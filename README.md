@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Sistema de Adopción de Mascotas
 
 Este proyecto es una aplicación completa para la gestión profesional de adopciones de mascotas, compuesta por un backend (Spring Boot) y un frontend (React).
@@ -83,3 +84,5 @@ Este proyecto es una aplicación completa para la gestión profesional de adopci
 
 ## Créditos
 Desarrollado por Diego y colaboradores.
+=======
+
