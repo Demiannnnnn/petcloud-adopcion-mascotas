@@ -14,39 +14,39 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.adopcion.model.Usuario;
-import com.adopcion.repository.UsuarioRepository;
+import com.adopcion.model.perfil.Perfil;
+import com.adopcion.repository.PerfilRepository;
 
 @RestController
 @RequestMapping("/api/usuarios")
 @CrossOrigin(origins = "*")
-public class UsuarioController {
+public class PerfilController {
     @Autowired
-    private UsuarioRepository usuarioRepository;
+    private PerfilRepository perfilRepository;
 
     @GetMapping
-    public List<Usuario> getAll() {
-        return usuarioRepository.findAll();
+    public List<Perfil> getAll() {
+        return perfilRepository.findAll();
     }
 
     @GetMapping("/{id}")
-    public Optional<Usuario> getById(@PathVariable Long id) {
-        return usuarioRepository.findById(id);
+    public Optional<Perfil> getById(@PathVariable Long id) {
+        return perfilRepository.findById(id);
     }
 
     @PostMapping
-    public Usuario create(@RequestBody Usuario usuario) {
-        return usuarioRepository.save(usuario);
+    public Perfil create(@RequestBody Perfil perfil) {
+        return perfilRepository.save(perfil);
     }
 
     @PutMapping("/{id}")
-    public Usuario update(@PathVariable Long id, @RequestBody Usuario usuario) {
-        usuario.setId(id);
-        return usuarioRepository.save(usuario);
+    public Perfil update(@PathVariable Long id, @RequestBody Perfil perfil) {
+        perfil.setId(id);
+        return perfilRepository.save(perfil);
     }
 
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Long id) {
-        usuarioRepository.deleteById(id);
+        perfilRepository.deleteById(id);
     }
 }

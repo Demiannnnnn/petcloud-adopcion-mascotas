@@ -14,8 +14,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.adopcion.model.Adopcion;
-import com.adopcion.model.Mascota;
+import com.adopcion.model.adopcion.Adopcion;
+import com.adopcion.model.mascota.Mascota;
 import com.adopcion.repository.AdopcionRepository;
 import com.adopcion.repository.MascotaRepository;
 

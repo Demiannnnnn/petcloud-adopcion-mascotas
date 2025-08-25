@@ -1,6 +1,8 @@
-package com.adopcion.model;
+package com.adopcion.model.adopcion;
 
 import java.time.LocalDate;
+import com.adopcion.model.mascota.Mascota;
+import com.adopcion.model.perfil.Perfil;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -18,23 +20,25 @@ public class Adopcion {
     private Mascota mascota;
 
     @ManyToOne
-    private Usuario usuario;
+    private Perfil perfil;
 
     private LocalDate fechaAdopcion;
-
     private String estado; // En proceso, Finalizada, Cancelada
-
     private String notas;
 
     // Getters y setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+
     public Mascota getMascota() { return mascota; }
     public void setMascota(Mascota mascota) { this.mascota = mascota; }
-    public Usuario getUsuario() { return usuario; }
-    public void setUsuario(Usuario usuario) { this.usuario = usuario; }
+
+    public Perfil getPerfil() { return perfil; }
+    public void setPerfil(Perfil perfil) { this.perfil = perfil; } // Corregido
+
     public LocalDate getFechaAdopcion() { return fechaAdopcion; }
     public void setFechaAdopcion(LocalDate fechaAdopcion) { this.fechaAdopcion = fechaAdopcion; }
+
     public String getNotas() { return notas; }
     public void setNotas(String notas) { this.notas = notas; }
 
