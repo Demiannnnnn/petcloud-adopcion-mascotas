@@ -47,11 +47,9 @@ function AdopcionPerfil({ adopcion, mascota, usuario, onClose, onEdit, onDelete,
       </Snackbar>
       {loading && <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}><CircularProgress /></Box>}
       <Typography variant="h6" gutterBottom>Detalle de Adopción</Typography>
-      {mascota?.fotoUrl && (
-        <Box sx={{ width: '100%', mb: 2, display: 'flex', justifyContent: 'center' }}>
-          <img src={mascota.fotoUrl} alt={mascota.nombre} style={{ width: 120, height: 120, objectFit: 'cover', borderRadius: 12 }} />
-        </Box>
-      )}
+      <Box sx={{ width: '100%', mb: 2, display: 'flex', justifyContent: 'center' }}>
+        <img src={mascota?.fotoUrl || 'https://via.placeholder.com/120x120?text=Sin+Foto'} alt={mascota?.nombre} style={{ width: 120, height: 120, objectFit: 'cover', borderRadius: 12 }} />
+      </Box>
       <Typography><b>Mascota:</b> {mascota?.nombre || '-'} ({mascota?.tipo || ''} {mascota?.raza || ''})</Typography>
       <Typography><b>Adoptante:</b> {usuario?.nombre || '-'} ({usuario?.email || ''} {usuario?.telefono || ''})</Typography>
       <Typography><b>Fecha adopción:</b> {adopcion.fechaAdopcion || adopcion.fechaSolicitud}</Typography>

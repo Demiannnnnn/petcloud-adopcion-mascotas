@@ -3,7 +3,7 @@ import { Box, Button, Typography, Paper, TextField, Alert, CircularProgress, Sna
 
 function LoginDemo({ onLogin }) {
   const [mode, setMode] = useState('login'); // login | register
-  const [form, setForm] = useState({ nombre: '', email: '', telefono: '', username: '', password: '' });
+  const [form, setForm] = useState({ nombre: '', email: '', telefono: '', username: '', password: '', rut: '', condicionesHogar: '', ubicacion: '', certificadoAntecedentes: '' });
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [error, setError] = useState('');
@@ -17,7 +17,7 @@ function LoginDemo({ onLogin }) {
     setSuccess('');
     setLoading(true);
     // Validaciones
-    if (!form.nombre || !form.email || !form.telefono || !form.username || !form.password) {
+    if (!form.nombre || !form.email || !form.telefono || !form.username || !form.password || !form.rut || !form.condicionesHogar || !form.ubicacion || !form.certificadoAntecedentes) {
       setError('Completa todos los campos.');
       setLoading(false);
       return;
@@ -37,10 +37,31 @@ function LoginDemo({ onLogin }) {
       return;
     }
     try {
+      // Mapear campos para backend
+      let certificado = null;
+      if (form.certificadoAntecedentes && form.certificadoAntecedentes.trim().toUpperCase() !== 'NO HAY') {
+        certificado = {
+          id: form.certificadoAntecedentes,
+          nombre: form.certificadoAntecedentes,
+          rutaArchivo: ''
+        };
+      }
+      const backendForm = {
+        ...form,
+        nombreCompleto: form.nombre,
+        correo: form.email,
+        contrasena: form.password,
+        numeroWhatsapp: form.telefono,
+        certificadoAntecedentes: certificado
+      };
+      delete backendForm.nombre;
+      delete backendForm.email;
+      delete backendForm.password;
+      delete backendForm.telefono;
       const res = await fetch('http://localhost:8080/api/usuarios', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form)
+        body: JSON.stringify(backendForm)
       });
       if (res.ok) {
         const usuario = await res.json();
@@ -78,9 +99,9 @@ function LoginDemo({ onLogin }) {
       const res = await fetch('http://localhost:8080/api/usuarios');
       if (res.ok) {
         const usuarios = await res.json();
-        const usuario = usuarios.find(u => u.email === loginEmail);
+        const usuario = usuarios.find(u => u.correo === loginEmail);
         if (usuario) {
-          if (usuario.password && usuario.password === loginPassword) {
+          if (usuario.contrasena && usuario.contrasena === loginPassword) {
             setSuccess('Bienvenido.');
             onLogin('USUARIO', usuario);
           } else {
@@ -111,14 +132,13 @@ function LoginDemo({ onLogin }) {
         <Paper elevation={4} sx={{ p: 5, minWidth: 320, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <Typography variant="h5" gutterBottom>Registrar nuevo usuario</Typography>
           <form onSubmit={handleRegister} style={{ width: '100%' }}>
-            <TextField label="Nombre" name="nombre" value={form.nombre} onChange={e => setForm({ ...form, nombre: e.target.value })} fullWidth sx={{ mb: 2 }} required />
+            <TextField label="Nombre completo" name="nombre" value={form.nombre} onChange={e => setForm({ ...form, nombre: e.target.value })} fullWidth sx={{ mb: 2 }} required />
             <TextField label="Email" name="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} fullWidth sx={{ mb: 2 }} required />
             <TextField
               label="Teléfono"
               name="telefono"
-              value={form.telefono.replace(/^\+569/, '')}
+                value={form.telefono.startsWith('+569') ? form.telefono.slice(4) : form.telefono}
               onChange={e => {
-                // Solo permitir números y máximo 8 dígitos
                 let val = e.target.value.replace(/\D/g, '').slice(0, 8);
                 setForm({ ...form, telefono: '+569' + val });
               }}
@@ -130,6 +150,10 @@ function LoginDemo({ onLogin }) {
             />
             <TextField label="Nombre de usuario" name="username" value={form.username} onChange={e => setForm({ ...form, username: e.target.value })} fullWidth sx={{ mb: 2 }} required />
             <TextField label="Contraseña" name="password" type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} fullWidth sx={{ mb: 2 }} required />
+            <TextField label="RUT" name="rut" value={form.rut} onChange={e => setForm({ ...form, rut: e.target.value })} fullWidth sx={{ mb: 2 }} required />
+            <TextField label="Condiciones del Hogar" name="condicionesHogar" value={form.condicionesHogar} onChange={e => setForm({ ...form, condicionesHogar: e.target.value })} fullWidth sx={{ mb: 2 }} required />
+            <TextField label="Ubicación" name="ubicacion" value={form.ubicacion} onChange={e => setForm({ ...form, ubicacion: e.target.value })} fullWidth sx={{ mb: 2 }} required />
+            <TextField label="Certificado de Antecedentes" name="certificadoAntecedentes" value={form.certificadoAntecedentes} onChange={e => setForm({ ...form, certificadoAntecedentes: e.target.value })} fullWidth sx={{ mb: 2 }} required />
             <Button type="submit" variant="contained" color="primary" fullWidth disabled={loading}>Registrar y entrar</Button>
             <Button onClick={() => setMode('login')} sx={{ mt: 1 }} fullWidth disabled={loading}>Volver</Button>
           </form>

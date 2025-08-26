@@ -4,7 +4,7 @@ import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper
 function Usuarios() {
   const [usuarios, setUsuarios] = useState([]);
   const [editId, setEditId] = useState(null);
-  const [editForm, setEditForm] = useState({ nombre: '', email: '', telefono: '', username: '', password: '' });
+  const [editForm, setEditForm] = useState({ nombre: '', email: '', telefono: '', username: '', password: '', rut: '', condicionesHogar: '', ubicacion: '', certificadoAntecedentes: '', numeroWhatsapp: '' });
   const [dialogOpen, setDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState('');
@@ -33,11 +33,18 @@ function Usuarios() {
   const handleEditClick = usuario => {
     setEditId(usuario.id);
     setEditForm({
-      nombre: usuario.nombre,
-      email: usuario.email,
-      telefono: usuario.telefono,
+      nombre: usuario.nombreCompleto || '',
+      email: usuario.correo || '',
+      telefono: usuario.numeroWhatsapp || '',
       username: usuario.username,
-      password: usuario.password || ''
+      password: usuario.contrasena || '',
+      rut: usuario.rut || '',
+      condicionesHogar: usuario.condicionesHogar || '',
+      ubicacion: usuario.ubicacion || '',
+      certificadoAntecedentes: typeof usuario.certificadoAntecedentes === 'object' && usuario.certificadoAntecedentes !== null
+        ? (usuario.certificadoAntecedentes.nombre || usuario.certificadoAntecedentes.id || '')
+        : (usuario.certificadoAntecedentes || ''),
+      documentosLegales: usuario.documentosLegales || []
     });
     setDialogOpen(true);
   };
@@ -52,10 +59,52 @@ function Usuarios() {
     setError('');
     setSuccess('');
     try {
+      // Mapear campos para backend
+      // Robust mapeo de certificadoAntecedentes
+      let certificado = null;
+      if (
+        editForm.certificadoAntecedentes &&
+        typeof editForm.certificadoAntecedentes === 'string' &&
+        editForm.certificadoAntecedentes.trim().toUpperCase() !== 'NO HAY'
+      ) {
+        certificado = {
+          id: String(editForm.certificadoAntecedentes),
+          nombre: String(editForm.certificadoAntecedentes),
+          rutaArchivo: ''
+        };
+      } else if (
+        editForm.certificadoAntecedentes &&
+        typeof editForm.certificadoAntecedentes === 'object' &&
+        (editForm.certificadoAntecedentes.nombre || editForm.certificadoAntecedentes.id)
+      ) {
+        certificado = {
+          id: String(editForm.certificadoAntecedentes.id || editForm.certificadoAntecedentes.nombre),
+          nombre: String(editForm.certificadoAntecedentes.nombre || editForm.certificadoAntecedentes.id),
+          rutaArchivo: editForm.certificadoAntecedentes.rutaArchivo || ''
+        };
+      } else {
+        certificado = null;
+      }
+
+      // Asegurar todos los campos requeridos
+      const backendForm = {
+  nombreCompleto: editForm.nombre || '',
+  correo: editForm.email || '',
+  contrasena: editForm.password || '',
+  numeroWhatsapp: editForm.telefono || '',
+  rut: editForm.rut || '',
+  condicionesHogar: editForm.condicionesHogar || '',
+  ubicacion: editForm.ubicacion || '',
+  certificadoAntecedentes: certificado,
+  username: editForm.username || '',
+  documentosLegales: editForm.documentosLegales || []
+      };
+      // Log para depuración
+      console.log('Enviando usuario al backend:', backendForm);
       const res = await fetch(`http://localhost:8080/api/usuarios/${editId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editForm)
+        body: JSON.stringify(backendForm)
       });
       if (res.ok) {
         setSuccess('Usuario actualizado correctamente.');
@@ -118,8 +167,8 @@ function Usuarios() {
               <TableRow key={u.id}>
                 <TableCell>{u.id}</TableCell>
                 <TableCell>{u.nombre}</TableCell>
-                <TableCell>{u.email}</TableCell>
-                <TableCell>{u.telefono}</TableCell>
+                <TableCell>{u.correo}</TableCell>
+                <TableCell>{u.numeroWhatsapp}</TableCell>
                 <TableCell>{u.username}</TableCell>
                 {user.rol === 'ADMIN' && (
                   <TableCell>
@@ -138,7 +187,7 @@ function Usuarios() {
         <DialogTitle>Editar usuario</DialogTitle>
         <form onSubmit={handleEditSubmit}>
           <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 300 }}>
-            <TextField name="nombre" label="Nombre" value={editForm.nombre} onChange={handleEditChange} required />
+            <TextField name="nombre" label="Nombre completo" value={editForm.nombre} onChange={handleEditChange} required />
             <TextField name="email" label="Email" value={editForm.email} onChange={handleEditChange} required
               error={!!editForm.email && !/^([^\s@]+)@([^\s@]+)\.[^\s@]+$/.test(editForm.email)}
               helperText={!!editForm.email && !/^([^\s@]+)@([^\s@]+)\.[^\s@]+$/.test(editForm.email) ? 'Email inválido' : ''}
@@ -146,7 +195,7 @@ function Usuarios() {
             <TextField
               name="telefono"
               label="Teléfono"
-              value={editForm.telefono.replace(/^\+569/, '')}
+                value={(editForm.telefono || '').replace(/^\+569/, '')}
               onChange={e => {
                 let val = e.target.value.replace(/\D/g, '').slice(0, 8);
                 setEditForm({ ...editForm, telefono: '+569' + val });
@@ -159,6 +208,10 @@ function Usuarios() {
             />
             <TextField name="username" label="Username" value={editForm.username} onChange={handleEditChange} required />
             <TextField name="password" label="Contraseña" type="password" value={editForm.password} onChange={handleEditChange} required />
+            <TextField name="rut" label="RUT" value={editForm.rut} onChange={handleEditChange} required />
+            <TextField name="condicionesHogar" label="Condiciones del Hogar" value={editForm.condicionesHogar} onChange={handleEditChange} required />
+            <TextField name="ubicacion" label="Ubicación" value={editForm.ubicacion} onChange={handleEditChange} required />
+            <TextField name="certificadoAntecedentes" label="Certificado de Antecedentes" value={editForm.certificadoAntecedentes} onChange={handleEditChange} required />
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setDialogOpen(false)}>Cancelar</Button>

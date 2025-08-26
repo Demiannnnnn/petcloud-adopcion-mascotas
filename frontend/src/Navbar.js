@@ -29,10 +29,14 @@ function Navbar({ onSectionChange, rol, usuario, onLogout, activeSection }) {
         {rol && (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Avatar sx={{ width: 32, height: 32, bgcolor: rol === 'ADMIN' ? 'secondary.main' : 'primary.light', fontWeight: 700 }}>
-              {rol === 'ADMIN' ? 'A' : (usuario?.nombre?.[0] || 'U')}
+              {rol === 'ADMIN'
+                ? 'A'
+                : (usuario?.nombreCompleto?.[0] || usuario?.nombre?.[0] || usuario?.username?.[0] || 'U')}
             </Avatar>
             <Typography variant="body1" sx={{ color: '#fff', fontWeight: 600, mr: 2 }}>
-              {rol === 'ADMIN' ? 'Administrador' : usuario?.nombre || ''}
+              {rol === 'ADMIN'
+                ? 'Administrador'
+                : (usuario?.nombreCompleto?.split(' ')[0] || usuario?.nombre?.split(' ')[0] || usuario?.username || '')}
             </Typography>
             <Button color="inherit" onClick={onLogout} sx={{ fontWeight: 600 }}>
               Cerrar sesión

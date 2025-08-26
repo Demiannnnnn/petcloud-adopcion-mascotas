@@ -22,11 +22,7 @@ function AdopcionCard({ adopcion, mascota, usuario, onClick }) {
     <Card sx={{ minWidth: 220, maxWidth: 320, width: { xs: '100%', sm: 260, md: 320 }, cursor: 'pointer', m: 1 }} onClick={onClick}>
       <CardContent>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          {mascota?.fotoUrl ? (
-            <img src={mascota.fotoUrl} alt={mascota.nombre} style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover' }} />
-          ) : (
-            <Box sx={{ width: 48, height: 48, background: '#eee', borderRadius: '50%' }} />
-          )}
+          <img src={mascota?.fotoUrl || 'https://via.placeholder.com/48x48?text=Sin+Foto'} alt={mascota?.nombre} style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover' }} />
           <Box>
             <Typography variant="subtitle1" sx={{ fontSize: { xs: 15, sm: 17 } }}>{mascota?.nombre || 'Mascota'}</Typography>
             <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: 12, sm: 14 } }}>{usuario?.nombre || 'Adoptante'}</Typography>

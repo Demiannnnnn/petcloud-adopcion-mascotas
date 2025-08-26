@@ -1,13 +1,12 @@
 
 
 
-import React, { useState } from 'react';
-import { Dialog as MuiDialog } from '@mui/material';
-import { Dialog, DialogTitle, DialogContent, Typography, Box, Button, Alert, CircularProgress, Snackbar } from '@mui/material';
+
+import React, { useState, useEffect } from 'react';
+import { Dialog as MuiDialog, Dialog, DialogTitle, DialogContent, Typography, Box, Button, Alert, CircularProgress, Snackbar } from '@mui/material';
 import MascotaGaleria from './MascotaGaleria';
 
 function MascotaPerfil({ mascota, open, onClose, usuario, rol }) {
-  // Usar props si existen, si no, fallback a localStorage
   const user = usuario || JSON.parse(localStorage.getItem('user')) || {};
   const userRol = rol || user.rol;
   const isAdmin = userRol === 'ADMIN';
@@ -19,10 +18,10 @@ function MascotaPerfil({ mascota, open, onClose, usuario, rol }) {
   const [loading, setLoading] = useState(false);
   const [imagenes, setImagenes] = useState(mascota?.imagenes || []);
 
-  // Sincronizar galería con la mascota activa
-  React.useEffect(() => {
+  useEffect(() => {
     setImagenes(mascota?.imagenes || []);
   }, [mascota]);
+
   if (!open || !mascota) return null;
 
   // Eliminar imagen de galería
@@ -31,9 +30,7 @@ function MascotaPerfil({ mascota, open, onClose, usuario, rol }) {
     setSuccess('');
     setLoading(true);
     try {
-      const res = await fetch(`http://localhost:8080/api/mascotas/${mascota.id}/imagenes?url=${encodeURIComponent(imgUrl)}`, {
-        method: 'DELETE'
-      });
+      const res = await fetch(`http://localhost:8080/api/mascotas/${mascota.id}/imagenes?url=${encodeURIComponent(imgUrl)}`, { method: 'DELETE' });
       if (res.ok) {
         const updated = await res.json();
         setImagenes(updated.imagenes);
@@ -47,6 +44,7 @@ function MascotaPerfil({ mascota, open, onClose, usuario, rol }) {
     setLoading(false);
   };
 
+  // Agregar imágenes a galería
   const handleAddImages = async () => {
     setError('');
     setSuccess('');
@@ -60,10 +58,7 @@ function MascotaPerfil({ mascota, open, onClose, usuario, rol }) {
       }
       const data = new FormData();
       data.append('file', f);
-      const res = await fetch('http://localhost:8080/api/uploads/imagen', {
-        method: 'POST',
-        body: data
-      });
+      const res = await fetch('http://localhost:8080/api/uploads/imagen', { method: 'POST', body: data });
       if (res.ok) {
         nuevas.push(await res.text());
       } else {
@@ -72,7 +67,6 @@ function MascotaPerfil({ mascota, open, onClose, usuario, rol }) {
         return;
       }
     }
-    // Llamar endpoint backend para asociar imágenes
     try {
       const res = await fetch(`http://localhost:8080/api/mascotas/${mascota.id}/imagenes`, {
         method: 'POST',
@@ -104,15 +98,23 @@ function MascotaPerfil({ mascota, open, onClose, usuario, rol }) {
       {loading && <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}><CircularProgress /></Box>}
       <DialogTitle>{mascota.nombre}</DialogTitle>
       <DialogContent>
-        {/* Imagen principal grande */}
+        {/* Imagen principal */}
         {mascota.fotoUrl && (
           <Box sx={{ width: '100%', mb: 2, display: 'flex', justifyContent: 'center', alignItems: 'center', background: '#f5f5f5', borderRadius: 3, minHeight: 220, maxHeight: 260, overflow: 'hidden' }}>
-            <img
-              src={mascota.fotoUrl}
-              alt="Foto principal"
-              style={{ width: '100%', height: 240, objectFit: 'contain', objectPosition: 'center', borderRadius: 12, background: '#f5f5f5', cursor: 'pointer' }}
-              onClick={() => setModalImg(mascota.fotoUrl)}
-            />
+            {(() => {
+              let fotoUrl = mascota.fotoUrl;
+              if (fotoUrl && fotoUrl.startsWith('/')) {
+                fotoUrl = `http://localhost:8080${fotoUrl}`;
+              }
+              return (
+                <img
+                  src={fotoUrl}
+                  alt="Foto principal"
+                  style={{ width: '100%', height: 240, objectFit: 'contain', objectPosition: 'center', borderRadius: 12, background: '#f5f5f5', cursor: 'pointer' }}
+                  onClick={() => setModalImg(fotoUrl)}
+                />
+              );
+            })()}
           </Box>
         )}
         <MuiDialog open={!!modalImg} onClose={() => setModalImg(null)} maxWidth="md">
@@ -120,7 +122,7 @@ function MascotaPerfil({ mascota, open, onClose, usuario, rol }) {
             <img src={modalImg} alt="Vista grande" style={{ maxWidth: 600, maxHeight: 600, display: 'block', margin: 'auto' }} />
           )}
         </MuiDialog>
-        {/* Galería tipo carrusel horizontal */}
+        {/* Carrusel galería */}
         {imagenes.length > 0 && (
           <MascotaGaleria
             imagenes={imagenes}
@@ -131,6 +133,15 @@ function MascotaPerfil({ mascota, open, onClose, usuario, rol }) {
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 2 }}>
           <Typography variant="h6" gutterBottom>
             {mascota.tipo} • {mascota.raza} • {mascota.edad} años
+          </Typography>
+          <Typography variant="body2" sx={{ mb: 1 }}>
+            <b>Sexo:</b> {mascota.sexo || 'No especificado'}
+          </Typography>
+          <Typography variant="body2" sx={{ mb: 1 }}>
+            <b>Ubicación:</b> {mascota.ubicacion || 'No especificada'}
+          </Typography>
+          <Typography variant="body2" sx={{ mb: 1 }}>
+            <b>Dueño:</b> {mascota.perfil?.username || mascota.usuario?.username || 'No asignado'}
           </Typography>
           <Typography variant="body1" sx={{ mb: 2 }}>
             {mascota.descripcion || 'Sin descripción.'}

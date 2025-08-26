@@ -3,13 +3,22 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 
 function MascotaCard({ mascota, onClick, showEditDelete, onEdit, onDelete }) {
+  // Ajuste: si la fotoUrl comienza con '/', anteponer el host del backend
+  let fotoUrl = mascota.fotoUrl;
+  if (fotoUrl && fotoUrl.startsWith('/')) {
+    fotoUrl = `http://localhost:8080${fotoUrl}`;
+  }
   return (
     <Card sx={{ maxWidth: 320, minWidth: 220, m: 1, boxShadow: 3, position: 'relative', width: { xs: '100%', sm: 260, md: 320 } }}>
       <CardActionArea onClick={onClick}>
         <CardMedia
           component="img"
           height="200"
-          image={mascota.fotoUrl || 'https://via.placeholder.com/320x200?text=Sin+Foto'}
+          image={
+            fotoUrl && (fotoUrl.startsWith('http'))
+              ? fotoUrl
+              : 'https://via.placeholder.com/320x200?text=Sin+Foto'
+          }
           alt={mascota.nombre}
         />
         <CardContent>

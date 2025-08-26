@@ -14,7 +14,18 @@ function Mascotas(props) {
   const { isPublic, onLoginRequest } = props;
   const navigate = useNavigate();
   const [mascotas, setMascotas] = useState([]);
-  const [form, setForm] = useState({ nombre: '', tipo: '', raza: '', edad: '', descripcion: '', fotoUrl: '' });
+  const [form, setForm] = useState({
+    nombre: '',
+    especie: '',
+    raza: '',
+    edad: '',
+    tipo: '',
+    sexo: '',
+    ubicacion: '',
+    descripcion: '',
+    fotoUrl: '',
+    adoptado: false
+  });
   const [editId, setEditId] = useState(null);
   const [file, setFile] = useState(null);
   // Eliminado: galería en registro
@@ -63,7 +74,7 @@ function Mascotas(props) {
         return;
       }
       // Validaciones
-      if (!form.nombre || !form.tipo || !form.raza || !form.edad) {
+      if (!form.nombre || !form.tipo || !form.raza || !form.edad || !form.especie || !form.sexo || !form.ubicacion) {
         setError('Todos los campos obligatorios deben estar completos.');
         setLoading(false);
         return;
@@ -98,11 +109,27 @@ function Mascotas(props) {
           'X-User': user.username,
           'X-Rol': user.rol
         },
-        body: JSON.stringify({ ...form, edad: Number(form.edad), fotoUrl })
+        body: JSON.stringify({
+          ...form,
+          edad: Number(form.edad),
+          fotoUrl,
+          adoptado: Boolean(form.adoptado)
+        })
       });
       if (res.ok) {
         setSuccess(editId ? 'Mascota actualizada correctamente.' : 'Mascota agregada correctamente.');
-        setForm({ nombre: '', tipo: '', raza: '', edad: '', descripcion: '', fotoUrl: '' });
+        setForm({
+          nombre: '',
+          especie: '',
+          raza: '',
+          edad: '',
+          tipo: '',
+          sexo: '',
+          ubicacion: '',
+          descripcion: '',
+          fotoUrl: '',
+          adoptado: false
+        });
         setFile(null);
         setEditId(null);
         setFormOpen(false); // Cierra el formulario automáticamente
@@ -117,10 +144,11 @@ function Mascotas(props) {
   };
 
   // Obtener usuario y rol correctamente
-  const user = props.usuario || JSON.parse(localStorage.getItem('user')) || {};
+  // Siempre forzar usuario admin si el rol es ADMIN
+  let user = props.usuario || JSON.parse(localStorage.getItem('user')) || {};
   if (props.rol === 'ADMIN') {
-    user.username = 'admin';
-    user.rol = 'ADMIN';
+    user = { ...user, username: 'admin', rol: 'ADMIN' };
+    localStorage.setItem('user', JSON.stringify(user));
   }
 
   const handleDelete = async id => {
@@ -161,12 +189,16 @@ function Mascotas(props) {
 
   const handleEdit = mascota => {
     setForm({
-      nombre: mascota.nombre,
-      tipo: mascota.tipo,
-      raza: mascota.raza,
-      edad: mascota.edad,
-      descripcion: mascota.descripcion,
-      fotoUrl: mascota.fotoUrl || ''
+      nombre: mascota.nombre || '',
+      especie: mascota.especie || '',
+      raza: mascota.raza || '',
+      edad: mascota.edad || '',
+      tipo: mascota.tipo || '',
+      sexo: mascota.sexo || '',
+      ubicacion: mascota.ubicacion || '',
+      descripcion: mascota.descripcion || '',
+      fotoUrl: mascota.fotoUrl || '',
+      adoptado: mascota.adoptado || false
     });
     setFile(null);
     setEditId(mascota.id);
@@ -252,6 +284,9 @@ function Mascotas(props) {
                 <TextField label="Nombre" name="nombre" value={form.nombre} onChange={handleChange} fullWidth required />
               </Grid>
               <Grid item xs={12} sm={6} md={4}>
+                <TextField label="Especie" name="especie" value={form.especie} onChange={handleChange} fullWidth required />
+              </Grid>
+              <Grid item xs={12} sm={6} md={4}>
                 <TextField label="Tipo" name="tipo" value={form.tipo} onChange={handleChange} fullWidth required />
               </Grid>
               <Grid item xs={12} sm={6} md={4}>
@@ -259,6 +294,12 @@ function Mascotas(props) {
               </Grid>
               <Grid item xs={12} sm={6} md={4}>
                 <TextField label="Edad" name="edad" value={form.edad} onChange={handleChange} fullWidth required type="number" />
+              </Grid>
+              <Grid item xs={12} sm={6} md={4}>
+                <TextField label="Sexo" name="sexo" value={form.sexo} onChange={handleChange} fullWidth required />
+              </Grid>
+              <Grid item xs={12} sm={6} md={4}>
+                <TextField label="Ubicación" name="ubicacion" value={form.ubicacion} onChange={handleChange} fullWidth required />
               </Grid>
               <Grid item xs={12} sm={6} md={4}>
                 <TextField label="Descripción" name="descripcion" value={form.descripcion} onChange={handleChange} fullWidth multiline rows={2} />
@@ -269,12 +310,16 @@ function Mascotas(props) {
                   <input type="file" hidden onChange={e => setFile(e.target.files[0])} />
                 </Button>
               </Grid>
-              {/* Eliminado: input de galería en registro */}
+              <Grid item xs={12} sm={6} md={4}>
+                <Button variant={form.adoptado ? "contained" : "outlined"} color="success" fullWidth onClick={e => { e.preventDefault(); setForm(f => ({ ...f, adoptado: !f.adoptado })); }}>
+                  {form.adoptado ? 'Adoptado' : 'No adoptado'}
+                </Button>
+              </Grid>
               <Grid item xs={12}>
                 <Button type="submit" variant="contained" color="primary">
                   {editId ? 'Actualizar' : 'Agregar'} Mascota
                 </Button>
-                <Button onClick={() => { setEditId(null); setForm({ nombre: '', tipo: '', raza: '', edad: '', descripcion: '', fotoUrl: '' }); setFile(null); setFormOpen(false); }} sx={{ ml: 2 }}>
+                <Button onClick={() => { setEditId(null); setForm({ nombre: '', especie: '', tipo: '', raza: '', edad: '', sexo: '', ubicacion: '', descripcion: '', fotoUrl: '', adoptado: false }); setFile(null); setFormOpen(false); }} sx={{ ml: 2 }}>
                   Cancelar
                 </Button>
               </Grid>
@@ -297,6 +342,7 @@ function Mascotas(props) {
           {mascotas.map(m => {
             const isAdmin = user.rol === 'ADMIN';
             const isOwner = m.usuario && m.usuario.username === user.username;
+            // Para ADMIN, mostrar siempre los controles de edición/eliminación
             return (
               <Grid item key={m.id} xs={12} sm={6} md={4} lg={3} xl={2} display="flex" justifyContent="center">
                 <MascotaCard
@@ -313,6 +359,7 @@ function Mascotas(props) {
                   showEditDelete={isAdmin || isOwner}
                   onDelete={() => handleDelete(m.id)}
                   onEdit={() => handleEdit(m)}
+                  isAdmin={isAdmin}
                 />
               </Grid>
             );
