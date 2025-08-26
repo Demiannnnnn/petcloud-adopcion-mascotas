@@ -1,8 +1,0 @@
-2025-08-25 20:16:39.928745-04:00 jdbc[13]: exception
-org.h2.jdbc.JdbcSQLSyntaxErrorException: Error de Sintaxis en sentencia SQL "[*]DESCRIPCION"; se esperaba "DELETE, DROP"
-Syntax error in SQL statement "[*]DESCRIPCION"; expected "DELETE, DROP"; SQL statement:
-DESCRIPCION [42001-224]
-2025-08-25 20:16:46.074461-04:00 jdbc[13]: exception
-org.h2.jdbc.JdbcSQLSyntaxErrorException: Tabla "ADOPTADO" no encontrada
-Table "ADOPTADO" not found; SQL statement:
-select * from ADOPTADO [42102-224]
