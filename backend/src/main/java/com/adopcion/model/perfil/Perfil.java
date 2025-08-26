@@ -1,3 +1,4 @@
+
 package com.adopcion.model.perfil;
 
 import java.util.List;
@@ -5,13 +6,20 @@ import com.adopcion.model.documento.Documento;
 import com.adopcion.model.mascota.Mascota;
 import com.adopcion.model.filtrodebusqueda.FiltroDeBusqueda;
 
+import jakarta.persistence.*;
+
+@Entity
+@Inheritance(strategy = InheritanceType.JOINED)
 public abstract class Perfil {
-	protected Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    protected Long id;
 	protected String rut;
 	protected String correo;
 	protected String contrasena;
     protected String username;
-	protected List<Documento> documentosLegales;
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    protected List<Documento> documentosLegales;
 	protected String condicionesHogar;
 
 	//public abstract void actualizarDocumentos(Documento d);

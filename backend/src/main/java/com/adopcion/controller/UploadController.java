@@ -30,18 +30,16 @@ public class UploadController {
             return ResponseEntity.badRequest().body("Archivo vacío");
         }
         try {
-            String filename = System.currentTimeMillis() + "_" + StringUtils.cleanPath(file.getOriginalFilename());
+            String ext = StringUtils.getFilenameExtension(file.getOriginalFilename());
+            String filename = System.currentTimeMillis() + "_" + java.util.UUID.randomUUID() + (ext != null ? "." + ext : "");
             Path uploadPath = Paths.get(UPLOAD_DIR);
             if (!Files.exists(uploadPath)) {
                 Files.createDirectories(uploadPath);
             }
             Path filePath = uploadPath.resolve(filename);
             file.transferTo(filePath);
-            String fileUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
-                    .path("/api/uploads/imagen/")
-                    .path(filename)
-                    .toUriString();
-            return ResponseEntity.ok(fileUrl);
+            // Retornar la URL relativa para el frontend
+            return ResponseEntity.ok("/uploads/" + filename);
         } catch (IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al subir la imagen");
         }

@@ -1,9 +1,11 @@
 package com.adopcion.model.solicitud;
 
+
 import jakarta.persistence.*;
 import java.util.Date;
 import com.adopcion.model.perfil.Perfil;
 import com.adopcion.model.mascota.Mascota;
+import com.adopcion.service.state.EstadoSolicitud;
 
 @Entity
 public class SolicitudAdopcion {

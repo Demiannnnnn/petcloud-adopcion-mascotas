@@ -1,9 +1,27 @@
+
 package com.adopcion.model.documento;
 
+import jakarta.persistence.*;
+
+@Entity
 public class Documento {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long internalId;
     private String id;
     private String nombre;
     private String rutaArchivo;
+    // Getters y setters para internalId
+    public Long getInternalId() {
+        return internalId;
+    }
+    public void setInternalId(Long internalId) {
+        this.internalId = internalId;
+    }
+
+
+    // Constructor sin argumentos requerido por JPA
+    public Documento() {}
 
     // Constructor
     public Documento(String id, String nombre, String rutaArchivo) {

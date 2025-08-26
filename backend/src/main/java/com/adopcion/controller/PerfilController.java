@@ -15,14 +15,21 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.adopcion.model.perfil.Perfil;
+import com.adopcion.model.perfil.Persona;
+import com.adopcion.model.documento.Documento;
 import com.adopcion.repository.PerfilRepository;
+import com.adopcion.repository.DocumentoRepository;
 
 @RestController
 @RequestMapping("/api/usuarios")
 @CrossOrigin(origins = "*")
+
 public class PerfilController {
     @Autowired
     private PerfilRepository perfilRepository;
+
+    @Autowired
+    private DocumentoRepository documentoRepository;
 
     @GetMapping
     public List<Perfil> getAll() {
@@ -35,14 +42,37 @@ public class PerfilController {
     }
 
     @PostMapping
-    public Perfil create(@RequestBody Perfil perfil) {
-        return perfilRepository.save(perfil);
+    public Persona create(@RequestBody Persona persona) {
+        return perfilRepository.save(persona);
     }
 
     @PutMapping("/{id}")
-    public Perfil update(@PathVariable Long id, @RequestBody Perfil perfil) {
-        perfil.setId(id);
-        return perfilRepository.save(perfil);
+    public Persona update(@PathVariable Long id, @RequestBody Persona persona) {
+        persona.setId(id);
+        // Robustez: Si certificadoAntecedentes tiene id, buscarlo por internalId o por id (string)
+        if (persona.getCertificadoAntecedentes() != null) {
+            Documento cert = persona.getCertificadoAntecedentes();
+            Documento existente = null;
+            if (cert.getInternalId() != null) {
+                existente = documentoRepository.findById(cert.getInternalId()).orElse(null);
+            }
+            // Si no se encontró por internalId, buscar por id (string)
+            if (existente == null && cert.getId() != null && !cert.getId().isEmpty()) {
+                // Buscar por id (string) manualmente
+                existente = documentoRepository.findAll().stream()
+                    .filter(d -> cert.getId().equals(d.getId()))
+                    .findFirst().orElse(null);
+            }
+            if (existente != null) {
+                persona.setCertificadoAntecedentes(existente);
+            } else if (cert.getId() != null && !cert.getId().isEmpty()) {
+                // Si no existe, guardar el nuevo documento
+                persona.setCertificadoAntecedentes(documentoRepository.save(cert));
+            } else {
+                persona.setCertificadoAntecedentes(null);
+            }
+        }
+        return perfilRepository.save(persona);
     }
 
     @DeleteMapping("/{id}")

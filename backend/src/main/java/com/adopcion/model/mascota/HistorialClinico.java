@@ -1,11 +1,19 @@
+
 package com.adopcion.model.mascota;
 
+import jakarta.persistence.*;
 import java.util.Date;
 
+@Entity
 public class HistorialClinico {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private Date fecha;
     private String descripcion;
+    @ManyToOne
+    @JoinColumn(name = "mascota_id")
+    private Mascota mascota;
 
     // Getters y setters
     public Long getId() {
@@ -13,6 +21,12 @@ public class HistorialClinico {
     }
     public void setId(Long id) {
         this.id = id;
+    }
+    public Mascota getMascota() {
+        return mascota;
+    }
+    public void setMascota(Mascota mascota) {
+        this.mascota = mascota;
     }
     public Date getFecha() {
         return fecha;

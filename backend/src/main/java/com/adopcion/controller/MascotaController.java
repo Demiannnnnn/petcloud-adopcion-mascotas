@@ -34,6 +34,31 @@ public class MascotaController {
     @Autowired
     private MascotaRepository mascotaRepository;
 
+    // Alias para agregar imágenes a la galería (compatibilidad frontend)
+    @PostMapping("/{id}/imagenes")
+    public ResponseEntity<Mascota> addImagenes(@PathVariable Long id, @RequestBody List<String> nuevasFotos) {
+        return addFotos(id, nuevasFotos);
+    }
+
+    // Eliminar una imagen de la galería de una mascota por URL
+    @DeleteMapping("/{id}/imagenes")
+    public ResponseEntity<Mascota> removeImagen(@PathVariable Long id, @RequestParam String url) {
+        Optional<Mascota> optMascota = mascotaRepository.findById(id);
+        if (optMascota.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        Mascota mascota = optMascota.get();
+        if (mascota.getImagenes() == null) {
+            return ResponseEntity.ok(mascota);
+        }
+        boolean removed = mascota.getImagenes().removeIf(f -> f.getUrl().equals(url));
+        if (!removed) {
+            return ResponseEntity.badRequest().body(mascota);
+        }
+        mascotaRepository.save(mascota);
+        return ResponseEntity.ok(mascota);
+    }
+
     @GetMapping
     public List<Mascota> getAll() {
         return mascotaRepository.findAll();
@@ -51,45 +76,56 @@ public class MascotaController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El usuario especificado no existe: " + username);
         }
         mascota.setPerfil(perfil);
+        // Asegurar que todos los campos estén correctamente asignados (por si el frontend omite alguno)
+        if (mascota.getNombre() == null) mascota.setNombre("");
+        if (mascota.getEspecie() == null) mascota.setEspecie("");
+        if (mascota.getTipo() == null) mascota.setTipo("");
+        if (mascota.getRaza() == null) mascota.setRaza("");
+        if (mascota.getSexo() == null) mascota.setSexo("");
+        if (mascota.getUbicacion() == null) mascota.setUbicacion("");
+        if (mascota.getDescripcion() == null) mascota.setDescripcion("");
+        if (mascota.getFotoUrl() == null) mascota.setFotoUrl("");
+        // adoptado por defecto false si no viene
+        // historialClinico, imagenes, videos se manejan aparte
         return mascotaRepository.save(mascota);
     }
 
     @PutMapping("/{id}")
     public Mascota updateMascota(@PathVariable Long id, @RequestBody Mascota mascotaDetails, @RequestHeader("X-User") String username, @RequestHeader("X-Rol") String rol) {
-    Mascota mascota = mascotaRepository.findById(id)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Mascota not found with id " + id));
-    // Obtener usuario desde header personalizado (X-User)
-    // username y rol ya vienen de los headers
-    Perfil currentUser = perfilRepository.findByUsername(username);
-    boolean isAdmin = rol != null && rol.equalsIgnoreCase("ADMIN");
-    boolean isOwner = mascota.getPerfil() != null && currentUser != null && mascota.getPerfil().getUsername().equals(currentUser.getUsername());
-    if (!isAdmin && !isOwner) {
-        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No tienes permiso para editar esta mascota");
-    }
+        Mascota mascota = mascotaRepository.findById(id)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Mascota not found with id " + id));
+        Perfil currentUser = perfilRepository.findByUsername(username);
+        boolean isAdmin = rol != null && rol.equalsIgnoreCase("ADMIN");
+        boolean isOwner = mascota.getPerfil() != null && currentUser != null && mascota.getPerfil().getUsername().equals(currentUser.getUsername());
+        if (!isAdmin && !isOwner) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No tienes permiso para editar esta mascota");
+        }
     mascota.setNombre(mascotaDetails.getNombre());
-    mascota.setTipo(mascotaDetails.getTipo()); // Corregido: actualizar tipo
-    mascota.setDescripcion(mascotaDetails.getDescripcion());
-    mascota.setEdad(mascotaDetails.getEdad());
+    mascota.setEspecie(mascotaDetails.getEspecie());
+    mascota.setTipo(mascotaDetails.getTipo());
     mascota.setRaza(mascotaDetails.getRaza());
-    // Si tienes setImagen, descomenta la siguiente línea
-    // mascota.setImagen(mascotaDetails.getImagen());
+    mascota.setEdad(mascotaDetails.getEdad());
+    mascota.setSexo(mascotaDetails.getSexo());
+    mascota.setUbicacion(mascotaDetails.getUbicacion());
+    mascota.setDescripcion(mascotaDetails.getDescripcion());
+    mascota.setFotoUrl(mascotaDetails.getFotoUrl());
+    mascota.setAdoptado(mascotaDetails.isAdoptado());
+    // historialClinico, imagenes, videos se manejan aparte
     return mascotaRepository.save(mascota);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteMascota(@PathVariable Long id, @RequestHeader("X-User") String username, @RequestHeader("X-Rol") String rol) {
-    Mascota mascota = mascotaRepository.findById(id)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Mascota not found with id " + id));
-    // Obtener usuario desde header personalizado (X-User)
-    // username y rol ya vienen de los headers
-    Perfil currentUser = perfilRepository.findByUsername(username);
-    boolean isAdmin = rol != null && rol.equalsIgnoreCase("ADMIN");
-    boolean isOwner = mascota.getPerfil() != null && currentUser != null && mascota.getPerfil().getUsername().equals(currentUser.getUsername());
-    if (!isAdmin && !isOwner) {
-        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No tienes permiso para eliminar esta mascota");
-    }
-    mascotaRepository.delete(mascota);
-    return ResponseEntity.ok().build();
+        Mascota mascota = mascotaRepository.findById(id)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Mascota not found with id " + id));
+        Perfil currentUser = perfilRepository.findByUsername(username);
+        boolean isAdmin = rol != null && rol.equalsIgnoreCase("ADMIN");
+        boolean isOwner = mascota.getPerfil() != null && currentUser != null && mascota.getPerfil().getUsername().equals(currentUser.getUsername());
+        if (!isAdmin && !isOwner) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No tienes permiso para eliminar esta mascota");
+        }
+        mascotaRepository.delete(mascota);
+        return ResponseEntity.ok().build();
     }
 
     // Agregar imágenes adicionales a una mascota existente
@@ -100,29 +136,14 @@ public class MascotaController {
             return ResponseEntity.notFound().build();
         }
         Mascota mascota = optMascota.get();
-
+        if (mascota.getImagenes() == null) {
+            mascota.setImagenes(new java.util.ArrayList<>());
+        }
         for (String url : nuevasFotos) {
             Foto foto = new Foto();
             foto.setUrl(url);
             foto.setMascota(mascota);
-            mascota.getFotos().add(foto);
-        }
-
-        mascotaRepository.save(mascota);
-        return ResponseEntity.ok(mascota);
-    }
-
-    // Eliminar una imagen de la galería de una mascota
-    @DeleteMapping("/{id}/fotos")
-    public ResponseEntity<Mascota> removeImagen(@PathVariable Long id, @RequestParam String url) {
-        Optional<Mascota> optMascota = mascotaRepository.findById(id);
-        if (optMascota.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        Mascota mascota = optMascota.get();
-        boolean removed = mascota.getFotos().removeIf(f -> f.getUrl().equals(url));
-        if (!removed) {
-            return ResponseEntity.badRequest().body(mascota);
+            mascota.getImagenes().add(foto);
         }
         mascotaRepository.save(mascota);
         return ResponseEntity.ok(mascota);
