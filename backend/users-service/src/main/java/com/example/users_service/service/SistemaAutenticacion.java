@@ -1,7 +1,6 @@
 package com.example.users_service.service;
 
-import com.adopcion.users.model.Persona;
-import com.adopcion.users.model.Empresa;
+
 
 public class SistemaAutenticacion {
 
@@ -14,6 +13,5 @@ public class SistemaAutenticacion {
         return instancia;
     }
 
-    public Persona loginPersona(String rut, String contraseña) { return null; }
-    public Empresa loginEmpresa(String rut, String contraseña) { return null; }
+
 }
