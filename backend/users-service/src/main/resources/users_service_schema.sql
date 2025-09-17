@@ -1,9 +1,6 @@
--- usersdb
-CREATE DATABASE IF NOT EXISTS usersdb CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE usersdb;
 
 CREATE TABLE IF NOT EXISTS perfil (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
     tipo_perfil VARCHAR(50) NOT NULL,
     rut VARCHAR(20) UNIQUE NOT NULL,
     correo VARCHAR(100) UNIQUE NOT NULL,
@@ -19,7 +16,7 @@ CREATE TABLE IF NOT EXISTS persona (
     ubicacion VARCHAR(200),
     numero_whatsapp VARCHAR(20),
     fecha_nacimiento DATE,
-    FOREIGN KEY (id) REFERENCES perfil(id) ON DELETE CASCADE
+    FOREIGN KEY (id) REFERENCES perfil(id)
 );
 
 CREATE TABLE IF NOT EXISTS empresa (
@@ -29,20 +26,19 @@ CREATE TABLE IF NOT EXISTS empresa (
     rut_empresa VARCHAR(20) UNIQUE,
     direccion VARCHAR(300),
     telefono_contacto VARCHAR(20),
-    FOREIGN KEY (id) REFERENCES perfil(id) ON DELETE CASCADE
+    FOREIGN KEY (id) REFERENCES perfil(id)
 );
 
 CREATE TABLE IF NOT EXISTS documento (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
     perfil_id BIGINT NOT NULL,
     tipo VARCHAR(100) NOT NULL,
     nombre_archivo VARCHAR(200),
-    archivo LONGBLOB,
+    archivo BLOB,
     fecha_subida TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     validado BOOLEAN DEFAULT FALSE,
-    FOREIGN KEY (perfil_id) REFERENCES perfil(id) ON DELETE CASCADE
+    FOREIGN KEY (perfil_id) REFERENCES perfil(id)
 );
 
--- índices recomendados
-CREATE INDEX IF NOT EXISTS idx_perfil_correo ON perfil(correo);
-CREATE INDEX IF NOT EXISTS idx_perfil_rut ON perfil(rut);
+CREATE INDEX idx_perfil_correo ON perfil(correo);
+CREATE INDEX idx_perfil_rut ON perfil(rut);

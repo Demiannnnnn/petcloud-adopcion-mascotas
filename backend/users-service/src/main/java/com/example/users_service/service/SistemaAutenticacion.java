@@ -1,7 +1,7 @@
 package com.example.users_service.service;
 
-import com.adopcion.users.model.Persona;
-import com.adopcion.users.model.Empresa;
+import com.example.users_service.model.Empresa;
+import com.example.users_service.model.Persona;
 
 public class SistemaAutenticacion {
 

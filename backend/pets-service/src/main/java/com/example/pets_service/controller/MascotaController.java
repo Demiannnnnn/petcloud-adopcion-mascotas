@@ -1,12 +1,14 @@
 package com.example.pets_service.controller;
 
-import com.example.pets_service.model.Mascota;
-import com.example.pets_service.service.MascotaService;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import java.util.List;
+
+import com.example.pets_service.model.Mascota;
+import com.example.pets_service.service.MascotaService;
 
 @RestController
 @RequestMapping("/api/mascotas")

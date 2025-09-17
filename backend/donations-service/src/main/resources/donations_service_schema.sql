@@ -1,18 +1,15 @@
--- donationsdb
-CREATE DATABASE IF NOT EXISTS donationsdb CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE donationsdb;
 
 CREATE TABLE IF NOT EXISTS donacion (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
     donante_id BIGINT NOT NULL,
     receptor_id BIGINT,
-    tipo_donacion ENUM('MONETARIA','ALIMENTO','MEDICINA','JUGUETES','ACCESORIOS','OTRO') NOT NULL,
+    tipo_donacion VARCHAR(20) NOT NULL,
     descripcion TEXT,
     monto DECIMAL(12,2),
     cantidad INT,
     unidad VARCHAR(20),
     fecha_donacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    estado ENUM('PENDIENTE','CONFIRMADA','ENTREGADA','CANCELADA') DEFAULT 'PENDIENTE',
+    estado VARCHAR(20) DEFAULT 'PENDIENTE',
     metodo_pago VARCHAR(50),
     comprobante_url VARCHAR(500),
     direccion_entrega VARCHAR(300),
@@ -21,7 +18,7 @@ CREATE TABLE IF NOT EXISTS donacion (
 );
 
 CREATE TABLE IF NOT EXISTS campana_donacion (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
     organizador_id BIGINT NOT NULL,
     titulo VARCHAR(200) NOT NULL,
     descripcion TEXT NOT NULL,
@@ -35,13 +32,15 @@ CREATE TABLE IF NOT EXISTS campana_donacion (
 );
 
 CREATE TABLE IF NOT EXISTS donacion_campana (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
     donacion_id BIGINT NOT NULL,
     campana_id BIGINT NOT NULL,
-    FOREIGN KEY (donacion_id) REFERENCES donacion(id) ON DELETE CASCADE,
-    FOREIGN KEY (campana_id) REFERENCES campana_donacion(id) ON DELETE CASCADE
+    -- Las claves foráneas se pueden definir en H2, pero ON DELETE CASCADE puede requerir ajuste en JPA
+    FOREIGN KEY (donacion_id) REFERENCES donacion(id),
+    FOREIGN KEY (campana_id) REFERENCES campana_donacion(id)
 );
 
-CREATE INDEX IF NOT EXISTS idx_donante ON donacion(donante_id);
-CREATE INDEX IF NOT EXISTS idx_tipo_donacion ON donacion(tipo_donacion);
-CREATE INDEX IF NOT EXISTS idx_fecha_donacion ON donacion(fecha_donacion);
+-- Los índices se pueden crear así en H2
+CREATE INDEX idx_donante ON donacion(donante_id);
+CREATE INDEX idx_tipo_donacion ON donacion(tipo_donacion);
+CREATE INDEX idx_fecha_donacion ON donacion(fecha_donacion);

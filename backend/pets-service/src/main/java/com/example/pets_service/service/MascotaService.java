@@ -1,12 +1,13 @@
 
 package com.example.pets_service.service;
 
-import com.example.pets_service.model.Mascota;
-import com.example.pets_service.repository.MascotaRepository;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import com.example.pets_service.model.Mascota;
+import com.example.pets_service.repository.MascotaRepository;
 
 @Service
 public class MascotaService {
