@@ -1,4 +1,3 @@
--- Insertar mascotas de prueba
 INSERT INTO mascota (id, propietario_id, nombre, especie, raza, edad, sexo, ubicacion, descripcion, disponible_adopcion, imagen_url, peso, esterilizado) VALUES
 (1, 3, 'Luna', 'PERRO', 'Labrador Mix', 3, 'HEMBRA', 'Santiago, RM', 'Perra muy cariñosa y juguetona, ideal para familias', true, 'https://ejemplo.com/luna.jpg', 25.5, true),
 (2, 3, 'Simón', 'GATO', 'Siamés', 2, 'MACHO', 'Santiago, RM', 'Gato tranquilo y sociable, se lleva bien con otros gatos', true, 'https://ejemplo.com/simon.jpg', 4.2, true),
@@ -11,7 +10,6 @@ INSERT INTO mascota (id, propietario_id, nombre, especie, raza, edad, sexo, ubic
 (9, 1, 'Bruno', 'PERRO', 'Golden Retriever', 6, 'MACHO', 'Concepción, Biobío', 'Entrenado y obediente', true, 'https://ejemplo.com/bruno.jpg', 35.0, true),
 (10, 2, 'Lola', 'GATO', 'Maine Coon', 2, 'HEMBRA', 'Valparaíso, V Región', 'Grande y cariñosa', true, 'https://ejemplo.com/lola.jpg', 5.0, false);
 
--- Insertar historial clínico
 INSERT INTO historial_clinico (mascota_id, fecha, descripcion, veterinario, tipo_consulta, costo) VALUES
 (1, '2024-01-15', 'Revisión general y vacunas al día', 'Dr. Ana Martínez', 'REVISION', 25000),
 (1, '2023-12-10', 'Esterilización exitosa', 'Dr. Pedro Sánchez', 'TRATAMIENTO', 80000),
@@ -23,7 +21,6 @@ INSERT INTO historial_clinico (mascota_id, fecha, descripcion, veterinario, tipo
 (7, '2024-02-15', 'Revisión general', 'Dr. Manuel Soto', 'REVISION', 20000),
 (9, '2024-01-05', 'Control anual', 'Dr. Andrés Paredes', 'REVISION', 25000);
 
--- Insertar vacunas
 INSERT INTO vacuna (mascota_id, nombre, fecha_aplicacion, proxima_dosis, lote, veterinario) VALUES
 (1, 'Séxtuple Canina', '2024-01-15', '2025-01-15', 'LOT123', 'Dr. Ana Martínez'),
 (1, 'Antirrábica', '2024-01-15', '2025-01-15', 'LOT124', 'Dr. Ana Martínez'),
