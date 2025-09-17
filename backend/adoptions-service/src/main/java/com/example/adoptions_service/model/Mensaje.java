@@ -10,10 +10,12 @@ public class Mensaje {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    private Perfil remitente;
+    private Long remitenteId;
 
     private String contenido;
     private Date fecha;
     private boolean leido;
+    private Long chatId;
+    private String tipoMensaje;
+    private String archivoUrl;
 }

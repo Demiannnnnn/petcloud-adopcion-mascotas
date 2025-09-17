@@ -12,15 +12,23 @@ public class SolicitudAdopcion {
 
     private Date fecha;
 
-    @ManyToOne
-    private Perfil adoptante;
+    private Long adoptanteId;
+    private Long mascotaId;
+    private String estado;
 
-    @ManyToOne
-    private Mascota mascota;
+    @Column(columnDefinition = "TEXT")
+    private String motivoRechazo;
 
-    @Enumerated(EnumType.STRING)
-    private EstadoSolicitud estado;
+    @Column(columnDefinition = "TEXT")
+    private String comentariosAdoptante;
+
+    private Date fechaRespuesta;
+
+    private Long evaluadorId;
+
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date fechaSolicitud;
 
     public boolean validarRequisitos() { return true; }
-    public void cambiarEstado(EstadoSolicitud nuevoEstado) { this.estado = nuevoEstado; }
+    public void cambiarEstado(String nuevoEstado) { this.estado = nuevoEstado; }
 }
