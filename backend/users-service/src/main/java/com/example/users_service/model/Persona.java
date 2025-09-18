@@ -1,6 +1,8 @@
+
 package com.example.users_service.model;
 
 import jakarta.persistence.Entity;
+
 
 @Entity
 public class Persona extends Perfil {

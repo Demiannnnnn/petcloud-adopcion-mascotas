@@ -40,5 +40,7 @@ CREATE TABLE IF NOT EXISTS documento (
     FOREIGN KEY (perfil_id) REFERENCES perfil(id)
 );
 
-CREATE INDEX idx_perfil_correo ON perfil(correo);
-CREATE INDEX idx_perfil_rut ON perfil(rut);
+-- Solo crear el índice si no existe (compatible con H2)
+CREATE INDEX IF NOT EXISTS idx_perfil_correo ON perfil(correo);
+-- Solo crear el índice si no existe (compatible con H2)
+CREATE INDEX IF NOT EXISTS idx_perfil_rut ON perfil(rut);

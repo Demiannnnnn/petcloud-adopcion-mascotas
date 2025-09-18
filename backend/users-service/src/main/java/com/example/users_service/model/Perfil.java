@@ -31,7 +31,8 @@ public abstract class Perfil {
 
     // Getters y setters
     public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    // El id se genera automáticamente, no se debe asignar manualmente
+    // public void setId(Long id) { this.id = id; }
     public String getTipoPerfil() { return tipoPerfil; }
     public void setTipoPerfil(String tipoPerfil) { this.tipoPerfil = tipoPerfil; }
     public String getRut() { return rut; }
