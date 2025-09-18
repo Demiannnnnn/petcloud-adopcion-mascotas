@@ -25,6 +25,9 @@ public class PersonaController {
 		if (personaRepository.findByCorreo(persona.getCorreo()).isPresent()) {
 			return new RespuestaRegistro(false, "Ya existe un usuario con ese correo");
 		}
+        if (personaRepository.findByNumeroWhatsapp(persona.getNumeroWhatsapp()).isPresent()) {
+            return new RespuestaRegistro(false, "Ya existe un usuario con ese número de WhatsApp");
+        }
         // Encriptar la contraseña antes de guardar
         String hash = org.springframework.security.crypto.bcrypt.BCrypt.hashpw(persona.getContraseña(), org.springframework.security.crypto.bcrypt.BCrypt.gensalt());
         persona.setContraseña(hash);

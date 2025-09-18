@@ -10,4 +10,5 @@ public interface PersonaRepository extends JpaRepository<Persona, Long> {
 	Optional<Persona> findByRutAndContraseña(String rut, String contraseña);
 	Optional<Persona> findByRut(String rut);
 	Optional<Persona> findByCorreo(String correo);
+    Optional<Persona> findByNumeroWhatsapp(String numeroWhatsapp);
 }

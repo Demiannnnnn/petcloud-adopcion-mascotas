@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS persona (
     id BIGINT PRIMARY KEY,
     nombre_completo VARCHAR(200) NOT NULL,
     ubicacion VARCHAR(200),
-    numero_whatsapp VARCHAR(20),
+    numero_whatsapp VARCHAR(20) UNIQUE,
     fecha_nacimiento DATE,
     FOREIGN KEY (id) REFERENCES perfil(id)
 );
