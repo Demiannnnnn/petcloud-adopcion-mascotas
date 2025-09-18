@@ -1,0 +1,133 @@
+/* Paleta de colores:
+   Fondo principal: #FFCD95
+   Fondo formulario: #F2C6B6
+   Botón: #D9663D
+   Texto: #400B19
+   Logo: centrado, fondo #F29C6B
+*/
+
+
+body {
+  margin: 0;
+  font-family: 'Segoe UI', 'Roboto', sans-serif;
+}
+
+.login-card {
+  position: relative;
+  margin-top: 4vh;
+  z-index: 1;
+  background: #fff !important;
+  border-radius: 2rem;
+  box-shadow: 0 4px 24px rgba(64,11,25,0.10);
+  padding: 2.5rem 2rem;
+  width: 350px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.login-logo {
+  background: #F29C6B;
+  border-radius: 50%;
+  padding: 1.2rem;
+  margin-bottom: 1.2rem;
+  box-shadow: 0 4px 16px rgba(64,11,25,0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.login-logo img {
+  width: 100px;
+  height: 100px;
+}
+
+.login-user-icon {
+  margin-bottom: 1.2rem;
+}
+
+
+.login-btn, .register-btn {
+  width: 80%;
+  background: #400B19;
+  color: #fff;
+  border: none;
+  border-radius: 2rem;
+  padding: 0.9rem 0;
+  font-size: 1.1rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.login-btn:hover, .register-btn:hover {
+  background: #D9663D;
+}
+
+.login-or {
+  color: #400B19;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.login-fields {
+  width: 100%;
+  margin-top: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.login-fields label {
+  color: #400B19;
+  margin-bottom: 0.3rem;
+  font-weight: 500;
+}
+
+
+.login-fields input {
+  margin-bottom: 1rem;
+  padding: 0.7rem;
+  border-radius: 0.5rem;
+  border: 1px solid #D9663D;
+  font-size: 1rem;
+  color: #400B19;
+  background: #FFCD95;
+  width: 100%;
+}
+
+.login-fields textarea {
+  margin-bottom: 1rem;
+  padding: 0.9rem;
+  border-radius: 0.7rem;
+  border: 1px solid #D9663D;
+  font-size: 1.05rem;
+  color: #400B19;
+  background: #FFCD95;
+  width: 100%;
+  min-height: 90px;
+  max-height: 180px;
+  resize: vertical;
+  box-sizing: border-box;
+  transition: box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(64,11,25,0.05);
+}
+
+.login-fields textarea:focus {
+  outline: 2px solid #D9663D;
+  box-shadow: 0 2px 16px rgba(64,11,25,0.10);
+}
+
+.login-fields input:focus {
+  outline: 2px solid #D9663D;
+}
+
+.login-error {
+  color: #D9663D;
+  margin-bottom: 1rem;
+  text-align: center;
+  width: 100%;
+}
