@@ -11,15 +11,33 @@ export async function registrarPersona(personaData) {
 	}
 	return response.json();
 }
+
+// Registro de empresa
+export async function registrarEmpresa(empresaData) {
+	const formData = new FormData();
+	for (const key in empresaData) {
+		if (empresaData[key] !== undefined && empresaData[key] !== null) {
+			formData.append(key, empresaData[key]);
+		}
+	}
+	const response = await fetch("/api/registro-empresa", {
+		method: "POST",
+		body: formData
+	});
+	if (!response.ok) {
+		throw new Error("Error de conexión");
+	}
+	return response.json();
+}
 //login, registro
 export async function login(rut, contraseña) {
-	const response = await fetch("/api/login", {
-		method: "POST",
-		headers: {
-			"Content-Type": "application/json"
-		},
-		body: JSON.stringify({ rut, contraseña })
-	});
+		const response = await fetch("/api/login", {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json"
+			},
+			body: JSON.stringify({ rut, contraseña, tipoPerfil: window.tipoPerfilLogin || 'PERSONA' })
+		});
 	let result;
 	try {
 		result = await response.json();
