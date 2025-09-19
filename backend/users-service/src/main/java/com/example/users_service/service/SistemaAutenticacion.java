@@ -1,18 +1,23 @@
 package com.example.users_service.service;
 
-import com.example.users_service.model.Empresa;
-import com.example.users_service.model.Persona;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCrypt;
+import org.springframework.stereotype.Service;
 
 import com.example.users_service.model.Empresa;
 import com.example.users_service.model.Persona;
 import com.example.users_service.repository.EmpresaRepository;
 import com.example.users_service.repository.PersonaRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.security.crypto.bcrypt.BCrypt;
 
 @Service
 public class SistemaAutenticacion {
+    public boolean personaExiste(String rut) {
+        return personaRepository.findByRut(rut).isPresent();
+    }
+
+    public boolean empresaExiste(String rut) {
+        return empresaRepository.findByRutEmpresa(rut).isPresent();
+    }
 
 
     @Autowired

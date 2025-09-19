@@ -13,16 +13,19 @@ public class Documento {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+
     private String tipo;
     private String nombreArchivo;
     private Boolean validado;
-
     private java.sql.Timestamp fechaSubida;
-
     @ManyToOne
     private Perfil perfil;
+    @jakarta.persistence.Lob
+    private byte[] archivo;
 
     // Getters y setters
+    public byte[] getArchivo() { return archivo; }
+    public void setArchivo(byte[] archivo) { this.archivo = archivo; }
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getTipo() { return tipo; }
