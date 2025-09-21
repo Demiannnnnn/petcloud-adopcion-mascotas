@@ -96,7 +96,8 @@ body {
   font-size: 1rem;
   color: #400B19;
   background: #FFCD95;
-  width: 100%;
+  width: 300px;
+  box-sizing: border-box;
 }
 
 .login-fields textarea {
@@ -107,7 +108,7 @@ body {
   font-size: 1.05rem;
   color: #400B19;
   background: #FFCD95;
-  width: 100%;
+  width: 300px;
   min-height: 90px;
   max-height: 180px;
   resize: vertical;

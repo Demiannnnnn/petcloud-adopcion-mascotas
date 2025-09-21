@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-// ...existing code...
 import { useNavigate } from 'react-router-dom';
 import './LoginPage.css';
 import { registrarPersona, registrarEmpresa } from '../api/authApi';
-function RegistroPersonaPage() {
+function RegistroPage() {
   // Fecha máxima local para el input de fecha
   const todayLocal = new Date();
   todayLocal.setHours(0, 0, 0, 0);
@@ -159,50 +158,6 @@ function RegistroPersonaPage() {
         return;
       }
     }
-    let fechaNacimientoFormateada = null;
-    if (fechaNacimiento) {
-      const partes = fechaNacimiento.split('-');
-      if (partes.length === 3) {
-        // Si el input es dd-MM-yyyy, lo convertimos
-        if (partes[0].length === 2 && partes[1].length === 2 && partes[2].length === 4) {
-          fechaNacimientoFormateada = `${partes[2]}-${partes[1]}-${partes[0]}`;
-        } else {
-          fechaNacimientoFormateada = fechaNacimiento;
-        }
-      }
-    }
-    try {
-      const result = await registrarPersona({
-        rut,
-        nombreCompleto,
-        contraseña,
-        correo,
-        tipoPerfil: 'PERSONA',
-        condicionesHogar,
-        activo: true,
-        ubicacion,
-        numeroWhatsapp,
-        fechaNacimiento: fechaNacimientoFormateada
-      });
-      if (result && result.success) {
-        setSuccess('Registro exitoso. Redirigiendo a inicio de sesión...');
-        setError('');
-        setTimeout(() => {
-          navigate('/login');
-        }, 2000);
-      } else {
-        setError(result.message || 'Error en el registro');
-        setSuccess('');
-      }
-    } catch (err) {
-      // Si el backend responde con JSON, intenta mostrar el mensaje
-      if (err && err.message && err.message !== 'Error de conexión') {
-        setError(err.message);
-      } else {
-        setError('Error de conexión');
-      }
-      setSuccess('');
-    }
   };
 
   return (
@@ -232,7 +187,37 @@ function RegistroPersonaPage() {
           </div>
           {/* Switch para tipo de perfil */}
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
-            <button type="button" onClick={() => setTipoPerfil('PERSONA')} style={{
+            <button type="button" onClick={() => {
+              setTipoPerfil('PERSONA');
+              // Limpiar todos los campos de empresa
+              setNombreEmpresa('');
+              setRutEmpresa('');
+              setCorreoEmpresa('');
+              setContraseña('');
+              setDireccion('');
+              setTelefonoContacto('');
+              setUbicacionEmpresa('');
+              setCertificadoLegal(null);
+              // Limpiar también campos de persona por consistencia
+              setRut('');
+              setNombreCompleto('');
+              setCorreo('');
+              setUbicacion('');
+              setNumeroWhatsapp('');
+              setFechaNacimiento('');
+              setCondicionesHogar('');
+              setError('');
+              setSuccess('');
+              // Limpiar DOM directamente
+              setTimeout(() => {
+                const inputs = document.querySelectorAll('input, textarea');
+                inputs.forEach(input => {
+                  if (input.type !== 'submit' && input.type !== 'button') {
+                    input.value = '';
+                  }
+                });
+              }, 0);
+            }} style={{
               background: tipoPerfil === 'PERSONA' ? '#F29C6B' : '#fff',
               color: tipoPerfil === 'PERSONA' ? '#fff' : '#F29C6B',
               border: '2px solid #F29C6B',
@@ -242,7 +227,37 @@ function RegistroPersonaPage() {
               cursor: 'pointer',
               outline: 'none'
             }}>Persona</button>
-            <button type="button" onClick={() => setTipoPerfil('EMPRESA')} style={{
+            <button type="button" onClick={() => {
+              setTipoPerfil('EMPRESA');
+              // Limpiar todos los campos de persona
+              setRut('');
+              setNombreCompleto('');
+              setContraseña('');
+              setCorreo('');
+              setUbicacion('');
+              setNumeroWhatsapp('');
+              setFechaNacimiento('');
+              setCondicionesHogar('');
+              // Limpiar también campos de empresa por consistencia
+              setNombreEmpresa('');
+              setRutEmpresa('');
+              setCorreoEmpresa('');
+              setDireccion('');
+              setTelefonoContacto('');
+              setUbicacionEmpresa('');
+              setCertificadoLegal(null);
+              setError('');
+              setSuccess('');
+              // Limpiar DOM directamente
+              setTimeout(() => {
+                const inputs = document.querySelectorAll('input, textarea');
+                inputs.forEach(input => {
+                  if (input.type !== 'submit' && input.type !== 'button') {
+                    input.value = '';
+                  }
+                });
+              }, 0);
+            }} style={{
               background: tipoPerfil === 'EMPRESA' ? '#F29C6B' : '#fff',
               color: tipoPerfil === 'EMPRESA' ? '#fff' : '#F29C6B',
               border: '2px solid #F29C6B',
@@ -266,7 +281,12 @@ function RegistroPersonaPage() {
                   <label>Email</label>
                   <input type="email" value={correo} onChange={e => setCorreo(e.target.value)} placeholder="Correo electrónico" />
                   <label>Contraseña</label>
-                  <input type="password" value={contraseña} onChange={e => setContraseña(e.target.value)} placeholder="Contraseña" />
+                  <input 
+                    type="password" 
+                    value={contraseña} 
+                    onChange={e => setContraseña(e.target.value)} 
+                    placeholder="Contraseña" 
+                  />
                   <label>Ubicación</label>
                   <input type="text" value={ubicacion} onChange={e => setUbicacion(e.target.value)} placeholder="Ciudad, Región" />
                   <label>Número de WhatsApp</label>
@@ -290,7 +310,12 @@ function RegistroPersonaPage() {
                   <label>Email de contacto</label>
                   <input type="email" value={correoEmpresa} onChange={e => setCorreoEmpresa(e.target.value)} placeholder="Correo electrónico" />
                   <label>Contraseña</label>
-                  <input type="password" value={contraseña} onChange={e => setContraseña(e.target.value)} placeholder="Contraseña" />
+                  <input 
+                    type="password" 
+                    value={contraseña} 
+                    onChange={e => setContraseña(e.target.value)} 
+                    placeholder="Contraseña" 
+                  />
                   <label>Dirección</label>
                   <input type="text" value={direccion} onChange={e => setDireccion(e.target.value)} placeholder="Dirección completa" />
                   <label>Teléfono de contacto</label>
@@ -312,4 +337,4 @@ function RegistroPersonaPage() {
   );
 }
 
-export default RegistroPersonaPage;
+export default RegistroPage;

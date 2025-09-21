@@ -51,10 +51,8 @@ function LoginPage() {
           setError('Este RUT corresponde a una empresa. Cambia el tipo de perfil para iniciar sesión.');
         } else if (msg.includes('credencial') || msg.includes('incorrect')) {
           setError('RUT o contraseña incorrectos');
-        } else if (msg) {
-          setError(err.message);
         } else {
-          setError('Error de conexión');
+          setError(err.message);
         }
       }
     } else {
@@ -84,10 +82,8 @@ function LoginPage() {
           setError('Este RUT corresponde a una persona. Cambia el tipo de perfil para iniciar sesión.');
         } else if (msg.includes('credencial') || msg.includes('incorrect')) {
           setError('RUT o contraseña incorrectos');
-        } else if (msg) {
-          setError(err.message);
         } else {
-          setError('Error de conexión');
+          setError(err.message);
         }
       }
     }
@@ -118,7 +114,20 @@ function LoginPage() {
           </div>
         </div>
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
-          <button type="button" onClick={() => setTipoPerfil('PERSONA')} style={{
+          <button type="button" onClick={() => {
+            setTipoPerfil('PERSONA');
+            setPassword('');
+            setRutEmpresa(''); // Limpiar RUT de empresa
+            setRut(''); // Limpiar RUT de persona también
+            setError(''); // Limpiar errores
+            // Limpiar DOM directamente
+            setTimeout(() => {
+              const passwordInputs = document.querySelectorAll('input[type="password"]');
+              const textInputs = document.querySelectorAll('input[type="text"]');
+              passwordInputs.forEach(input => input.value = '');
+              textInputs.forEach(input => input.value = '');
+            }, 0);
+          }} style={{
             background: tipoPerfil === 'PERSONA' ? '#F29C6B' : '#fff',
             color: tipoPerfil === 'PERSONA' ? '#fff' : '#F29C6B',
             border: '2px solid #F29C6B',
@@ -128,7 +137,20 @@ function LoginPage() {
             cursor: 'pointer',
             outline: 'none'
           }}>Persona</button>
-          <button type="button" onClick={() => setTipoPerfil('EMPRESA')} style={{
+          <button type="button" onClick={() => {
+            setTipoPerfil('EMPRESA');
+            setPassword('');
+            setRut(''); // Limpiar RUT de persona
+            setRutEmpresa(''); // Limpiar RUT de empresa también
+            setError(''); // Limpiar errores
+            // Limpiar DOM directamente
+            setTimeout(() => {
+              const passwordInputs = document.querySelectorAll('input[type="password"]');
+              const textInputs = document.querySelectorAll('input[type="text"]');
+              passwordInputs.forEach(input => input.value = '');
+              textInputs.forEach(input => input.value = '');
+            }, 0);
+          }} style={{
             background: tipoPerfil === 'EMPRESA' ? '#F29C6B' : '#fff',
             color: tipoPerfil === 'EMPRESA' ? '#fff' : '#F29C6B',
             border: '2px solid #F29C6B',
