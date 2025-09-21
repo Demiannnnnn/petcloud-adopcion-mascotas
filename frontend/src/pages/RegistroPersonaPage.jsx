@@ -4,6 +4,10 @@ import { useNavigate } from 'react-router-dom';
 import './LoginPage.css';
 import { registrarPersona, registrarEmpresa } from '../api/authApi';
 function RegistroPersonaPage() {
+  // Fecha máxima local para el input de fecha
+  const todayLocal = new Date();
+  todayLocal.setHours(0, 0, 0, 0);
+  const maxDate = todayLocal.toISOString().split('T')[0];
   const [tipoPerfil, setTipoPerfil] = useState('PERSONA');
   const navigate = useNavigate();
   // Persona
@@ -268,7 +272,12 @@ function RegistroPersonaPage() {
                   <label>Número de WhatsApp</label>
                   <input type="text" value={numeroWhatsapp} onChange={e => setNumeroWhatsapp(e.target.value)} placeholder="Ej: +56912345678" />
                   <label>Fecha de nacimiento</label>
-                  <input type="date" value={fechaNacimiento} onChange={e => setFechaNacimiento(e.target.value)} />
+                  <input
+                    type="date"
+                    value={fechaNacimiento}
+                    onChange={e => setFechaNacimiento(e.target.value)}
+                    max={maxDate}
+                  />
                   <label>Condiciones del hogar</label>
                   <textarea value={condicionesHogar} onChange={e => setCondicionesHogar(e.target.value)} placeholder="Describe tu hogar, otros animales, niños, etc." />
                 </>
@@ -295,7 +304,6 @@ function RegistroPersonaPage() {
               {error && <div className="login-error">{error}</div>}
               {success && <div className="login-success">{success}</div>}
             </div>
-            <button type="submit" className="register-btn" style={{ marginTop: '18px', width: '100%' }}>Registrarse</button>
             <button type="submit" className="register-btn" style={{ marginTop: '18px', width: '100%' }} disabled={isSubmitting}>Registrarse</button>
           </form>
         </div>
