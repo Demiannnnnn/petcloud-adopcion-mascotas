@@ -53,22 +53,27 @@ function RegistroPage() {
     if (tipoPerfil === 'PERSONA') {
       if (!rut || !nombreCompleto || !contraseña || !correo || !ubicacion || !numeroWhatsapp || !fechaNacimiento || !condicionesHogar) {
         setError('Completa todos los campos.');
+        setIsSubmitting(false);
         return;
       }
       if (!validarRut(rut)) {
         setError('RUT inválido. Usa el formato 12.345.678-9');
+        setIsSubmitting(false);
         return;
       }
       if (!validarEmail(correo)) {
         setError('Correo electrónico inválido.');
+        setIsSubmitting(false);
         return;
       }
       if (!validarWhatsapp(numeroWhatsapp)) {
         setError('Número de WhatsApp inválido. Usa el formato +569XXXXXXXX');
+        setIsSubmitting(false);
         return;
       }
       if (contraseña.length < 6) {
         setError('La contraseña debe tener al menos 6 caracteres.');
+        setIsSubmitting(false);
         return;
       }
       let fechaNacimientoFormateada = null;
@@ -226,7 +231,7 @@ function RegistroPage() {
               fontWeight: 'bold',
               cursor: 'pointer',
               outline: 'none'
-            }}>Persona</button>
+            }}>Persona <span role="img" aria-label="persona" style={{ marginLeft: 8 }}>👤</span></button>
             <button type="button" onClick={() => {
               setTipoPerfil('EMPRESA');
               // Limpiar todos los campos de persona

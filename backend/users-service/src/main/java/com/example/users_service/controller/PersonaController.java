@@ -31,7 +31,12 @@ public class PersonaController {
 		// Encriptar la contraseña antes de guardar
 		String hash = org.springframework.security.crypto.bcrypt.BCrypt.hashpw(persona.getContraseña(), org.springframework.security.crypto.bcrypt.BCrypt.gensalt());
 		persona.setContraseña(hash);
-		personaRepository.save(persona);
+		try {
+			personaRepository.save(persona);
+		} catch (Exception e) {
+			// Si ocurre una excepción de unicidad, retorna error
+			return new RespuestaRegistro(false, "Ya existe un usuario con ese RUT");
+		}
 		return new RespuestaRegistro(true, "Registro exitoso");
 	}
 

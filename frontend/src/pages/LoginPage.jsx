@@ -136,7 +136,7 @@ function LoginPage() {
             fontWeight: 'bold',
             cursor: 'pointer',
             outline: 'none'
-          }}>Persona</button>
+          }}>Persona <span role="img" aria-label="persona" style={{ marginLeft: 8 }}>👤</span></button>
           <button type="button" onClick={() => {
             setTipoPerfil('EMPRESA');
             setPassword('');
