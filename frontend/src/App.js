@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './pages/LoginPage';
 import HomePage from './pages/HomePage';
 import RegistroPage from './pages/RegistroPage';
+import PaginaPrincipal from './pages/PaginaPrincipal';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -14,6 +15,15 @@ function App() {
         <Route path="/" element={
           <ProtectedRoute>
             <HomePage />
+          </ProtectedRoute>
+        } />
+        <Route path="/dashboard" element={
+          <ProtectedRoute>
+          </ProtectedRoute>
+        } />
+        <Route path="/principal" element={
+          <ProtectedRoute>
+            <PaginaPrincipal />
           </ProtectedRoute>
         } />
         {/* Puedes agregar más rutas protegidas aquí */}

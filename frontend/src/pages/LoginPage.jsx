@@ -5,6 +5,7 @@ import './LoginPage.css';
 import { login } from '../api/authApi';
 function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   const CatEyeIcon = ({ open }) => (
     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
       <ellipse cx="12" cy="12" rx="8" ry="6" stroke="#F29C6B" strokeWidth="2" fill="#fff" />
@@ -23,10 +24,12 @@ function LoginPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     window.tipoPerfilLogin = tipoPerfil;
     if (tipoPerfil === 'PERSONA') {
       if (!rut || !password) {
         setError('Por favor ingresa tu RUT y contraseña.');
+        setLoading(false);
         return;
       }
       setError('');
@@ -36,14 +39,19 @@ function LoginPage() {
           const msg = result.toLowerCase();
           if (msg.includes('empresa') && !msg.includes('credencial')) {
             setError('Este RUT corresponde a una empresa. Cambia el tipo de perfil para iniciar sesión.');
+            setLoading(false);
           } else if (msg.includes('credencial') || msg.includes('incorrect')) {
             setError('RUT o contraseña incorrectos');
+            setLoading(false);
           } else {
             setError(result);
+            setLoading(false);
           }
         } else {
           loginSession(result);
-          setError('Login exitoso');
+          setTimeout(() => {
+            navigate('/principal');
+          }, 700); // 700ms para mostrar el mensaje
         }
       } catch (err) {
         const msg = err && err.message ? err.message.toLowerCase() : '';
@@ -54,10 +62,12 @@ function LoginPage() {
         } else {
           setError(err.message);
         }
+        setLoading(false);
       }
     } else {
       if (!rutEmpresa || !password) {
         setError('Por favor ingresa el RUT de empresa y contraseña.');
+        setLoading(false);
         return;
       }
       setError('');
@@ -67,14 +77,19 @@ function LoginPage() {
           const msg = result.toLowerCase();
           if (msg.includes('persona') && !msg.includes('credencial')) {
             setError('Este RUT corresponde a una persona. Cambia el tipo de perfil para iniciar sesión.');
+            setLoading(false);
           } else if (msg.includes('credencial') || msg.includes('incorrect')) {
             setError('RUT o contraseña incorrectos');
+            setLoading(false);
           } else {
             setError(result);
+            setLoading(false);
           }
         } else {
           loginSession(result);
-          setError('Login exitoso');
+          setTimeout(() => {
+            navigate('/principal');
+          }, 700); // 700ms para mostrar el mensaje
         }
       } catch (err) {
         const msg = err && err.message ? err.message.toLowerCase() : '';
@@ -85,6 +100,7 @@ function LoginPage() {
         } else {
           setError(err.message);
         }
+        setLoading(false);
       }
     }
   };
@@ -92,11 +108,20 @@ function LoginPage() {
   // Ícono dinámico según perfil
   const perfilIcon = tipoPerfil === 'PERSONA'
     ? (<svg width="70" height="70" viewBox="0 0 24 24" fill="#fff"><circle cx="12" cy="8" r="5" /><ellipse cx="12" cy="19" rx="7" ry="4" /></svg>)
-    : (<span style={{ fontSize: '56px', lineHeight: '1' }} role="img" aria-label="empresa">🏢</span>);
+    : (
+      <svg width="70" height="70" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="4" y="8" width="16" height="12" rx="3" fill="#fff" stroke="#F29C6B" strokeWidth="2" />
+        <rect x="8" y="12" width="2" height="4" rx="1" fill="#F29C6B" />
+        <rect x="14" y="12" width="2" height="4" rx="1" fill="#F29C6B" />
+        <rect x="11" y="15" width="2" height="5" rx="1" fill="#F29C6B" />
+        <rect x="10" y="8" width="4" height="3" rx="1" fill="#F29C6B" />
+      </svg>
+    );
 
   return (
     <div className="login-bg">
       <div className="login-card">
+        {loading && <div style={{ textAlign: 'center', color: '#D9663D', fontWeight: 'bold', marginBottom: 16 }}>Iniciando sesión...</div>}
         <div className="login-logo">
           <img src="/assets/petcloud-logo.png" alt="PetCloud Logo" style={{ width: '120px', height: '120px' }} />
         </div>
@@ -138,7 +163,10 @@ function LoginPage() {
             fontWeight: 'bold',
             cursor: 'pointer',
             outline: 'none'
-          }}>Persona <span role="img" aria-label="persona" style={{ marginLeft: 8 }}>👤</span></button>
+          }}>Persona <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style={{ marginLeft: 8, verticalAlign: 'middle' }} xmlns="http://www.w3.org/2000/svg">
+            <circle cx="11" cy="9" r="4" fill="#fff" stroke="#F29C6B" strokeWidth="2" />
+            <ellipse cx="11" cy="17" rx="6" ry="4" fill="#fff" stroke="#F29C6B" strokeWidth="2" />
+          </svg></button>
           <button type="button" onClick={() => {
             setTipoPerfil('EMPRESA');
             setPassword('');
@@ -162,7 +190,13 @@ function LoginPage() {
             cursor: 'pointer',
             outline: 'none'
           }}>
-            Empresa <span role="img" aria-label="empresa" style={{ marginLeft: 8 }}>🏢</span>
+            Empresa <svg width="28" height="28" viewBox="0 0 24 24" fill="none" style={{ marginLeft: 8, verticalAlign: 'middle' }} xmlns="http://www.w3.org/2000/svg">
+              <rect x="4" y="8" width="16" height="12" rx="3" fill="#fff" stroke="#F29C6B" strokeWidth="2" />
+              <rect x="8" y="12" width="2" height="4" rx="1" fill="#F29C6B" />
+              <rect x="14" y="12" width="2" height="4" rx="1" fill="#F29C6B" />
+              <rect x="11" y="15" width="2" height="5" rx="1" fill="#F29C6B" />
+              <rect x="10" y="8" width="4" height="3" rx="1" fill="#F29C6B" />
+            </svg>
           </button>
         </div>
         <form className="login-form" onSubmit={handleSubmit}>
@@ -225,7 +259,7 @@ function LoginPage() {
               </div>
             {error && <div className="login-error">{error}</div>}
           </div>
-          <button type="submit" className="login-btn" style={{ marginTop: '18px', width: '100%' }}>Iniciar sesión</button>
+          <button type="submit" className="login-btn" style={{ marginTop: '18px', width: '100%' }} disabled={loading}>Iniciar sesión</button>
           <button type="button" className="register-btn" style={{ marginTop: '10px', width: '100%' }} onClick={() => navigate('/registro')}>Registrarse</button>
         </form>
       </div>

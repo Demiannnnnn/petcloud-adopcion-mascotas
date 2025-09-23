@@ -168,7 +168,15 @@ function RegistroPage() {
   // Ícono dinámico según perfil
   const perfilIcon = tipoPerfil === 'PERSONA'
     ? (<svg width="70" height="70" viewBox="0 0 24 24" fill="#fff"><circle cx="12" cy="8" r="5" /><ellipse cx="12" cy="19" rx="7" ry="4" /></svg>)
-    : (<span style={{ fontSize: '56px', lineHeight: '1' }} role="img" aria-label="empresa">🏢</span>);
+    : (
+      <svg width="70" height="70" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="4" y="8" width="16" height="12" rx="3" fill="#fff" stroke="#F29C6B" strokeWidth="2" />
+        <rect x="8" y="12" width="2" height="4" rx="1" fill="#F29C6B" />
+        <rect x="14" y="12" width="2" height="4" rx="1" fill="#F29C6B" />
+        <rect x="11" y="15" width="2" height="5" rx="1" fill="#F29C6B" />
+        <rect x="10" y="8" width="4" height="3" rx="1" fill="#F29C6B" />
+      </svg>
+    );
 
   return (
     <div className="login-bg">
@@ -233,7 +241,10 @@ function RegistroPage() {
               fontWeight: 'bold',
               cursor: 'pointer',
               outline: 'none'
-            }}>Persona <span role="img" aria-label="persona" style={{ marginLeft: 8 }}>👤</span></button>
+            }}>Persona <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style={{ marginLeft: 8, verticalAlign: 'middle' }} xmlns="http://www.w3.org/2000/svg">
+              <circle cx="11" cy="9" r="4" fill="#fff" stroke="#F29C6B" strokeWidth="2" />
+              <ellipse cx="11" cy="17" rx="6" ry="4" fill="#fff" stroke="#F29C6B" strokeWidth="2" />
+            </svg></button>
             <button type="button" onClick={() => {
               setTipoPerfil('EMPRESA');
               // Limpiar todos los campos de persona
@@ -274,7 +285,13 @@ function RegistroPage() {
               cursor: 'pointer',
               outline: 'none'
             }}>
-              Empresa <span role="img" aria-label="empresa" style={{ marginLeft: 8 }}>🏢</span>
+                Empresa <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style={{ marginLeft: 8, verticalAlign: 'middle' }} xmlns="http://www.w3.org/2000/svg">
+                  <rect x="4" y="8" width="16" height="12" rx="3" fill="#fff" stroke="#F29C6B" strokeWidth="2" />
+                  <rect x="8" y="12" width="2" height="4" rx="1" fill="#F29C6B" />
+                  <rect x="14" y="12" width="2" height="4" rx="1" fill="#F29C6B" />
+                  <rect x="11" y="15" width="2" height="5" rx="1" fill="#F29C6B" />
+                  <rect x="10" y="8" width="4" height="3" rx="1" fill="#F29C6B" />
+                </svg>
             </button>
           </div>
           <form className="login-form form-blanco registro-form-blanco" onSubmit={handleSubmit}>
