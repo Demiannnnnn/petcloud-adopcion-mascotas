@@ -165,6 +165,11 @@ function RegistroPage() {
     }
   };
 
+  // Ícono dinámico según perfil
+  const perfilIcon = tipoPerfil === 'PERSONA'
+    ? (<svg width="70" height="70" viewBox="0 0 24 24" fill="#fff"><circle cx="12" cy="8" r="5" /><ellipse cx="12" cy="19" rx="7" ry="4" /></svg>)
+    : (<span style={{ fontSize: '56px', lineHeight: '1' }} role="img" aria-label="empresa">🏢</span>);
+
   return (
     <div className="login-bg">
       <div className="login-prototype-layout">
@@ -184,10 +189,7 @@ function RegistroPage() {
               boxShadow: '0 2px 8px rgba(64,11,25,0.10)',
               border: '3px solid #D9663D'
             }}>
-              <svg width="70" height="70" viewBox="0 0 24 24" fill="#fff">
-                <circle cx="12" cy="8" r="5" />
-                <ellipse cx="12" cy="19" rx="7" ry="4" />
-              </svg>
+              {perfilIcon}
             </div>
           </div>
           {/* Switch para tipo de perfil */}
