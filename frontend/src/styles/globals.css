@@ -1,0 +1,99 @@
+@media (max-width: 600px) {
+	.select-placeholder {
+		display: none !important;
+	}
+	.combobox-label-mobile {
+		display: block !important;
+		margin-bottom: 2px !important;
+	}
+	.modal-form {
+		min-width: 0 !important;
+		max-width: 98vw !important;
+		padding: 10px !important;
+		border-radius: 10px !important;
+		box-shadow: 0 2px 12px rgba(64,11,25,0.10) !important;
+		gap: 8px !important;
+	}
+	.modal-input {
+		font-size: 15px !important;
+		padding: 7px 10px !important;
+		margin-bottom: 2px !important;
+		border-radius: 8px !important;
+		width: 100% !important;
+		box-sizing: border-box !important;
+	}
+		select.modal-input {
+			font-size: 18px !important;
+			height: 52px !important;
+			padding: 0 16px !important;
+			border-radius: 12px !important;
+			background: #fff !important;
+			color: #a0522d !important;
+			border: 2px solid #F29C6B !important;
+			width: 100% !important;
+			box-sizing: border-box !important;
+			appearance: none !important;
+			-webkit-appearance: none !important;
+			-moz-appearance: none !important;
+			text-align: left !important;
+			overflow: visible !important;
+			white-space: normal !important;
+			text-overflow: unset !important;
+		}
+		select.modal-input option {
+			font-size: 17px !important;
+			color: #400B19 !important;
+			background: #fff !important;
+			white-space: normal !important;
+			text-overflow: unset !important;
+			overflow: visible !important;
+		}
+	button {
+		font-size: 15px !important;
+		padding: 8px 12px !important;
+		border-radius: 14px !important;
+	}
+	h2 {
+		font-size: 22px !important;
+		margin-bottom: 4px !important;
+	}
+	label {
+		font-size: 15px !important;
+	}
+	.modal-img-preview {
+		width: 60px !important;
+		height: 60px !important;
+	}
+}
+@media (max-width: 600px) {
+	form {
+		min-width: 0 !important;
+		max-width: 98vw !important;
+		padding: 12px !important;
+		border-radius: 12px !important;
+		box-shadow: 0 2px 12px rgba(64,11,25,0.10) !important;
+		gap: 10px !important;
+	}
+	input, select, textarea {
+		font-size: 15px !important;
+		padding: 7px 10px !important;
+		margin-bottom: 2px !important;
+		border-radius: 8px !important;
+	}
+	button {
+		font-size: 15px !important;
+		padding: 8px 12px !important;
+		border-radius: 14px !important;
+	}
+	h2 {
+		font-size: 22px !important;
+		margin-bottom: 4px !important;
+	}
+	label {
+		font-size: 15px !important;
+	}
+	.modal-img-preview {
+		width: 60px !important;
+		height: 60px !important;
+	}
+}

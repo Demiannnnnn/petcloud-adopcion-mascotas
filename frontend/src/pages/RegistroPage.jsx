@@ -178,28 +178,24 @@ function RegistroPage() {
       </svg>
     );
 
+  // Detectar si es móvil
+  const isMobile = window.innerWidth < 600;
+
   return (
-    <div className="login-bg">
-      <div className="login-prototype-layout">
-        <div className="login-logo-prototype">
+    <div className="login-bg" style={{ minHeight: '100vh', width: '100vw', overflowY: isMobile ? 'auto' : 'unset', position: 'relative' }}>
+      {/* Logo: fijo y pequeño solo en móvil, centrado y grande en desktop */}
+      {isMobile ? null : (
+        <div className="login-logo-prototype" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: 32, marginBottom: 0 }}>
           <img src="/assets/petcloud-logo.png" alt="PetCloud Logo" style={{ width: '120px', height: '120px' }} />
         </div>
-        <div className="login-container">
-          <div className="login-user-icon" style={{ marginTop: '20px', marginBottom: '20px' }}>
-            <div style={{
-              width: '120px',
-              height: '120px',
-              background: '#F29C6B',
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 2px 8px rgba(64,11,25,0.10)',
-              border: '3px solid #D9663D'
-            }}>
-              {perfilIcon}
+      )}
+      <div className="login-prototype-layout" style={{ marginTop: 0, display: 'flex', justifyContent: 'center', alignItems: 'flex-start', minHeight: '100vh' }}>
+        <div className="login-container" style={{ width: isMobile ? '100%' : 'auto', maxWidth: 480, margin: '32px auto 32px auto', background: '#fff', borderRadius: 24, boxShadow: '0 2px 12px rgba(64,11,25,0.10)', padding: isMobile ? '24px 12px' : '32px 32px', position: 'relative' }}>
+          {isMobile && (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: 8, marginBottom: 16 }}>
+              <img src="/assets/petcloud-logo.png" alt="PetCloud Logo" style={{ width: '80px', height: '80px' }} />
             </div>
-          </div>
+          )}
           {/* Switch para tipo de perfil */}
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
             <button type="button" onClick={() => {
@@ -294,66 +290,69 @@ function RegistroPage() {
                 </svg>
             </button>
           </div>
-          <form className="login-form form-blanco registro-form-blanco" onSubmit={handleSubmit}>
-            <div className="login-fields">
+          <form className="login-form form-blanco registro-form-blanco" onSubmit={handleSubmit} style={{ width: '100%' }}>
+            <div className="login-fields" style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 12 : 18, alignItems: isMobile ? 'center' : 'stretch', width: '100%' }}>
               {tipoPerfil === 'PERSONA' ? (
                 <>
-                  <label>RUT</label>
-                  <input type="text" value={rut} onChange={e => setRut(e.target.value)} placeholder="Ej: 12.345.678-9" />
-                  <label>Nombre completo</label>
-                  <input type="text" value={nombreCompleto} onChange={e => setNombreCompleto(e.target.value)} placeholder="Nombre completo" />
-                  <label>Email</label>
-                  <input type="email" value={correo} onChange={e => setCorreo(e.target.value)} placeholder="Correo electrónico" />
-                  <label>Contraseña</label>
+                  <label style={{ width: isMobile ? '100%' : 'auto', textAlign: isMobile ? 'left' : 'inherit' }}>RUT</label>
+                  <input type="text" value={rut} onChange={e => setRut(e.target.value)} placeholder="Ej: 12.345.678-9" style={{ fontSize: isMobile ? 17 : 20, padding: isMobile ? '12px' : '16px', borderRadius: 12, width: isMobile ? '100%' : 'auto' }} />
+                  <label style={{ width: isMobile ? '100%' : 'auto', textAlign: isMobile ? 'left' : 'inherit' }}>Nombre completo</label>
+                  <input type="text" value={nombreCompleto} onChange={e => setNombreCompleto(e.target.value)} placeholder="Nombre completo" style={{ fontSize: isMobile ? 17 : 20, padding: isMobile ? '12px' : '16px', borderRadius: 12, width: isMobile ? '100%' : 'auto' }} />
+                  <label style={{ width: isMobile ? '100%' : 'auto', textAlign: isMobile ? 'left' : 'inherit' }}>Email</label>
+                  <input type="email" value={correo} onChange={e => setCorreo(e.target.value)} placeholder="Correo electrónico" style={{ fontSize: isMobile ? 17 : 20, padding: isMobile ? '12px' : '16px', borderRadius: 12, width: isMobile ? '100%' : 'auto' }} />
+                  <label style={{ width: isMobile ? '100%' : 'auto', textAlign: isMobile ? 'left' : 'inherit' }}>Contraseña</label>
                   <input 
                     type="password" 
                     value={contraseña} 
                     onChange={e => setContraseña(e.target.value)} 
                     placeholder="Contraseña" 
+                    style={{ fontSize: isMobile ? 17 : 20, padding: isMobile ? '12px' : '16px', borderRadius: 12, width: isMobile ? '100%' : 'auto' }}
                   />
-                  <label>Ubicación</label>
-                  <input type="text" value={ubicacion} onChange={e => setUbicacion(e.target.value)} placeholder="Ciudad, Región" />
-                  <label>Número de WhatsApp</label>
-                  <input type="text" value={numeroWhatsapp} onChange={e => setNumeroWhatsapp(e.target.value)} placeholder="Ej: +56912345678" />
-                  <label>Fecha de nacimiento</label>
+                  <label style={{ width: isMobile ? '100%' : 'auto', textAlign: isMobile ? 'left' : 'inherit' }}>Ubicación</label>
+                  <input type="text" value={ubicacion} onChange={e => setUbicacion(e.target.value)} placeholder="Ciudad, Región" style={{ fontSize: isMobile ? 17 : 20, padding: isMobile ? '12px' : '16px', borderRadius: 12, width: isMobile ? '100%' : 'auto' }} />
+                  <label style={{ width: isMobile ? '100%' : 'auto', textAlign: isMobile ? 'left' : 'inherit' }}>Número de WhatsApp</label>
+                  <input type="text" value={numeroWhatsapp} onChange={e => setNumeroWhatsapp(e.target.value)} placeholder="Ej: +56912345678" style={{ fontSize: isMobile ? 17 : 20, padding: isMobile ? '12px' : '16px', borderRadius: 12, width: isMobile ? '100%' : 'auto' }} />
+                  <label style={{ width: isMobile ? '100%' : 'auto', textAlign: isMobile ? 'left' : 'inherit' }}>Fecha de nacimiento</label>
                   <input
                     type="date"
                     value={fechaNacimiento}
                     onChange={e => setFechaNacimiento(e.target.value)}
                     max={maxDate}
+                    style={{ fontSize: isMobile ? 17 : 20, padding: isMobile ? '12px' : '16px', borderRadius: 12, width: isMobile ? '100%' : 'auto' }}
                   />
-                  <label>Condiciones del hogar</label>
-                  <textarea value={condicionesHogar} onChange={e => setCondicionesHogar(e.target.value)} placeholder="Describe tu hogar, otros animales, niños, etc." />
+                  <label style={{ width: isMobile ? '100%' : 'auto', textAlign: isMobile ? 'left' : 'inherit' }}>Condiciones del hogar</label>
+                  <textarea value={condicionesHogar} onChange={e => setCondicionesHogar(e.target.value)} placeholder="Describe tu hogar, otros animales, niños, etc." style={{ fontSize: isMobile ? 17 : 20, padding: isMobile ? '12px' : '16px', borderRadius: 12, width: isMobile ? '100%' : 'auto' }} />
                 </>
               ) : (
                 <>
-                  <label>Nombre de la empresa</label>
-                  <input type="text" value={nombreEmpresa} onChange={e => setNombreEmpresa(e.target.value)} placeholder="Nombre de la empresa" />
-                  <label>RUT de la empresa</label>
-                  <input type="text" value={rutEmpresa} onChange={e => setRutEmpresa(e.target.value)} placeholder="Ej: 12.345.678-9" />
-                  <label>Email de contacto</label>
-                  <input type="email" value={correoEmpresa} onChange={e => setCorreoEmpresa(e.target.value)} placeholder="Correo electrónico" />
-                  <label>Contraseña</label>
+                  <label style={{ width: isMobile ? '100%' : 'auto', textAlign: isMobile ? 'left' : 'inherit' }}>Nombre de la empresa</label>
+                  <input type="text" value={nombreEmpresa} onChange={e => setNombreEmpresa(e.target.value)} placeholder="Nombre de la empresa" style={{ fontSize: isMobile ? 17 : 20, padding: isMobile ? '12px' : '16px', borderRadius: 12, width: isMobile ? '100%' : 'auto' }} />
+                  <label style={{ width: isMobile ? '100%' : 'auto', textAlign: isMobile ? 'left' : 'inherit' }}>RUT de la empresa</label>
+                  <input type="text" value={rutEmpresa} onChange={e => setRutEmpresa(e.target.value)} placeholder="Ej: 12.345.678-9" style={{ fontSize: isMobile ? 17 : 20, padding: isMobile ? '12px' : '16px', borderRadius: 12, width: isMobile ? '100%' : 'auto' }} />
+                  <label style={{ width: isMobile ? '100%' : 'auto', textAlign: isMobile ? 'left' : 'inherit' }}>Email de contacto</label>
+                  <input type="email" value={correoEmpresa} onChange={e => setCorreoEmpresa(e.target.value)} placeholder="Correo electrónico" style={{ fontSize: isMobile ? 17 : 20, padding: isMobile ? '12px' : '16px', borderRadius: 12, width: isMobile ? '100%' : 'auto' }} />
+                  <label style={{ width: isMobile ? '100%' : 'auto', textAlign: isMobile ? 'left' : 'inherit' }}>Contraseña</label>
                   <input 
                     type="password" 
                     value={contraseña} 
                     onChange={e => setContraseña(e.target.value)} 
                     placeholder="Contraseña" 
+                    style={{ fontSize: isMobile ? 17 : 20, padding: isMobile ? '12px' : '16px', borderRadius: 12, width: isMobile ? '100%' : 'auto' }}
                   />
-                  <label>Dirección</label>
-                  <input type="text" value={direccion} onChange={e => setDireccion(e.target.value)} placeholder="Dirección completa" />
-                  <label>Teléfono de contacto</label>
-                  <input type="text" value={telefonoContacto} onChange={e => setTelefonoContacto(e.target.value)} placeholder="Ej: +56912345678" />
-                  <label>Ubicación</label>
-                  <input type="text" value={ubicacionEmpresa} onChange={e => setUbicacionEmpresa(e.target.value)} placeholder="Ciudad, Región" />
-                  <label>Certificado legal (PDF/JPG)</label>
-                  <input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={e => setCertificadoLegal(e.target.files[0])} />
+                  <label style={{ width: isMobile ? '100%' : 'auto', textAlign: isMobile ? 'left' : 'inherit' }}>Dirección</label>
+                  <input type="text" value={direccion} onChange={e => setDireccion(e.target.value)} placeholder="Dirección completa" style={{ fontSize: isMobile ? 17 : 20, padding: isMobile ? '12px' : '16px', borderRadius: 12, width: isMobile ? '100%' : 'auto' }} />
+                  <label style={{ width: isMobile ? '100%' : 'auto', textAlign: isMobile ? 'left' : 'inherit' }}>Teléfono de contacto</label>
+                  <input type="text" value={telefonoContacto} onChange={e => setTelefonoContacto(e.target.value)} placeholder="Ej: +56912345678" style={{ fontSize: isMobile ? 17 : 20, padding: isMobile ? '12px' : '16px', borderRadius: 12, width: isMobile ? '100%' : 'auto' }} />
+                  <label style={{ width: isMobile ? '100%' : 'auto', textAlign: isMobile ? 'left' : 'inherit' }}>Ubicación</label>
+                  <input type="text" value={ubicacionEmpresa} onChange={e => setUbicacionEmpresa(e.target.value)} placeholder="Ciudad, Región" style={{ fontSize: isMobile ? 17 : 20, padding: isMobile ? '12px' : '16px', borderRadius: 12, width: isMobile ? '100%' : 'auto' }} />
+                  <label style={{ width: isMobile ? '100%' : 'auto', textAlign: isMobile ? 'left' : 'inherit' }}>Certificado legal (PDF/JPG)</label>
+                  <input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={e => setCertificadoLegal(e.target.files[0])} style={{ fontSize: isMobile ? 15 : 18, padding: isMobile ? '8px' : '12px', borderRadius: 12, width: isMobile ? '100%' : 'auto' }} />
                 </>
               )}
               {error && <div className="login-error">{error}</div>}
               {success && <div className="login-success">{success}</div>}
             </div>
-            <button type="submit" className="register-btn" style={{ marginTop: '18px', width: '100%' }} disabled={isSubmitting}>Registrarse</button>
+            <button type="submit" className="register-btn" style={{ marginTop: '18px', width: '100%', fontSize: isMobile ? 18 : 22, padding: isMobile ? '14px' : '18px', borderRadius: 14 }} disabled={isSubmitting}>Registrarse</button>
           </form>
         </div>
       </div>

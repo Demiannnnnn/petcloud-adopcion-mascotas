@@ -121,24 +121,8 @@ function LoginPage() {
   return (
     <div className="login-bg">
       <div className="login-card">
-        {loading && <div style={{ textAlign: 'center', color: '#D9663D', fontWeight: 'bold', marginBottom: 16 }}>Iniciando sesión...</div>}
         <div className="login-logo">
           <img src="/assets/petcloud-logo.png" alt="PetCloud Logo" style={{ width: '120px', height: '120px' }} />
-        </div>
-        <div className="login-user-icon">
-          <div style={{
-            width: '120px',
-            height: '120px',
-            background: '#F29C6B',
-            borderRadius: '50%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 2px 8px rgba(64,11,25,0.10)',
-            border: '3px solid #D9663D'
-          }}>
-            {perfilIcon}
-          </div>
         </div>
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
           <button type="button" onClick={() => {
@@ -259,7 +243,9 @@ function LoginPage() {
               </div>
             {error && <div className="login-error">{error}</div>}
           </div>
-          <button type="submit" className="login-btn" style={{ marginTop: '18px', width: '100%' }} disabled={loading}>Iniciar sesión</button>
+          <button type="submit" className="login-btn" style={{ marginTop: '18px', width: '100%' }} disabled={loading}>
+            {loading ? 'Iniciando sesión...' : 'Iniciar sesión'}
+          </button>
           <button type="button" className="register-btn" style={{ marginTop: '10px', width: '100%' }} onClick={() => navigate('/registro')}>Registrarse</button>
         </form>
       </div>
