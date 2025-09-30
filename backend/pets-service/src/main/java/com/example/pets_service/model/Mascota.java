@@ -30,15 +30,24 @@ public class Mascota {
     private java.math.BigDecimal peso;
     private Boolean esterilizado;
 
-    @OneToMany(cascade = CascadeType.ALL)
-    private List<HistorialClinico> historialClinico;
 
-    @OneToMany(cascade = CascadeType.ALL)
-    private List<Vacuna> vacunas;
+        // Nuevos campos para guardar todo lo que envía el frontend
+        private String chip;
+        private String documentos; // Guardar como texto plano (puedes cambiar a lista si lo necesitas)
+        private String enfermedades; // Guardar como texto plano (puedes cambiar a lista si lo necesitas)
+        private String vacunas; // Guardar como texto plano (puedes cambiar a lista si lo necesitas)
 
     public boolean esAptaParaAdopcion() {
-        return historialClinico != null && !historialClinico.isEmpty();
+        return true;
     }
+    public String getChip() { return chip; }
+    public void setChip(String chip) { this.chip = chip; }
+    public String getDocumentos() { return documentos; }
+    public void setDocumentos(String documentos) { this.documentos = documentos; }
+    public String getEnfermedades() { return enfermedades; }
+    public void setEnfermedades(String enfermedades) { this.enfermedades = enfermedades; }
+    public String getVacunas() { return vacunas; }
+    public void setVacunas(String vacunas) { this.vacunas = vacunas; }
 
     public Long getPropietarioId() { return propietarioId; }
     public void setPropietarioId(Long propietarioId) { this.propietarioId = propietarioId; }

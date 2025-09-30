@@ -1,5 +1,6 @@
 
 import React, { useState, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import MascotaRegistroModal from '../components/MascotaRegistroModal';
 import MascotaCard from '../components/MascotaCard';
 import { AuthContext } from '../context/AuthContext';
@@ -8,7 +9,7 @@ import './LoginPage.css';
 
 
 function PaginaPrincipal() {
-  const [menuOpen, setMenuOpen] = useState(false);
+  const navigate = useNavigate();
   const [modalOpen, setModalOpen] = useState(false);
   const [mascotas, setMascotas] = useState([]);
   const [publicMascotas, setPublicMascotas] = useState([]);
@@ -57,10 +58,47 @@ function PaginaPrincipal() {
         ) : ''}!`}
       </div>
       <img src="/assets/petcloud-logo.png" alt="PetCloud Logo" style={{ position: 'absolute', top: isMobile ? 8 : 24, left: isMobile ? 8 : 24, width: isMobile ? 60 : 100, height: isMobile ? 60 : 100 }} />
-      {/* Menú usuario */}
-      <div style={{ position: 'absolute', top: isMobile ? 8 : 24, right: isMobile ? 8 : 24, display: 'flex', flexDirection: 'column', alignItems: 'center', userSelect: 'none', zIndex: 20, pointerEvents: 'auto' }}>
+      
+      {/* Botones de Adopciones y Donaciones */}
+      <div style={{ position: 'absolute', top: isMobile ? 8 : 24, right: isMobile ? 76 : 130, display: 'flex', gap: 8, alignItems: 'center', zIndex: 20 }}>
+        <button 
+          style={{ 
+            background: '#400B19', 
+            color: '#fff', 
+            border: 'none', 
+            borderRadius: 16, 
+            padding: isMobile ? '8px 12px' : '10px 16px', 
+            fontSize: isMobile ? 12 : 14, 
+            fontWeight: 'bold',
+            cursor: 'pointer',
+            boxShadow: '0 2px 8px rgba(64,11,25,0.10)'
+          }}
+          onClick={() => navigate('/adopciones')}
+        >
+          Adopciones
+        </button>
+        <button 
+          style={{ 
+            background: '#400B19', 
+            color: '#fff', 
+            border: 'none', 
+            borderRadius: 16, 
+            padding: isMobile ? '8px 12px' : '10px 16px', 
+            fontSize: isMobile ? 12 : 14, 
+            fontWeight: 'bold',
+            cursor: 'pointer',
+            boxShadow: '0 2px 8px rgba(64,11,25,0.10)'
+          }}
+          onClick={() => navigate('/donaciones')}
+        >
+          Donaciones
+        </button>
+      </div>
+
+      {/* Ícono de perfil */}
+      <div style={{ position: 'absolute', top: isMobile ? 8 : 24, right: isMobile ? 8 : 24, display: 'flex', alignItems: 'center', userSelect: 'none', zIndex: 20, pointerEvents: 'auto' }}>
         <div style={{ background: '#F29C6B', borderRadius: '50%', width: isMobile ? 60 : 90, height: isMobile ? 60 : 90, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '4px solid #D9663D', cursor: 'pointer', userSelect: 'none', zIndex: 21, pointerEvents: 'auto', fontSize: isMobile ? 36 : 56 }}
-          onClick={() => setMenuOpen(!menuOpen)}>
+          onClick={() => navigate('/perfil')}>
           {user && user.perfil && user.perfil.tipoPerfil === 'EMPRESA'
             ? (
               <svg width={isMobile ? '36' : '56'} height={isMobile ? '36' : '56'} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -79,13 +117,6 @@ function PaginaPrincipal() {
             )
           }
         </div>
-        {menuOpen && (
-          <div style={{ marginTop: 8, background: '#F29C6B', borderRadius: 20, boxShadow: '0 2px 8px rgba(64,11,25,0.10)', padding: '8px 0', width: isMobile ? 100 : 140, zIndex: 2, userSelect: 'none' }}>
-            <button style={{ width: '100%', background: '#400B19', color: '#fff', border: 'none', borderRadius: 12, padding: '8px 0', fontSize: isMobile ? 14 : 18, marginBottom: 8, cursor: 'pointer', userSelect: 'none' }}>Ver perfil</button>
-            <button style={{ width: '100%', background: '#400B19', color: '#fff', border: 'none', borderRadius: 12, padding: '8px 0', fontSize: isMobile ? 14 : 18, marginBottom: 8, cursor: 'pointer', userSelect: 'none' }}>Adopciones</button>
-            <button style={{ width: '100%', background: '#400B19', color: '#fff', border: 'none', borderRadius: 12, padding: '8px 0', fontSize: isMobile ? 14 : 18, cursor: 'pointer', userSelect: 'none' }}>Donaciones</button>
-          </div>
-        )}
       </div>
       {/* Layout principal responsivo */}
       <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', minHeight: isMobile ? '100vh' : '100vh', width: '100vw', position: 'relative', zIndex: 10 }}>

@@ -1,5 +1,7 @@
 
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
+import { registrarMascota } from '../api/petsApi';
+import { AuthContext } from '../context/AuthContext';
 
 
 const ESPECIES = [
@@ -37,6 +39,7 @@ const buttonStyle = {
 };
 
 export default function MascotaRegistroModal({ open, onClose, onRegister }) {
+  const { user } = useContext(AuthContext) || {};
   const [nombre, setNombre] = useState('');
   const [especie, setEspecie] = useState('');
   const [raza, setRaza] = useState('');
@@ -114,7 +117,7 @@ export default function MascotaRegistroModal({ open, onClose, onRegister }) {
     setEnfermedades(enfermedades.filter((_, i) => i !== idx));
   };
 
-  const handleSubmit = e => {
+  const handleSubmit = async e => {
     e.preventDefault();
     // Validación básica
     const hoy = new Date();
@@ -130,10 +133,65 @@ export default function MascotaRegistroModal({ open, onClose, onRegister }) {
       alert('La fecha de nacimiento no puede ser futura.');
       return;
     }
-    onRegister({ nombre, especie, raza, fechaNacimiento, sexo, tamaño, vacunas, esterilizado, enfermedades, documentos, descripcion, foto, ubicacion, chip });
-    // Limpiar
-    setNombre(''); setEspecie(''); setRaza(''); setFechaNacimiento(''); setSexo(''); setTamaño(''); setVacunas([]); setVacunaInput(''); setEsterilizado(''); setEnfermedades([]); setEnfermedadInput(''); setDocumentos([]); setDescripcion(''); setFoto(null); setPreview(null); setUbicacion(''); setChip('');
-    onClose();
+
+    try {
+      // Limpiar el nombre del archivo de imagen
+      let imagenUrl = '';
+      if (foto && foto.name) {
+        imagenUrl = foto.name.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9._-]/g, '');
+      } else {
+        alert('Debes seleccionar una imagen.');
+        return;
+      }
+      // Obtener propietarioId según estructura real del usuario
+      console.log('Usuario en contexto:', user);
+      let propietarioId = null;
+      if (user) {
+        if (typeof user.id !== 'undefined') {
+          propietarioId = user.id;
+        } else if (user.perfil && typeof user.perfil.id !== 'undefined') {
+          propietarioId = user.perfil.id;
+        }
+      }
+      if (typeof propietarioId === 'string') {
+        propietarioId = parseInt(propietarioId, 10);
+      }
+      if (!propietarioId || isNaN(propietarioId)) {
+        alert('No se pudo obtener el ID del usuario. Inicia sesión nuevamente.');
+        return;
+      }
+      const mascotaData = {
+        nombre,
+        especie,
+        raza,
+        fechaNacimiento,
+        sexo,
+        tamaño,
+        vacunas,
+        esterilizado: esterilizado === 'Sí',
+        enfermedades,
+        documentos,
+        descripcion,
+        imagenUrl,
+        ubicacion,
+        chip,
+        propietarioId
+      };
+
+      const resultado = await registrarMascota(mascotaData);
+      console.log('Mascota registrada:', resultado);
+      alert('¡Mascota registrada exitosamente!');
+      
+      // Llamar onRegister para actualizar la lista (si es necesario)
+      onRegister(mascotaData);
+      
+      // Limpiar
+      setNombre(''); setEspecie(''); setRaza(''); setFechaNacimiento(''); setSexo(''); setTamaño(''); setVacunas([]); setVacunaInput(''); setEsterilizado(''); setEnfermedades([]); setEnfermedadInput(''); setDocumentos([]); setDescripcion(''); setFoto(null); setPreview(null); setUbicacion(''); setChip('');
+      onClose();
+    } catch (error) {
+      console.error('Error al registrar mascota:', error);
+      alert('Error al registrar la mascota. Por favor, inténtalo de nuevo.');
+    }
   };
 
   return (
