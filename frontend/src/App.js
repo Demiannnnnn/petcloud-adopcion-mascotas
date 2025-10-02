@@ -10,13 +10,9 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-  <Route path="/login" element={<LoginPage />} />
-  <Route path="/registro" element={<RegistroPage />} />
-        <Route path="/" element={
-          <ProtectedRoute>
-            <HomePage />
-          </ProtectedRoute>
-        } />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/registro" element={<RegistroPage />} />
+        <Route path="/" element={<Navigate to="/login" />} />
         <Route path="/dashboard" element={
           <ProtectedRoute>
           </ProtectedRoute>
@@ -24,6 +20,11 @@ function App() {
         <Route path="/principal" element={
           <ProtectedRoute>
             <PaginaPrincipal />
+          </ProtectedRoute>
+        } />
+        <Route path="/perfil" element={
+          <ProtectedRoute>
+            {require('./pages/PerfilPage.jsx').default()}
           </ProtectedRoute>
         } />
         {/* Puedes agregar más rutas protegidas aquí */}

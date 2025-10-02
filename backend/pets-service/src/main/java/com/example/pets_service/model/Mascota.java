@@ -1,13 +1,9 @@
 package com.example.pets_service.model;
 
-import java.util.List;
-
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
 
 @Entity
 public class Mascota {
@@ -17,6 +13,9 @@ public class Mascota {
     private Long id;
 
     private Long propietarioId;
+    private Long refugioId; // null si es persona
+    public Long getRefugioId() { return refugioId; }
+    public void setRefugioId(Long refugioId) { this.refugioId = refugioId; }
     private String nombre;
     private String especie;
     private String raza;

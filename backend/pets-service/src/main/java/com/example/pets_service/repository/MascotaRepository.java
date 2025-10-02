@@ -8,5 +8,6 @@ import com.example.pets_service.model.Mascota;
 
 @Repository
 public interface MascotaRepository extends JpaRepository<Mascota, Long> {
-	// Métodos personalizados si son necesarios
+	// Buscar mascotas por propietario
+	java.util.List<Mascota> findByPropietarioId(Long propietarioId);
 }

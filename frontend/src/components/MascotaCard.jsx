@@ -16,7 +16,7 @@ export default function MascotaCard({ mascota, onEdit, onDelete }) {
       transition: 'box-shadow 0.2s',
     }}>
       {mascota.imagenUrl && (
-        <img src={typeof mascota.imagenUrl === 'string' ? `/assets/${mascota.imagenUrl}` : URL.createObjectURL(mascota.imagenUrl)} alt={mascota.nombre} style={{ width: 70, height: 70, objectFit: 'cover', borderRadius: '50%', marginBottom: 8, border: '3px solid #F29C6B' }} />
+  <img src={typeof mascota.imagenUrl === 'string' ? `http://192.168.1.6:8082${mascota.imagenUrl.startsWith('/') ? mascota.imagenUrl : '/uploads/' + mascota.imagenUrl}` : URL.createObjectURL(mascota.imagenUrl)} alt={mascota.nombre} style={{ width: 70, height: 70, objectFit: 'cover', borderRadius: '50%', marginBottom: 8, border: '3px solid #F29C6B' }} />
       )}
       <div style={{ fontWeight: 'bold', color: '#a0522d', fontSize: 18, marginBottom: 2 }}>{mascota.nombre}</div>
       <div style={{ fontSize: 15, color: '#400B19', opacity: 0.8 }}>{mascota.especie}</div>

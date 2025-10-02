@@ -3,13 +3,18 @@ package com.example.pets_service.controller;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import com.example.pets_service.model.Mascota;
 import com.example.pets_service.service.MascotaService;
@@ -18,6 +23,29 @@ import com.example.pets_service.service.MascotaService;
 @RequestMapping("/api/mascotas")
 @CrossOrigin(origins = {"http://localhost:3001", "http://localhost:3000"})
 public class MascotaController {
+	// Endpoint para subir imagen
+	@PostMapping("/upload")
+	public ResponseEntity<String> uploadImage(@RequestParam("file") MultipartFile file) {
+		try {
+			String uploadDir = System.getProperty("user.dir") + "/uploads/";
+			java.io.File dest = new java.io.File(uploadDir + file.getOriginalFilename());
+			file.transferTo(dest);
+			// Retornar la URL pública
+			String imageUrl = "/uploads/" + file.getOriginalFilename();
+			return ResponseEntity.ok(imageUrl);
+		} catch (Exception e) {
+			return ResponseEntity.status(500).body("Error al subir la imagen: " + e.getMessage());
+		}
+	}
+// Configuración para servir archivos estáticos desde /uploads
+@Configuration
+class WebConfig implements WebMvcConfigurer {
+	@Override
+	public void addResourceHandlers(ResourceHandlerRegistry registry) {
+		registry.addResourceHandler("/uploads/**")
+				.addResourceLocations("file:" + System.getProperty("user.dir") + "/uploads/");
+	}
+}
 	private final MascotaService mascotaService;
 
 	@Autowired
@@ -28,6 +56,11 @@ public class MascotaController {
 	@GetMapping
 	public List<Mascota> listarMascotas() {
 		return mascotaService.listarMascotas();
+	}
+
+	@GetMapping("/propietario/{id}")
+	public List<Mascota> listarPorPropietario(@org.springframework.web.bind.annotation.PathVariable Long id) {
+		return mascotaService.listarPorPropietario(id);
 	}
 
 	@PostMapping("/registrar")
@@ -56,7 +89,10 @@ public class MascotaController {
 		public String foto;
 		public String ubicacion;
 		public String chip;
-		public Long propietarioId;
+	public Long propietarioId;
+	public Long refugioId; // solo para empresa
+	public Long getRefugioId() { return refugioId; }
+	public void setRefugioId(Long refugioId) { this.refugioId = refugioId; }
 
 		// Getters y setters
 		public String getNombre() { return nombre; }

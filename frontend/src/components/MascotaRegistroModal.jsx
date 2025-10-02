@@ -1,5 +1,6 @@
 
 import React, { useState, useContext } from 'react';
+import { getRefugiosByEmpresa } from '../api/refugiosApi';
 import { registrarMascota } from '../api/petsApi';
 import { AuthContext } from '../context/AuthContext';
 
@@ -29,6 +30,8 @@ const inputStyle = {
   marginBottom: 4,
 };
 
+// Estados para mensajes de éxito y error deben ir dentro del componente principal
+
 const buttonStyle = {
   borderRadius: 18,
   border: 'none',
@@ -40,6 +43,24 @@ const buttonStyle = {
 
 export default function MascotaRegistroModal({ open, onClose, onRegister }) {
   const { user } = useContext(AuthContext) || {};
+  const [refugioId, setRefugioId] = useState('');
+  const [refugios, setRefugios] = useState([]);
+
+  React.useEffect(() => {
+    async function fetchRefugios() {
+      if (user?.perfil?.tipoPerfil === 'EMPRESA' && user?.perfil?.id) {
+        try {
+          const refugiosBackend = await getRefugiosByEmpresa(user.perfil.id);
+          setRefugios(Array.isArray(refugiosBackend) ? refugiosBackend : []);
+        } catch (err) {
+          setRefugios([]);
+        }
+      } else {
+        setRefugios([]);
+      }
+    }
+    fetchRefugios();
+  }, [user, open]);
   const [nombre, setNombre] = useState('');
   const [especie, setEspecie] = useState('');
   const [raza, setRaza] = useState('');
@@ -57,6 +78,8 @@ export default function MascotaRegistroModal({ open, onClose, onRegister }) {
   const [preview, setPreview] = useState(null);
   const [ubicacion, setUbicacion] = useState('');
   const [chip, setChip] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
 
   if (!open) return null;
 
@@ -103,6 +126,7 @@ export default function MascotaRegistroModal({ open, onClose, onRegister }) {
       setVacunaInput('');
     }
   };
+
   const handleRemoveVacuna = idx => {
     setVacunas(vacunas.filter((_, i) => i !== idx));
   };
@@ -123,28 +147,41 @@ export default function MascotaRegistroModal({ open, onClose, onRegister }) {
     const hoy = new Date();
     const fechaNacDate = new Date(fechaNacimiento);
     if (!nombre || !especie || !fechaNacimiento || !sexo || !tamaño || vacunas.length === 0 || !esterilizado || !descripcion || !foto || !ubicacion) {
-      alert('Completa todos los campos obligatorios.');
+      setErrorMsg('Completa todos los campos obligatorios.');
+      setTimeout(() => setErrorMsg(''), 2500);
       return;
     }
     // Comparar solo año, mes y día
     const hoySinHora = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
     const nacSinHora = new Date(fechaNacDate.getFullYear(), fechaNacDate.getMonth(), fechaNacDate.getDate());
     if (isNaN(nacSinHora.getTime()) || nacSinHora > hoySinHora) {
-      alert('La fecha de nacimiento no puede ser futura.');
+      setErrorMsg('La fecha de nacimiento no puede ser futura.');
+      setTimeout(() => setErrorMsg(''), 2500);
       return;
     }
 
     try {
-      // Limpiar el nombre del archivo de imagen
+      // Subir imagen al backend
       let imagenUrl = '';
       if (foto && foto.name) {
-        imagenUrl = foto.name.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9._-]/g, '');
+        const formData = new FormData();
+        formData.append('file', foto);
+        const uploadResp = await fetch('http://localhost:8082/api/mascotas/upload', {
+          method: 'POST',
+          body: formData
+        });
+        if (!uploadResp.ok) {
+          setErrorMsg('Error al subir la imagen.');
+          setTimeout(() => setErrorMsg(''), 2500);
+          return;
+        }
+        imagenUrl = await uploadResp.text();
       } else {
-        alert('Debes seleccionar una imagen.');
+        setErrorMsg('Debes seleccionar una imagen.');
+        setTimeout(() => setErrorMsg(''), 2500);
         return;
       }
       // Obtener propietarioId según estructura real del usuario
-      console.log('Usuario en contexto:', user);
       let propietarioId = null;
       if (user) {
         if (typeof user.id !== 'undefined') {
@@ -157,7 +194,8 @@ export default function MascotaRegistroModal({ open, onClose, onRegister }) {
         propietarioId = parseInt(propietarioId, 10);
       }
       if (!propietarioId || isNaN(propietarioId)) {
-        alert('No se pudo obtener el ID del usuario. Inicia sesión nuevamente.');
+        setErrorMsg('No se pudo obtener el ID del usuario. Inicia sesión nuevamente.');
+        setTimeout(() => setErrorMsg(''), 2500);
         return;
       }
       const mascotaData = {
@@ -172,27 +210,34 @@ export default function MascotaRegistroModal({ open, onClose, onRegister }) {
         enfermedades,
         documentos,
         descripcion,
-        imagenUrl,
+        foto: imagenUrl, // Enviar como 'foto' para que el backend lo reciba correctamente
         ubicacion,
         chip,
-        propietarioId
+        propietarioId,
+        refugioId: user?.perfil?.tipoPerfil === 'EMPRESA' && refugioId ? parseInt(refugioId) : undefined
       };
 
       const resultado = await registrarMascota(mascotaData);
-      console.log('Mascota registrada:', resultado);
-      alert('¡Mascota registrada exitosamente!');
-      
-      // Llamar onRegister para actualizar la lista (si es necesario)
-      onRegister(mascotaData);
-      
-      // Limpiar
-      setNombre(''); setEspecie(''); setRaza(''); setFechaNacimiento(''); setSexo(''); setTamaño(''); setVacunas([]); setVacunaInput(''); setEsterilizado(''); setEnfermedades([]); setEnfermedadInput(''); setDocumentos([]); setDescripcion(''); setFoto(null); setPreview(null); setUbicacion(''); setChip('');
-      onClose();
+      setSuccessMsg('¡Mascota registrada exitosamente!');
+      setTimeout(() => {
+        setSuccessMsg('');
+        onRegister(mascotaData);
+        setNombre(''); setEspecie(''); setRaza(''); setFechaNacimiento(''); setSexo(''); setTamaño(''); setVacunas([]); setVacunaInput(''); setEsterilizado(''); setEnfermedades([]); setEnfermedadInput(''); setDocumentos([]); setDescripcion(''); setFoto(null); setPreview(null); setUbicacion(''); setChip('');
+        onClose();
+      }, 1800);
     } catch (error) {
       console.error('Error al registrar mascota:', error);
-      alert('Error al registrar la mascota. Por favor, inténtalo de nuevo.');
+      // Si el backend envía un mensaje específico, mostrarlo
+      if (error.message && error.message.includes('La imagen de la mascota es obligatoria')) {
+        setErrorMsg('Debes subir una imagen para la mascota.');
+      } else if (error.message) {
+        setErrorMsg(error.message);
+      } else {
+        setErrorMsg('Error al registrar la mascota. Por favor, inténtalo de nuevo.');
+      }
+      setTimeout(() => setErrorMsg(''), 2500);
     }
-  };
+  } // <-- Add this closing brace for handleSubmit
 
   return (
     <div
@@ -216,6 +261,18 @@ export default function MascotaRegistroModal({ open, onClose, onRegister }) {
           gap: 16,
         }}
       >
+        {/* Select de refugio solo para empresa */}
+        {user?.perfil?.tipoPerfil === 'EMPRESA' && (
+          <div>
+            <label style={{ fontWeight: 'bold', color: '#a0522d', marginBottom: 2 }}>Refugio</label>
+            <select value={refugioId} onChange={e => setRefugioId(e.target.value)} required style={{ borderRadius: 12, border: '2px solid #F29C6B', padding: '8px 16px', fontSize: 16, marginBottom: 8 }}>
+              <option value="">Selecciona refugio</option>
+              {refugios.map(r => (
+                <option key={r.id} value={r.id}>{r.nombre}</option>
+              ))}
+            </select>
+          </div>
+        )}
         <h2 style={{ color: '#a0522d', textAlign: 'center', marginBottom: 8 }}>Registrar Mascota</h2>
   <input type="text" className="modal-input" placeholder="Nombre" value={nombre} onChange={e => setNombre(e.target.value)} required style={inputStyle} />
   {/* Solo para móvil: label explicativo y opción vacía sin texto largo */}
@@ -307,6 +364,16 @@ export default function MascotaRegistroModal({ open, onClose, onRegister }) {
           <button type="button" onClick={onClose} style={{ ...buttonStyle, background: '#ccc', color: '#400B19' }}>Cancelar</button>
           <button type="submit" style={{ ...buttonStyle, background: '#a0522d', color: '#fff' }}>Registrar</button>
         </div>
+        {successMsg && (
+          <div style={{marginTop:10, background:'#e6f7e6', color:'#2e7d32', padding:'8px 16px', borderRadius:8, textAlign:'center', fontWeight:'bold', boxShadow:'0 2px 8px rgba(0,0,0,0.08)'}}>
+            {successMsg}
+          </div>
+        )}
+        {errorMsg && (
+          <div style={{marginTop:10, background:'#ffe6e6', color:'#c62828', padding:'8px 16px', borderRadius:8, textAlign:'center', fontWeight:'bold', boxShadow:'0 2px 8px rgba(0,0,0,0.08)'}}>
+            {errorMsg}
+          </div>
+        )}
       </form>
     </div>
   );

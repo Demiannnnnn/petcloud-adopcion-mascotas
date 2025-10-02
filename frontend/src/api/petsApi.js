@@ -1,8 +1,19 @@
+const API_BASE =
+  window.location.hostname === "localhost"
+    ? process.env.REACT_APP_API_PETS
+    : process.env.REACT_APP_API_IP_PETS;
+
+// Obtener mascotas por refugio
+export async function getMascotasByRefugio(refugioId) {
+	const res = await fetch(`${API_BASE}/api/mascotas/refugio/${refugioId}`);
+	if (!res.ok) throw new Error("Error al obtener mascotas por refugio");
+	return await res.json();
+}
 // API para gestión de mascotas
 
 export async function registrarMascota(mascotaData) {
 	try {
-		const response = await fetch("http://localhost:8082/api/mascotas/registrar", {
+		const response = await fetch(`${API_BASE}/api/mascotas/registrar`, {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json"
@@ -29,17 +40,15 @@ export async function registrarMascota(mascotaData) {
 
 export async function listarMascotas() {
 	try {
-		const response = await fetch("http://localhost:8082/api/mascotas", {
+		const response = await fetch(`${API_BASE}/api/mascotas`, {
 			method: "GET",
 			headers: {
 				"Content-Type": "application/json"
 			}
 		});
-
 		if (!response.ok) {
-			throw new Error("Error de conexión al listar mascotas");
+			throw new Error("Error al listar mascotas");
 		}
-
 		return await response.json();
 	} catch (error) {
 		console.error("Error en listarMascotas:", error);

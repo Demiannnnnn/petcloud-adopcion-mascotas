@@ -1,5 +1,6 @@
 
 import React, { useState, useContext } from 'react';
+import { getRefugiosByEmpresa, registrarRefugio } from '../api/refugiosApi';
 import { useNavigate } from 'react-router-dom';
 import MascotaRegistroModal from '../components/MascotaRegistroModal';
 import MascotaCard from '../components/MascotaCard';
@@ -9,12 +10,75 @@ import './LoginPage.css';
 
 
 function PaginaPrincipal() {
+  const { user } = useContext(AuthContext) || {};
+  // Estado para refugios (solo empresa)
+  const [refugios, setRefugios] = useState([]);
+  const [modalRefugioOpen, setModalRefugioOpen] = useState(false);
+  const [nuevoRefugio, setNuevoRefugio] = useState({ nombre: '', direccion: '', contacto: '' });
+
+  // Cargar refugios reales desde backend
+  React.useEffect(() => {
+    async function fetchRefugios() {
+      if (user?.perfil?.tipoPerfil === 'EMPRESA' && user?.perfil?.id) {
+        try {
+          const refugiosBackend = await getRefugiosByEmpresa(user.perfil.id);
+          setRefugios(Array.isArray(refugiosBackend) ? refugiosBackend : []);
+        } catch (err) {
+          setRefugios([]);
+        }
+      } else {
+        setRefugios([]);
+      }
+    }
+    fetchRefugios();
+  }, [user]);
+
+  const handleRegistrarRefugio = async e => {
+    e.preventDefault();
+    if (!nuevoRefugio.nombre || !nuevoRefugio.direccion || !nuevoRefugio.contacto) return;
+    try {
+      const refugioNuevo = {
+        ...nuevoRefugio,
+        empresaId: user?.perfil?.id
+      };
+      await registrarRefugio(refugioNuevo);
+      // Recargar refugios
+      const refugiosActualizados = await getRefugiosByEmpresa(user.perfil.id);
+      setRefugios(Array.isArray(refugiosActualizados) ? refugiosActualizados : []);
+      setNuevoRefugio({ nombre: '', direccion: '', contacto: '' });
+      setModalRefugioOpen(false);
+    } catch (err) {
+      alert('Error al registrar refugio');
+    }
+  };
   const navigate = useNavigate();
   const [modalOpen, setModalOpen] = useState(false);
   const [mascotas, setMascotas] = useState([]);
   const [publicMascotas, setPublicMascotas] = useState([]);
   const [search, setSearch] = useState('');
-  const { user } = useContext(AuthContext) || {};
+
+  // Cargar mascotas del usuario al iniciar sesión o recargar
+  React.useEffect(() => {
+    async function fetchMascotasUsuario() {
+      if (user && (user.id || (user.perfil && user.perfil.id))) {
+        const propietarioId = user.id || (user.perfil && user.perfil.id);
+        try {
+          const response = await fetch(`http://192.168.1.6:8082/api/mascotas/propietario/${propietarioId}`);
+          if (response.ok) {
+            const data = await response.json();
+            setMascotas(Array.isArray(data) ? data : []);
+          } else {
+            setMascotas([]);
+          }
+        } catch (err) {
+          setMascotas([]);
+        }
+      } else {
+        setMascotas([]);
+      }
+    }
+    fetchMascotasUsuario();
+  }, [user]);
 
   // Filtro simple para el feed público
   const filteredPublicMascotas = publicMascotas.filter(m =>
@@ -57,10 +121,10 @@ function PaginaPrincipal() {
             : ''
         ) : ''}!`}
       </div>
-      <img src="/assets/petcloud-logo.png" alt="PetCloud Logo" style={{ position: 'absolute', top: isMobile ? 8 : 24, left: isMobile ? 8 : 24, width: isMobile ? 60 : 100, height: isMobile ? 60 : 100 }} />
+  <img src="/assets/petcloud-logo.png" alt="PetCloud Logo" style={{ position: isMobile ? 'absolute' : 'absolute', top: isMobile ? 90 : 24, left: isMobile ? 8 : 24, width: isMobile ? 60 : 100, height: isMobile ? 60 : 100, zIndex: 101 }} />
       
       {/* Botones de Adopciones y Donaciones */}
-      <div style={{ position: 'absolute', top: isMobile ? 8 : 24, right: isMobile ? 76 : 130, display: 'flex', gap: 8, alignItems: 'center', zIndex: 20 }}>
+  <div style={{ position: isMobile ? 'absolute' : 'absolute', top: isMobile ? 90 : 24, right: isMobile ? 76 : 130, display: 'flex', gap: 8, alignItems: 'center', zIndex: 102 }}>
         <button 
           style={{ 
             background: '#400B19', 
@@ -96,7 +160,7 @@ function PaginaPrincipal() {
       </div>
 
       {/* Ícono de perfil */}
-      <div style={{ position: 'absolute', top: isMobile ? 8 : 24, right: isMobile ? 8 : 24, display: 'flex', alignItems: 'center', userSelect: 'none', zIndex: 20, pointerEvents: 'auto' }}>
+  <div style={{ position: isMobile ? 'absolute' : 'absolute', top: isMobile ? 90 : 24, right: isMobile ? 8 : 24, display: 'flex', alignItems: 'center', userSelect: 'none', zIndex: 103, pointerEvents: 'auto' }}>
         <div style={{ background: '#F29C6B', borderRadius: '50%', width: isMobile ? 60 : 90, height: isMobile ? 60 : 90, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '4px solid #D9663D', cursor: 'pointer', userSelect: 'none', zIndex: 21, pointerEvents: 'auto', fontSize: isMobile ? 36 : 56 }}
           onClick={() => navigate('/perfil')}>
           {user && user.perfil && user.perfil.tipoPerfil === 'EMPRESA'
@@ -121,7 +185,7 @@ function PaginaPrincipal() {
       {/* Layout principal responsivo */}
       <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', minHeight: isMobile ? '100vh' : '100vh', width: '100vw', position: 'relative', zIndex: 10 }}>
         {/* Feed público de mascotas */}
-        <div style={{ flex: 1, width: '100%', padding: isMobile ? '90px 8px 8px 8px' : '120px 48px 32px 48px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 18 }}>
+  <div style={{ flex: 1, width: '100%', padding: isMobile ? '170px 8px 8px 8px' : '120px 48px 32px 48px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 18 }}>
           {/* Barra de búsqueda y filtros */}
           <div style={{ width: '100%', maxWidth: isMobile ? 340 : 600, display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'stretch' : 'center', gap: 10, marginBottom: 12 }}>
             <input
@@ -156,6 +220,42 @@ function PaginaPrincipal() {
         </div>
         {/* Panel "Mis Mascotas" en móvil: abajo, en desktop: lateral derecho */}
         <div style={{ width: isMobile ? '100%' : 370, minWidth: isMobile ? 'unset' : 320, background: 'rgba(255,255,255,0.92)', boxShadow: isMobile ? '0 -2px 12px rgba(64,11,25,0.10)' : '-2px 0 12px rgba(64,11,25,0.10)', position: isMobile ? 'static' : 'absolute', right: isMobile ? 'unset' : 0, top: isMobile ? 'unset' : 0, height: isMobile ? 'auto' : '100vh', zIndex: 15, padding: isMobile ? '18px 8px 32px 8px' : '120px 32px 32px 32px', display: 'flex', flexDirection: 'column', gap: 12, marginTop: isMobile ? 8 : 0 }}>
+          {/* Sección de refugios para empresa */}
+          {user?.perfil?.tipoPerfil === 'EMPRESA' && (
+            <>
+              <h2 style={{ color: '#a0522d', fontWeight: 'bold', fontSize: isMobile ? 18 : 22, marginBottom: 8 }}>Refugios</h2>
+              <button onClick={() => setModalRefugioOpen(true)} style={{ background: '#F29C6B', color: '#fff', border: 'none', borderRadius: 18, padding: isMobile ? '7px 12px' : '8px 18px', fontWeight: 'bold', fontSize: isMobile ? 15 : 16, cursor: 'pointer', boxShadow: '0 2px 8px rgba(64,11,25,0.10)', marginBottom: 8 }}>+ Registrar Refugio</button>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: isMobile ? 8 : 16, minHeight: 60 }}>
+                {refugios.length === 0 ? (
+                  <div style={{ color: '#a0522d', fontSize: isMobile ? 14 : 16, opacity: 0.7 }}>No tienes refugios registrados.</div>
+                ) : (
+                  refugios.map((r, i) => (
+                    <div key={i} style={{ background: '#fff', borderRadius: 18, boxShadow: '0 2px 8px rgba(64,11,25,0.10)', padding: 12, minWidth: 120, maxWidth: 180, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                      <div style={{ fontWeight: 'bold', color: '#a0522d', fontSize: 16, marginBottom: 2 }}>{r.nombre}</div>
+                      <div style={{ fontSize: 14, color: '#400B19', opacity: 0.8 }}>{r.direccion}</div>
+                      <div style={{ fontSize: 13, color: '#400B19', opacity: 0.7 }}>{r.contacto}</div>
+                    </div>
+                  ))
+                )}
+              </div>
+              {/* Modal para registrar refugio */}
+              {modalRefugioOpen && (
+                <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(64,11,25,0.25)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <form onSubmit={handleRegistrarRefugio} style={{ background: '#fff', borderRadius: 24, padding: 32, minWidth: 320, maxWidth: 400, boxShadow: '0 4px 24px rgba(64,11,25,0.15)', display: 'flex', flexDirection: 'column', gap: 16 }}>
+                    <h2 style={{ color: '#a0522d', textAlign: 'center', marginBottom: 8 }}>Registrar Refugio</h2>
+                    <input type="text" placeholder="Nombre del refugio" value={nuevoRefugio.nombre} onChange={e => setNuevoRefugio({ ...nuevoRefugio, nombre: e.target.value })} required style={{ borderRadius: 12, border: '2px solid #F29C6B', padding: '8px 16px', fontSize: 16, marginBottom: 4 }} />
+                    <input type="text" placeholder="Dirección" value={nuevoRefugio.direccion} onChange={e => setNuevoRefugio({ ...nuevoRefugio, direccion: e.target.value })} required style={{ borderRadius: 12, border: '2px solid #F29C6B', padding: '8px 16px', fontSize: 16, marginBottom: 4 }} />
+                    <input type="text" placeholder="Contacto" value={nuevoRefugio.contacto} onChange={e => setNuevoRefugio({ ...nuevoRefugio, contacto: e.target.value })} required style={{ borderRadius: 12, border: '2px solid #F29C6B', padding: '8px 16px', fontSize: 16, marginBottom: 4 }} />
+                    <div style={{ display: 'flex', gap: 12, marginTop: 10 }}>
+                      <button type="submit" style={{ background: '#F29C6B', color: '#fff', border: 'none', borderRadius: 14, padding: '8px 18px', fontWeight: 'bold', fontSize: 15, cursor: 'pointer' }}>Registrar</button>
+                      <button type="button" style={{ background: '#c62828', color: '#fff', border: 'none', borderRadius: 14, padding: '8px 18px', fontWeight: 'bold', fontSize: 15, cursor: 'pointer' }} onClick={() => setModalRefugioOpen(false)}>Cancelar</button>
+                    </div>
+                  </form>
+                </div>
+              )}
+            </>
+          )}
+          {/* Sección de mascotas para todos los usuarios */}
           <h2 style={{ color: '#a0522d', fontWeight: 'bold', fontSize: isMobile ? 18 : 22, marginBottom: 8 }}>Mis Mascotas</h2>
           <button onClick={() => setModalOpen(true)} style={{ background: '#F29C6B', color: '#fff', border: 'none', borderRadius: 18, padding: isMobile ? '7px 12px' : '8px 18px', fontWeight: 'bold', fontSize: isMobile ? 15 : 16, cursor: 'pointer', boxShadow: '0 2px 8px rgba(64,11,25,0.10)', marginBottom: 8 }}>+ Registrar Mascota</button>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: isMobile ? 8 : 16, minHeight: 60 }}>
@@ -172,13 +272,30 @@ function PaginaPrincipal() {
               ))
             )}
           </div>
-        </div>
+  </div>
       </div>
       {/* Modal de registro de mascota */}
       <MascotaRegistroModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        onRegister={mascota => setMascotas([...mascotas, mascota])}
+        onRegister={async () => {
+          if (user && (user.id || (user.perfil && user.perfil.id))) {
+            const propietarioId = user.id || (user.perfil && user.perfil.id);
+            try {
+              const response = await fetch(`http://192.168.1.6:8082/api/mascotas/propietario/${propietarioId}`);
+              if (response.ok) {
+                const data = await response.json();
+                setMascotas(Array.isArray(data) ? data : []);
+              } else {
+                setMascotas([]);
+              }
+            } catch (err) {
+              setMascotas([]);
+            }
+          } else {
+            setMascotas([]);
+          }
+        }}
       />
       {/* Fondo decorativo */}
       <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: -1, background: "url('/assets/fondo.png') no-repeat center center fixed", backgroundSize: 'cover', pointerEvents: 'none' }} />

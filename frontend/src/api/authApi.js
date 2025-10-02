@@ -1,5 +1,10 @@
+const API_BASE =
+  window.location.hostname === "localhost"
+    ? process.env.REACT_APP_API_USERS
+    : process.env.REACT_APP_API_IP_USERS;
+
 export async function registrarPersona(personaData) {
-	const response = await fetch("http://localhost:8081/api/registro-persona", {
+	const response = await fetch(`${API_BASE}/api/registro-persona`, {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json"
@@ -20,7 +25,7 @@ export async function registrarEmpresa(empresaData) {
 			formData.append(key, empresaData[key]);
 		}
 	}
-	const response = await fetch("http://localhost:8081/api/registro-empresa", {
+	const response = await fetch(`${API_BASE}/api/registro-empresa`, {
 		method: "POST",
 		body: formData
 	});
@@ -31,7 +36,7 @@ export async function registrarEmpresa(empresaData) {
 }
 //login, registro
 export async function login(rut, contraseña) {
-		const response = await fetch("http://localhost:8081/api/login", {
+		const response = await fetch(`${API_BASE}/api/login`, {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json"

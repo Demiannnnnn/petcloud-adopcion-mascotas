@@ -16,6 +16,9 @@ import com.example.pets_service.repository.MascotaRepository;
 
 @Service
 public class MascotaService {
+	public List<Mascota> listarPorPropietario(Long propietarioId) {
+		return mascotaRepository.findByPropietarioId(propietarioId);
+	}
 	private final MascotaRepository mascotaRepository;
 
 	@Autowired
@@ -37,6 +40,10 @@ public class MascotaService {
 		} else {
 			throw new IllegalArgumentException("El propietarioId es obligatorio y no puede ser null");
 		}
+		// Asociar refugio solo si viene en el DTO (empresa)
+		if (mascotaDTO.getRefugioId() != null) {
+			mascota.setRefugioId(mascotaDTO.getRefugioId());
+		}
 		mascota.setNombre(mascotaDTO.getNombre());
 		mascota.setEspecie(mascotaDTO.getEspecie());
 		mascota.setRaza(mascotaDTO.getRaza() != null && !mascotaDTO.getRaza().isEmpty() ? mascotaDTO.getRaza() : null);
@@ -54,7 +61,11 @@ public class MascotaService {
 		// Configurar valores por defecto
 		mascota.setDisponibleAdopcion(true);
 		mascota.setFechaRegistro(new Timestamp(System.currentTimeMillis()));
-		mascota.setImagenUrl(mascotaDTO.getFoto() != null ? mascotaDTO.getFoto() : "default.jpg");
+		if (mascotaDTO.getFoto() != null && !mascotaDTO.getFoto().isEmpty()) {
+			mascota.setImagenUrl(mascotaDTO.getFoto());
+		} else {
+			throw new IllegalArgumentException("La imagen de la mascota es obligatoria.");
+		}
 		
 		// Calcular edad a partir de fecha de nacimiento
 		if (mascotaDTO.getFechaNacimiento() != null && !mascotaDTO.getFechaNacimiento().isEmpty()) {
