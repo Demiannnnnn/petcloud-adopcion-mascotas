@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import './LoginPage.css';
 import { login } from '../api/authApi';
+import { formatRut, cleanRut } from '../utils/rut';
 function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -105,18 +106,7 @@ function LoginPage() {
     }
   };
 
-  // Ícono dinámico según perfil
-  const perfilIcon = tipoPerfil === 'PERSONA'
-    ? (<svg width="70" height="70" viewBox="0 0 24 24" fill="#fff"><circle cx="12" cy="8" r="5" /><ellipse cx="12" cy="19" rx="7" ry="4" /></svg>)
-    : (
-      <svg width="70" height="70" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="4" y="8" width="16" height="12" rx="3" fill="#fff" stroke="#F29C6B" strokeWidth="2" />
-        <rect x="8" y="12" width="2" height="4" rx="1" fill="#F29C6B" />
-        <rect x="14" y="12" width="2" height="4" rx="1" fill="#F29C6B" />
-        <rect x="11" y="15" width="2" height="5" rx="1" fill="#F29C6B" />
-        <rect x="10" y="8" width="4" height="3" rx="1" fill="#F29C6B" />
-      </svg>
-    );
+  // ...existing code... (perfil icon removed to avoid unused variable warning)
 
   return (
     <div className="login-bg">
@@ -192,7 +182,9 @@ function LoginPage() {
                   <input
                     type="text"
                     value={rut}
-                    onChange={e => setRut(e.target.value)}
+                    onChange={e => setRut(formatRut(e.target.value.replace(/[^0-9kK.-]/g, '')))}
+                    onBlur={e => setRut(formatRut(e.target.value))}
+                    onFocus={e => setRut(cleanRut(e.target.value))}
                     placeholder="Ej: 12.345.678-9"
                     style={{ width: '100%', height: '44px', fontSize: '16px', borderRadius: '8px', border: '1.5px solid #F29C6B', background: '#FFC891', color: '#4B1C2F', padding: '0 12px' }}
                   />
@@ -205,7 +197,9 @@ function LoginPage() {
                   <input
                     type="text"
                     value={rutEmpresa}
-                    onChange={e => setRutEmpresa(e.target.value)}
+                    onChange={e => setRutEmpresa(formatRut(e.target.value.replace(/[^0-9kK.-]/g, '')))}
+                    onBlur={e => setRutEmpresa(formatRut(e.target.value))}
+                    onFocus={e => setRutEmpresa(cleanRut(e.target.value))}
                     placeholder="Ej: 12.345.678-9"
                     style={{ width: '100%', height: '44px', fontSize: '16px', borderRadius: '8px', border: '1.5px solid #F29C6B', background: '#FFC891', color: '#4B1C2F', padding: '0 12px' }}
                   />

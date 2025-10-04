@@ -1,5 +1,6 @@
 
 import React, { useState, useContext } from 'react';
+import { toast } from 'react-toastify';
 import { getRefugiosByEmpresa, registrarRefugio } from '../api/refugiosApi';
 import { useNavigate } from 'react-router-dom';
 import MascotaRegistroModal from '../components/MascotaRegistroModal';
@@ -14,47 +15,45 @@ function PaginaPrincipal() {
   // Estado para refugios (solo empresa)
   const [refugios, setRefugios] = useState([]);
   const [modalRefugioOpen, setModalRefugioOpen] = useState(false);
-  const [nuevoRefugio, setNuevoRefugio] = useState({ nombre: '', direccion: '', contacto: '' });
+  const [nuevoRefugio, setNuevoRefugio] = useState({ nombre: '', direccion: '', contactoSuffix: '' });
+  const [refugioError, setRefugioError] = useState('');
+  const isRefugioValid = !!(nuevoRefugio.nombre && nuevoRefugio.direccion && /^\d{8}$/.test(nuevoRefugio.contactoSuffix));
 
-  // Cargar refugios reales desde backend
-  React.useEffect(() => {
-    async function fetchRefugios() {
-      if (user?.perfil?.tipoPerfil === 'EMPRESA' && user?.perfil?.id) {
-        try {
-          const refugiosBackend = await getRefugiosByEmpresa(user.perfil.id);
-          setRefugios(Array.isArray(refugiosBackend) ? refugiosBackend : []);
-        } catch (err) {
-          setRefugios([]);
-        }
-      } else {
-        setRefugios([]);
-      }
-    }
-    fetchRefugios();
-  }, [user]);
-
-  const handleRegistrarRefugio = async e => {
+  const handleRegistrarRefugio = async (e) => {
     e.preventDefault();
-    if (!nuevoRefugio.nombre || !nuevoRefugio.direccion || !nuevoRefugio.contacto) return;
+    setRefugioError('');
+    if (!nuevoRefugio.nombre || !nuevoRefugio.direccion || !nuevoRefugio.contactoSuffix) {
+      setRefugioError('Todos los campos son obligatorios');
+      return;
+    }
+    // Combinar prefijo +569 y validar que el sufijo tenga 8 dígitos
+    const contactoFull = '+569' + (nuevoRefugio.contactoSuffix || '');
+    if (!/^\+569\d{8}$/.test(contactoFull)) {
+      setRefugioError('Contacto inválido. Debe comenzar con +569 y contener 8 dígitos (ej: +56912345678)');
+      return;
+    }
     try {
       const refugioNuevo = {
-        ...nuevoRefugio,
+        nombre: nuevoRefugio.nombre,
+        direccion: nuevoRefugio.direccion,
+        contacto: contactoFull,
         empresaId: user?.perfil?.id
       };
       await registrarRefugio(refugioNuevo);
       // Recargar refugios
       const refugiosActualizados = await getRefugiosByEmpresa(user.perfil.id);
       setRefugios(Array.isArray(refugiosActualizados) ? refugiosActualizados : []);
-      setNuevoRefugio({ nombre: '', direccion: '', contacto: '' });
+      setNuevoRefugio({ nombre: '', direccion: '', contactoSuffix: '' });
       setModalRefugioOpen(false);
     } catch (err) {
-      alert('Error al registrar refugio');
+      toast.error('Error al registrar refugio');
     }
   };
   const navigate = useNavigate();
   const [modalOpen, setModalOpen] = useState(false);
   const [mascotas, setMascotas] = useState([]);
-  const [publicMascotas, setPublicMascotas] = useState([]);
+  // eslint-disable-next-line no-unused-vars
+  const [publicMascotas, _setPublicMascotas] = useState([]);
   const [search, setSearch] = useState('');
 
   // Cargar mascotas del usuario al iniciar sesión o recargar
@@ -63,7 +62,8 @@ function PaginaPrincipal() {
       if (user && (user.id || (user.perfil && user.perfil.id))) {
         const propietarioId = user.id || (user.perfil && user.perfil.id);
         try {
-          const response = await fetch(`http://192.168.1.6:8082/api/mascotas/propietario/${propietarioId}`);
+          const API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8082';
+          const response = await fetch(`${API_BASE}/api/mascotas/propietario/${propietarioId}`);
           if (response.ok) {
             const data = await response.json();
             setMascotas(Array.isArray(data) ? data : []);
@@ -78,6 +78,23 @@ function PaginaPrincipal() {
       }
     }
     fetchMascotasUsuario();
+  }, [user]);
+
+  // Cargar refugios asociados a la empresa cuando el usuario es empresa
+  React.useEffect(() => {
+    async function fetchRefugiosEmpresa() {
+      if (user && user.perfil && user.perfil.tipoPerfil === 'EMPRESA' && user.perfil.id) {
+        try {
+          const data = await getRefugiosByEmpresa(user.perfil.id);
+          setRefugios(Array.isArray(data) ? data : []);
+        } catch (err) {
+          setRefugios([]);
+        }
+      } else {
+        setRefugios([]);
+      }
+    }
+    fetchRefugiosEmpresa();
   }, [user]);
 
   // Filtro simple para el feed público
@@ -245,9 +262,32 @@ function PaginaPrincipal() {
                     <h2 style={{ color: '#a0522d', textAlign: 'center', marginBottom: 8 }}>Registrar Refugio</h2>
                     <input type="text" placeholder="Nombre del refugio" value={nuevoRefugio.nombre} onChange={e => setNuevoRefugio({ ...nuevoRefugio, nombre: e.target.value })} required style={{ borderRadius: 12, border: '2px solid #F29C6B', padding: '8px 16px', fontSize: 16, marginBottom: 4 }} />
                     <input type="text" placeholder="Dirección" value={nuevoRefugio.direccion} onChange={e => setNuevoRefugio({ ...nuevoRefugio, direccion: e.target.value })} required style={{ borderRadius: 12, border: '2px solid #F29C6B', padding: '8px 16px', fontSize: 16, marginBottom: 4 }} />
-                    <input type="text" placeholder="Contacto" value={nuevoRefugio.contacto} onChange={e => setNuevoRefugio({ ...nuevoRefugio, contacto: e.target.value })} required style={{ borderRadius: 12, border: '2px solid #F29C6B', padding: '8px 16px', fontSize: 16, marginBottom: 4 }} />
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                      <input type="text" value="+569" disabled style={{ borderRadius: 12, border: '2px solid #eee', background: '#f5f5f5', padding: '8px 12px', fontSize: 16, width: 90, textAlign: 'center' }} />
+                      <input
+                        type="text"
+                        placeholder="12345678"
+                        value={nuevoRefugio.contactoSuffix}
+                        onChange={e => {
+                          const raw = e.target.value || '';
+                          const digits = raw.replace(/\D/g, '');
+                          const suffix = digits.slice(0, 8);
+                          setNuevoRefugio({ ...nuevoRefugio, contactoSuffix: suffix });
+                          if (!suffix) {
+                            setRefugioError('');
+                          } else if (/^\d{8}$/.test(suffix)) {
+                            setRefugioError('');
+                          } else {
+                            setRefugioError('Contacto inválido. Debe contener 8 dígitos (ej: 12345678)');
+                          }
+                        }}
+                        required
+                        style={{ borderRadius: 12, border: '2px solid #F29C6B', padding: '8px 16px', fontSize: 16, marginBottom: 4, width: '100%' }}
+                      />
+                    </div>
+                    {refugioError && <div style={{ color: '#c62828', fontSize: 13, marginTop: 4 }}>{refugioError}</div>}
                     <div style={{ display: 'flex', gap: 12, marginTop: 10 }}>
-                      <button type="submit" style={{ background: '#F29C6B', color: '#fff', border: 'none', borderRadius: 14, padding: '8px 18px', fontWeight: 'bold', fontSize: 15, cursor: 'pointer' }}>Registrar</button>
+                      <button type="submit" disabled={!isRefugioValid} style={{ background: '#F29C6B', color: '#fff', border: 'none', borderRadius: 14, padding: '8px 18px', fontWeight: 'bold', fontSize: 15, cursor: isRefugioValid ? 'pointer' : 'not-allowed', opacity: isRefugioValid ? 1 : 0.6 }}>Registrar</button>
                       <button type="button" style={{ background: '#c62828', color: '#fff', border: 'none', borderRadius: 14, padding: '8px 18px', fontWeight: 'bold', fontSize: 15, cursor: 'pointer' }} onClick={() => setModalRefugioOpen(false)}>Cancelar</button>
                     </div>
                   </form>
@@ -266,8 +306,12 @@ function PaginaPrincipal() {
                 <MascotaCard
                   key={i}
                   mascota={m}
-                  onEdit={() => alert('Función editar próximamente')}
+                  onEdit={() => toast.info('Función editar próximamente')}
                   onDelete={() => setMascotas(mascotas.filter((_, idx) => idx !== i))}
+                  refugioName={(() => {
+                    const r = refugios.find(x => x.id === m.refugioId || x.id === Number(m.refugioId));
+                    return r ? r.nombre : undefined;
+                  })()}
                 />
               ))
             )}
@@ -282,7 +326,8 @@ function PaginaPrincipal() {
           if (user && (user.id || (user.perfil && user.perfil.id))) {
             const propietarioId = user.id || (user.perfil && user.perfil.id);
             try {
-              const response = await fetch(`http://192.168.1.6:8082/api/mascotas/propietario/${propietarioId}`);
+              const API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8082';
+              const response = await fetch(`${API_BASE}/api/mascotas/propietario/${propietarioId}`);
               if (response.ok) {
                 const data = await response.json();
                 setMascotas(Array.isArray(data) ? data : []);

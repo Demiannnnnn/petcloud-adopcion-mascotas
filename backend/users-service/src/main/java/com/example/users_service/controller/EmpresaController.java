@@ -1,5 +1,7 @@
 package com.example.users_service.controller;
 
+import java.io.IOException;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -36,6 +38,10 @@ public class EmpresaController {
 		@RequestParam("ubicacion") String ubicacion,
 		@RequestParam("certificadoLegal") MultipartFile certificadoLegal
 	) {
+		// Validar formato de telefono: +569 seguido de 8 digitos
+		if (telefonoContacto == null || !telefonoContacto.matches("^\\+569\\d{8}$")) {
+			return new RespuestaRegistro(false, "Teléfono de contacto inválido. Usa el formato +569XXXXXXXX (ej: +56912345678)");
+		}
 		// Validar duplicados solo en empresas
 		if (empresaRepository.findByRutEmpresa(rutEmpresa).isPresent()) {
 			return new RespuestaRegistro(false, "Ya existe una empresa con ese RUT");
@@ -72,7 +78,7 @@ public class EmpresaController {
 			doc.setPerfil(empresaGuardada);
 			doc.setArchivo(certificadoLegal.getBytes());
 			documentoRepository.save(doc);
-		} catch (Exception ex) {
+		} catch (IOException | RuntimeException ex) {
 			return new RespuestaRegistro(false, "Error al guardar el certificado legal");
 		}
 	// ...existing code...

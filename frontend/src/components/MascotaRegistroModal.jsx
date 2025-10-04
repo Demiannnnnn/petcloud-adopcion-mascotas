@@ -217,8 +217,8 @@ export default function MascotaRegistroModal({ open, onClose, onRegister }) {
         refugioId: user?.perfil?.tipoPerfil === 'EMPRESA' && refugioId ? parseInt(refugioId) : undefined
       };
 
-      const resultado = await registrarMascota(mascotaData);
-      setSuccessMsg('¡Mascota registrada exitosamente!');
+  await registrarMascota(mascotaData);
+  setSuccessMsg('¡Mascota registrada exitosamente!');
       setTimeout(() => {
         setSuccessMsg('');
         onRegister(mascotaData);

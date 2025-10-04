@@ -16,6 +16,10 @@ public class Mascota {
     private Long refugioId; // null si es persona
     public Long getRefugioId() { return refugioId; }
     public void setRefugioId(Long refugioId) { this.refugioId = refugioId; }
+    
+    // Getter y setter para id (usado por JPA y para evitar advertencias de análisis estático)
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
     private String nombre;
     private String especie;
     private String raza;

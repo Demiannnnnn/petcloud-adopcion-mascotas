@@ -1,12 +1,15 @@
+// Use single API base env var with fallback to localhost. Keep backwards compatibility with older env names.
 const API_BASE =
-  window.location.hostname === "localhost"
-    ? process.env.REACT_APP_API_PETS
-    : process.env.REACT_APP_API_IP_PETS;
+	process.env.REACT_APP_API_BASE_URL || process.env.REACT_APP_API_PETS || process.env.REACT_APP_API_IP_PETS || 'http://localhost:8082';
 
 // Obtener mascotas por refugio
 export async function getMascotasByRefugio(refugioId) {
 	const res = await fetch(`${API_BASE}/api/mascotas/refugio/${refugioId}`);
-	if (!res.ok) throw new Error("Error al obtener mascotas por refugio");
+	if (!res.ok) {
+		// If the backend returns 404 or empty, return empty array to avoid breaking callers.
+		console.warn('getMascotasByRefugio: non-ok response', res.status);
+		return [];
+	}
 	return await res.json();
 }
 // API para gestión de mascotas

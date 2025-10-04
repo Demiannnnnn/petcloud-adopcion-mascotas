@@ -1,9 +1,12 @@
 import './App.css';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './pages/LoginPage';
-import HomePage from './pages/HomePage';
+// HomePage removed (not used directly in routes)
 import RegistroPage from './pages/RegistroPage';
 import PaginaPrincipal from './pages/PaginaPrincipal';
+import PerfilPage from './pages/PerfilPage';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -13,10 +16,7 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/registro" element={<RegistroPage />} />
         <Route path="/" element={<Navigate to="/login" />} />
-        <Route path="/dashboard" element={
-          <ProtectedRoute>
-          </ProtectedRoute>
-        } />
+        <Route path="/dashboard" element={<ProtectedRoute></ProtectedRoute>} />
         <Route path="/principal" element={
           <ProtectedRoute>
             <PaginaPrincipal />
@@ -24,12 +24,13 @@ function App() {
         } />
         <Route path="/perfil" element={
           <ProtectedRoute>
-            {require('./pages/PerfilPage.jsx').default()}
+            <PerfilPage />
           </ProtectedRoute>
         } />
         {/* Puedes agregar más rutas protegidas aquí */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
+      <ToastContainer position="top-right" autoClose={4000} hideProgressBar={false} newestOnTop closeOnClick pauseOnHover />
     </BrowserRouter>
   );
 }

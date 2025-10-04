@@ -30,6 +30,10 @@ public class MascotaService {
 		return mascotaRepository.findAll();
 	}
 
+	public List<Mascota> listarPorRefugio(Long refugioId) {
+		return mascotaRepository.findByRefugioId(refugioId);
+	}
+
 	public Mascota registrarMascota(MascotaRegistroDTO mascotaDTO) {
 		Mascota mascota = new Mascota();
 		
@@ -51,11 +55,11 @@ public class MascotaService {
 		mascota.setUbicacion(mascotaDTO.getUbicacion());
 		mascota.setDescripcion(mascotaDTO.getDescripcion());
 		
-		// Manejar esterilizado (viene como boolean del frontend)
+		// Manejar esterilizado (viene como Boolean del frontend)
 		if (mascotaDTO.getEsterilizado() != null) {
-			mascota.setEsterilizado(Boolean.parseBoolean(mascotaDTO.getEsterilizado()));
+			mascota.setEsterilizado(mascotaDTO.getEsterilizado());
 		} else {
-			mascota.setEsterilizado(false);
+			mascota.setEsterilizado(Boolean.FALSE);
 		}
 		
 		// Configurar valores por defecto

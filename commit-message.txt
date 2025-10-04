@@ -1,0 +1,27 @@
+Frontend & backend: formato RUT, máscara teléfono, toasts y endpoint mascotas por refugio
+
+- Frontend
+  - Añadida utilidad de formateo de RUT y aplicada en vistas de login/registro/perfil.
+  - Teléfono: máscara y validación con prefijo fijo "+569" (prefijo no editable) y sufijo de 8 dígitos.
+  - Unificación de la base API (REACT_APP_API_BASE_URL / fallbacks) para llamadas al backend.
+  - UX perfil/refugio: pasar `refugioName` a `MascotaCard`, toggle para "Ver mascotas", animación apertura/cierre del panel, ocultar botón "+ Registrar Mascota" en vistas de refugio.
+  - Sustituido alert() por toasts usando react-toastify (integrado en App.js) y mostrado errores/infos en PaginaPrincipal.jsx.
+  - Ajustes en MascotaRegistroModal, PaginaPrincipal, PerfilPage y clientes API para soportar las nuevas convenciones.
+
+- Backend (pets-service)
+  - Nuevo endpoint: GET /api/mascotas/refugio/{id} (controller + service + repository).
+  - Añadido método JPA findByRefugioId y listarPorRefugio en servicio.
+  - DTO MascotaRegistroDTO: esterilizado cambiado a Boolean para evitar conversiones innecesarias.
+  - Subida de imágenes: manejo de excepciones más específico; extracción de WebConfig a config/WebConfig.java para servir /uploads/**.
+  - Añadidos getters/setters (ej. id) en Mascota para silenciar advertencias estáticas y compatibilidad JPA.
+
+- Operaciones & seguridad
+  - Compilado y empaquetado pets-service (JAR generado y verificado).
+  - Servicio arrancado temporalmente para validar /api/mascotas/refugio/{id} y detenido después.
+  - Instalado react-toastify en frontend.
+  - Ejecutado npm audit → se intentó fix no forzado; finalmente se aplicó npm audit fix --force y se restauró react-scripts estable. Quedan recomendaciones: revisar react-scripts/tooling en rama separada si se desea limpieza completa de vulnerabilidades de dev-deps.
+
+- Notas y próximos pasos sugeridos
+  - Mejorar UX de errores: mostrar mensajes de validación del backend (toasts/inline) en lugar de alertas.
+  - Añadir tests unitarios para MascotaService / MascotaController y repositorio findByRefugioId.
+  - Hacer una actualización controlada de react-scripts en una rama para eliminar vulnerabilidades de tooling (probar build y ajustar breaking changes).

@@ -1,4 +1,5 @@
 import React, { createContext, useState } from 'react';
+import { cleanRut } from '../utils/rut';
 
 export const AuthContext = createContext();
 
@@ -9,8 +10,13 @@ export function AuthProvider({ children }) {
 	});
 
 	const login = (userData) => {
-	setUser(userData);
-	localStorage.setItem('user', JSON.stringify(userData));
+		// Normalizar RUT en el perfil antes de guardar
+		const copy = { ...userData };
+		if (copy.perfil && copy.perfil.rut) {
+			copy.perfil = { ...copy.perfil, rut: cleanRut(copy.perfil.rut).toUpperCase() };
+		}
+		setUser(copy);
+		localStorage.setItem('user', JSON.stringify(copy));
 	};
 
 	const logout = () => {

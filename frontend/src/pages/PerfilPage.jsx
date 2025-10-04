@@ -1,7 +1,9 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { AuthContext } from '../context/AuthContext';
+import { formatRut } from '../utils/rut';
 import { getRefugiosByEmpresa } from '../api/refugiosApi';
 import { getMascotasByRefugio } from '../api/petsApi';
+import MascotaCard from '../components/MascotaCard';
 
 export default function PerfilPage() {
   const { user, logout } = useContext(AuthContext);
@@ -9,7 +11,9 @@ export default function PerfilPage() {
   const [refugios, setRefugios] = useState([]);
   const [mascotasPorRefugio, setMascotasPorRefugio] = useState({});
   const [selectedRefugio, setSelectedRefugio] = useState('');
+  // eslint-disable-next-line no-unused-vars
   const [modalRefugioOpen, setModalRefugioOpen] = useState(false);
+  // eslint-disable-next-line no-unused-vars
   const [modalMascotaOpen, setModalMascotaOpen] = useState(false);
 
   useEffect(() => {
@@ -17,26 +21,33 @@ export default function PerfilPage() {
       if (user?.perfil?.tipoPerfil === 'EMPRESA' && user?.perfil?.id) {
         try {
           const refugiosBackend = await getRefugiosByEmpresa(user.perfil.id);
-          setRefugios(Array.isArray(refugiosBackend) ? refugiosBackend : []);
-          // Mascotas por refugio
+          const safeRefugios = Array.isArray(refugiosBackend) ? refugiosBackend : [];
+          setRefugios(safeRefugios);
+          // Mascotas por refugio (defensivo)
           const mascotasMap = {};
-          for (const refugio of refugiosBackend) {
+          for (const refugio of safeRefugios) {
+            if (!refugio || typeof refugio.id === 'undefined') {
+              continue;
+            }
             try {
               const mascotasR = await getMascotasByRefugio(refugio.id);
               mascotasMap[refugio.id] = Array.isArray(mascotasR) ? mascotasR : [];
-            } catch {
+            } catch (err) {
+              console.error('Error cargando mascotas para refugio', refugio.id, err);
               mascotasMap[refugio.id] = [];
             }
           }
           setMascotasPorRefugio(mascotasMap);
-        } catch {
+        } catch (err) {
+          console.error('Error cargando refugios', err);
           setRefugios([]);
         }
       } else if (user && (user.id || (user.perfil && user.perfil.id))) {
         // Persona: mascotas propias
         const propietarioId = user.id || (user.perfil && user.perfil.id);
         try {
-          const response = await fetch(`http://192.168.1.6:8082/api/mascotas/propietario/${propietarioId}`);
+          const API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8082';
+          const response = await fetch(`${API_BASE}/api/mascotas/propietario/${propietarioId}`);
           if (response.ok) {
             const data = await response.json();
             setMascotas(Array.isArray(data) ? data : []);
@@ -76,7 +87,7 @@ export default function PerfilPage() {
         <div style={{ color: '#400B19', fontSize: 16, marginBottom: 8 }}>{correo ? correo : 'Sin email'}</div>
         <div style={{ color: '#400B19', fontSize: 15, marginBottom: 8 }}>
           <div>Tipo de perfil: {tipo === 'EMPRESA' ? 'Empresa' : 'Persona'}</div>
-          <div>RUT: {rut ? rut : 'No registrado'}</div>
+          <div>RUT: {rut ? formatRut(rut) : 'No registrado'}</div>
           {tipo === 'PERSONA' ? (
             <>
               <div>Teléfono: {user.perfil?.numeroWhatsapp ? user.perfil.numeroWhatsapp : 'No registrado'}</div>
@@ -125,35 +136,51 @@ export default function PerfilPage() {
                   <div style={{ fontWeight: 'bold', color: '#a0522d', fontSize: 16, marginBottom: 2 }}>{r.nombre}</div>
                   <div style={{ fontSize: 14, color: '#400B19', opacity: 0.8 }}>{r.direccion}</div>
                   <div style={{ fontSize: 13, color: '#400B19', opacity: 0.7 }}>{r.contacto}</div>
-                  <button style={{ background: '#400B19', color: '#fff', border: 'none', borderRadius: 12, padding: '6px 14px', fontWeight: 'bold', fontSize: 14, cursor: 'pointer', marginTop: 8 }} onClick={() => setSelectedRefugio(r.id)}>Ver mascotas</button>
+                  <button style={{ background: '#400B19', color: '#fff', border: 'none', borderRadius: 12, padding: '6px 14px', fontWeight: 'bold', fontSize: 14, cursor: 'pointer', marginTop: 8 }} onClick={() => setSelectedRefugio(prev => (String(prev) === String(r.id) ? '' : r.id))}>Ver mascotas</button>
                 </div>
               ))}
             </div>
           )}
-          {/* Mascotas por refugio seleccionado */}
-          {selectedRefugio && (
-            <div style={{ marginTop: 24 }}>
-              <h4 style={{ color: '#a0522d', marginBottom: 8, textAlign: 'center' }}>Mascotas en refugio seleccionado</h4>
-              <button style={{ background: '#F29C6B', color: '#fff', border: 'none', borderRadius: 14, padding: '8px 18px', fontWeight: 'bold', fontSize: 15, cursor: 'pointer', marginBottom: 12 }} onClick={() => setModalMascotaOpen(true)}>+ Registrar Mascota</button>
-              {mascotasPorRefugio[selectedRefugio]?.length === 0 ? (
-                <div style={{ color: '#a0522d', fontSize: 15, opacity: 0.7, textAlign: 'center' }}>No hay mascotas registradas en este refugio.</div>
-              ) : (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, justifyContent: 'center' }}>
-                  {mascotasPorRefugio[selectedRefugio].map((m, i) => (
-                    <div key={i} style={{ background: '#fff', borderRadius: 18, boxShadow: '0 2px 8px rgba(64,11,25,0.10)', padding: 12, minWidth: 120, maxWidth: 160, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                      {m.imagenUrl && (
-                        <img src={`http://localhost:8082${m.imagenUrl.startsWith('/') ? m.imagenUrl : '/uploads/' + m.imagenUrl}`} alt={m.nombre} style={{ width: 50, height: 50, objectFit: 'cover', borderRadius: '50%', marginBottom: 6, border: '2px solid #F29C6B' }} />
+          {/* Mascotas por refugio seleccionado (con animación de apertura/cierre) */}
+          {
+            (() => {
+              const expanded = Boolean(selectedRefugio);
+              const key = selectedRefugio;
+              const mascotasList = selectedRefugio ? (mascotasPorRefugio[key] || mascotasPorRefugio[String(key)] || mascotasPorRefugio[Number(key)] || []) : [];
+              // Determine selected refugio object (name) for header
+              const selectedRefugioObj = refugios.find(r => String(r.id) === String(selectedRefugio));
+              const headerTitle = selectedRefugioObj ? `Mascotas en ${selectedRefugioObj.nombre}` : 'Mascotas en refugio seleccionado';
+
+              return (
+                <div style={{ marginTop: 24 }}>
+                  {expanded && <h4 style={{ color: '#a0522d', marginBottom: 8, textAlign: 'center' }}>{headerTitle}</h4>}
+                  <div
+                    aria-hidden={!expanded}
+                    style={{
+                      maxHeight: expanded ? 520 : 0,
+                      opacity: expanded ? 1 : 0,
+                      transform: expanded ? 'translateY(0)' : 'translateY(-6px)',
+                      overflow: 'hidden',
+                      transition: 'max-height 320ms ease, opacity 220ms ease, transform 260ms ease',
+                    }}
+                  >
+                    {/* Contenido dentro del panel animado */}
+                    <div style={{ paddingTop: expanded ? 12 : 0 }}>
+                      {(!mascotasList || mascotasList.length === 0) ? (
+                        <div style={{ color: '#a0522d', fontSize: 15, opacity: 0.7, textAlign: 'center', padding: '12px 0' }}>No hay mascotas registradas en este refugio.</div>
+                      ) : (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, justifyContent: 'center' }}>
+                          {mascotasList.map((m, i) => (
+                            <MascotaCard key={i} mascota={m} refugioName={refugios.find(r => String(r.id) === String(m.refugioId))?.nombre} />
+                          ))}
+                        </div>
                       )}
-                      <div style={{ fontWeight: 'bold', color: '#a0522d', fontSize: 15, marginBottom: 2 }}>{m.nombre}</div>
-                      <div style={{ fontSize: 13, color: '#400B19', opacity: 0.8 }}>{m.especie}</div>
-                      <div style={{ fontSize: 12, color: '#400B19', opacity: 0.6 }}>{m.raza}</div>
-                      <div style={{ fontSize: 12, color: '#400B19', opacity: 0.5 }}>{m.edad ? `${m.edad} años` : ''}</div>
                     </div>
-                  ))}
+                  </div>
                 </div>
-              )}
-            </div>
-          )}
+              );
+            })()
+          }
         </div>
       ) : (
         // Persona: mascotas propias

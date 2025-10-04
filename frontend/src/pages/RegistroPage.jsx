@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './LoginPage.css';
+import { formatRut, cleanRut } from '../utils/rut';
 import { registrarPersona, registrarEmpresa } from '../api/authApi';
 function RegistroPage() {
   // Fecha máxima local para el input de fecha
@@ -15,7 +16,7 @@ function RegistroPage() {
   const [contraseña, setContraseña] = useState('');
   const [correo, setCorreo] = useState('');
   const [ubicacion, setUbicacion] = useState('');
-  const [numeroWhatsapp, setNumeroWhatsapp] = useState('');
+  // número Whatsapp ahora separado en sufijo (sin prefijo +569)
   const [fechaNacimiento, setFechaNacimiento] = useState('');
   const [condicionesHogar, setCondicionesHogar] = useState('');
   // Empresa
@@ -23,7 +24,7 @@ function RegistroPage() {
   const [rutEmpresa, setRutEmpresa] = useState('');
   const [correoEmpresa, setCorreoEmpresa] = useState('');
   const [direccion, setDireccion] = useState('');
-  const [telefonoContacto, setTelefonoContacto] = useState('');
+  const [telefonoContactoSuffix, setTelefonoContactoSuffix] = useState('');
   const [ubicacionEmpresa, setUbicacionEmpresa] = useState('');
   const [certificadoLegal, setCertificadoLegal] = useState(null);
   const [error, setError] = useState('');
@@ -31,13 +32,16 @@ function RegistroPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   function validarRut(rut) {
-    // Validación simple de formato chileno
-    return /^\d{1,2}\.\d{3}\.\d{3}-[\dkK]$/.test(rut);
+    // Accept formatted or plain RUT; clean then validate length and dv
+    const s = cleanRut(rut);
+    return /^\d{7,8}[\dkK]$/.test(s);
   }
 
   function validarEmail(email) {
     return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);
   }
+
+  const [numeroWhatsappSuffix, setNumeroWhatsappSuffix] = useState('');
 
   function validarWhatsapp(numero) {
     // Formato chileno: +569XXXXXXXX
@@ -51,7 +55,7 @@ function RegistroPage() {
   setSuccess('');
   setIsSubmitting(true);
     if (tipoPerfil === 'PERSONA') {
-      if (!rut || !nombreCompleto || !contraseña || !correo || !ubicacion || !numeroWhatsapp || !fechaNacimiento || !condicionesHogar) {
+      if (!rut || !nombreCompleto || !contraseña || !correo || !ubicacion || !numeroWhatsappSuffix || !fechaNacimiento || !condicionesHogar) {
         setError('Completa todos los campos.');
         setIsSubmitting(false);
         return;
@@ -66,7 +70,8 @@ function RegistroPage() {
         setIsSubmitting(false);
         return;
       }
-      if (!validarWhatsapp(numeroWhatsapp)) {
+      const numeroWhatsappFull = '+569' + numeroWhatsappSuffix;
+      if (!validarWhatsapp(numeroWhatsappFull)) {
         setError('Número de WhatsApp inválido. Usa el formato +569XXXXXXXX');
         setIsSubmitting(false);
         return;
@@ -97,7 +102,7 @@ function RegistroPage() {
           condicionesHogar,
           activo: true,
           ubicacion,
-          numeroWhatsapp,
+          numeroWhatsapp: numeroWhatsappFull,
           fechaNacimiento: fechaNacimientoFormateada
         });
         if (result && result.success) {
@@ -115,7 +120,7 @@ function RegistroPage() {
       }
     } else {
       // EMPRESA
-      if (!nombreEmpresa || !rutEmpresa || !correoEmpresa || !contraseña || !direccion || !telefonoContacto || !ubicacionEmpresa || !certificadoLegal) {
+      if (!nombreEmpresa || !rutEmpresa || !correoEmpresa || !contraseña || !direccion || !telefonoContactoSuffix || !ubicacionEmpresa || !certificadoLegal) {
         setError('Completa todos los campos, incluyendo el certificado legal.');
         return;
       }
@@ -131,8 +136,9 @@ function RegistroPage() {
         setError('La contraseña debe tener al menos 6 caracteres.');
         return;
       }
-      if (!telefonoContacto.match(/^\+56\d{9}$/)) {
-        setError('Teléfono de contacto inválido. Usa el formato +569XXXXXXXX');
+      const telefonoContactoFull = '+569' + telefonoContactoSuffix;
+      if (!telefonoContactoFull.match(/^\+569\d{8}$/)) {
+        setError('Teléfono de contacto inválido. Usa el formato +569XXXXXXXX (ej: +56912345678)');
         return;
       }
       try {
@@ -142,7 +148,7 @@ function RegistroPage() {
           correo: correoEmpresa,
           contraseña,
           direccion,
-          telefonoContacto,
+          telefonoContacto: telefonoContactoFull,
           ubicacion: ubicacionEmpresa,
           certificadoLegal,
           tipoPerfil: 'EMPRESA',
@@ -165,18 +171,7 @@ function RegistroPage() {
     }
   };
 
-  // Ícono dinámico según perfil
-  const perfilIcon = tipoPerfil === 'PERSONA'
-    ? (<svg width="70" height="70" viewBox="0 0 24 24" fill="#fff"><circle cx="12" cy="8" r="5" /><ellipse cx="12" cy="19" rx="7" ry="4" /></svg>)
-    : (
-      <svg width="70" height="70" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="4" y="8" width="16" height="12" rx="3" fill="#fff" stroke="#F29C6B" strokeWidth="2" />
-        <rect x="8" y="12" width="2" height="4" rx="1" fill="#F29C6B" />
-        <rect x="14" y="12" width="2" height="4" rx="1" fill="#F29C6B" />
-        <rect x="11" y="15" width="2" height="5" rx="1" fill="#F29C6B" />
-        <rect x="10" y="8" width="4" height="3" rx="1" fill="#F29C6B" />
-      </svg>
-    );
+  // ...existing code...
 
   // Detectar si es móvil
   const isMobile = window.innerWidth < 600;
@@ -206,7 +201,7 @@ function RegistroPage() {
               setCorreoEmpresa('');
               setContraseña('');
               setDireccion('');
-              setTelefonoContacto('');
+              setTelefonoContactoSuffix('');
               setUbicacionEmpresa('');
               setCertificadoLegal(null);
               // Limpiar también campos de persona por consistencia
@@ -214,7 +209,7 @@ function RegistroPage() {
               setNombreCompleto('');
               setCorreo('');
               setUbicacion('');
-              setNumeroWhatsapp('');
+              setNumeroWhatsappSuffix('');
               setFechaNacimiento('');
               setCondicionesHogar('');
               setError('');
@@ -223,7 +218,8 @@ function RegistroPage() {
               setTimeout(() => {
                 const inputs = document.querySelectorAll('input, textarea');
                 inputs.forEach(input => {
-                  if (input.type !== 'submit' && input.type !== 'button') {
+                  // don't clear submit/button elements or disabled controls (prefix +569 is disabled)
+                  if (input.type !== 'submit' && input.type !== 'button' && !input.disabled) {
                     input.value = '';
                   }
                 });
@@ -249,7 +245,7 @@ function RegistroPage() {
               setContraseña('');
               setCorreo('');
               setUbicacion('');
-              setNumeroWhatsapp('');
+              setNumeroWhatsappSuffix('');
               setFechaNacimiento('');
               setCondicionesHogar('');
               // Limpiar también campos de empresa por consistencia
@@ -257,7 +253,7 @@ function RegistroPage() {
               setRutEmpresa('');
               setCorreoEmpresa('');
               setDireccion('');
-              setTelefonoContacto('');
+              setTelefonoContactoSuffix('');
               setUbicacionEmpresa('');
               setCertificadoLegal(null);
               setError('');
@@ -266,7 +262,8 @@ function RegistroPage() {
               setTimeout(() => {
                 const inputs = document.querySelectorAll('input, textarea');
                 inputs.forEach(input => {
-                  if (input.type !== 'submit' && input.type !== 'button') {
+                  // don't clear submit/button elements or disabled controls (prefix +569 is disabled)
+                  if (input.type !== 'submit' && input.type !== 'button' && !input.disabled) {
                     input.value = '';
                   }
                 });
@@ -295,7 +292,7 @@ function RegistroPage() {
               {tipoPerfil === 'PERSONA' ? (
                 <>
                   <label style={{ width: isMobile ? '100%' : 'auto', textAlign: isMobile ? 'left' : 'inherit' }}>RUT</label>
-                  <input type="text" value={rut} onChange={e => setRut(e.target.value)} placeholder="Ej: 12.345.678-9" style={{ fontSize: isMobile ? 17 : 20, padding: isMobile ? '12px' : '16px', borderRadius: 12, width: isMobile ? '100%' : 'auto' }} />
+                  <input type="text" value={rut} onChange={e => setRut(formatRut(e.target.value.replace(/[^0-9kK.-]/g, '')))} onBlur={e => setRut(formatRut(e.target.value))} onFocus={e => setRut(cleanRut(e.target.value))} placeholder="Ej: 12.345.678-9" style={{ fontSize: isMobile ? 17 : 20, padding: isMobile ? '12px' : '16px', borderRadius: 12, width: isMobile ? '100%' : 'auto' }} />
                   <label style={{ width: isMobile ? '100%' : 'auto', textAlign: isMobile ? 'left' : 'inherit' }}>Nombre completo</label>
                   <input type="text" value={nombreCompleto} onChange={e => setNombreCompleto(e.target.value)} placeholder="Nombre completo" style={{ fontSize: isMobile ? 17 : 20, padding: isMobile ? '12px' : '16px', borderRadius: 12, width: isMobile ? '100%' : 'auto' }} />
                   <label style={{ width: isMobile ? '100%' : 'auto', textAlign: isMobile ? 'left' : 'inherit' }}>Email</label>
@@ -311,7 +308,10 @@ function RegistroPage() {
                   <label style={{ width: isMobile ? '100%' : 'auto', textAlign: isMobile ? 'left' : 'inherit' }}>Ubicación</label>
                   <input type="text" value={ubicacion} onChange={e => setUbicacion(e.target.value)} placeholder="Ciudad, Región" style={{ fontSize: isMobile ? 17 : 20, padding: isMobile ? '12px' : '16px', borderRadius: 12, width: isMobile ? '100%' : 'auto' }} />
                   <label style={{ width: isMobile ? '100%' : 'auto', textAlign: isMobile ? 'left' : 'inherit' }}>Número de WhatsApp</label>
-                  <input type="text" value={numeroWhatsapp} onChange={e => setNumeroWhatsapp(e.target.value)} placeholder="Ej: +56912345678" style={{ fontSize: isMobile ? 17 : 20, padding: isMobile ? '12px' : '16px', borderRadius: 12, width: isMobile ? '100%' : 'auto' }} />
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <input type="text" value="+569" disabled style={{ fontSize: isMobile ? 17 : 20, padding: isMobile ? '12px' : '16px', borderRadius: 12, border: '2px solid #eee', background: '#f5f5f5', width: 90, textAlign: 'center' }} />
+                    <input type="text" value={numeroWhatsappSuffix} onChange={e => { const digits = (e.target.value || '').replace(/\D/g, ''); const suffix = digits.slice(0,8); setNumeroWhatsappSuffix(suffix); }} placeholder="12345678" style={{ fontSize: isMobile ? 17 : 20, padding: isMobile ? '12px' : '16px', borderRadius: 12, width: isMobile ? '100%' : 'auto' }} />
+                  </div>
                   <label style={{ width: isMobile ? '100%' : 'auto', textAlign: isMobile ? 'left' : 'inherit' }}>Fecha de nacimiento</label>
                   <input
                     type="date"
@@ -328,7 +328,7 @@ function RegistroPage() {
                   <label style={{ width: isMobile ? '100%' : 'auto', textAlign: isMobile ? 'left' : 'inherit' }}>Nombre de la empresa</label>
                   <input type="text" value={nombreEmpresa} onChange={e => setNombreEmpresa(e.target.value)} placeholder="Nombre de la empresa" style={{ fontSize: isMobile ? 17 : 20, padding: isMobile ? '12px' : '16px', borderRadius: 12, width: isMobile ? '100%' : 'auto' }} />
                   <label style={{ width: isMobile ? '100%' : 'auto', textAlign: isMobile ? 'left' : 'inherit' }}>RUT de la empresa</label>
-                  <input type="text" value={rutEmpresa} onChange={e => setRutEmpresa(e.target.value)} placeholder="Ej: 12.345.678-9" style={{ fontSize: isMobile ? 17 : 20, padding: isMobile ? '12px' : '16px', borderRadius: 12, width: isMobile ? '100%' : 'auto' }} />
+                  <input type="text" value={rutEmpresa} onChange={e => setRutEmpresa(formatRut(e.target.value.replace(/[^0-9kK.-]/g, '')))} onBlur={e => setRutEmpresa(formatRut(e.target.value))} onFocus={e => setRutEmpresa(cleanRut(e.target.value))} placeholder="Ej: 12.345.678-9" style={{ fontSize: isMobile ? 17 : 20, padding: isMobile ? '12px' : '16px', borderRadius: 12, width: isMobile ? '100%' : 'auto' }} />
                   <label style={{ width: isMobile ? '100%' : 'auto', textAlign: isMobile ? 'left' : 'inherit' }}>Email de contacto</label>
                   <input type="email" value={correoEmpresa} onChange={e => setCorreoEmpresa(e.target.value)} placeholder="Correo electrónico" style={{ fontSize: isMobile ? 17 : 20, padding: isMobile ? '12px' : '16px', borderRadius: 12, width: isMobile ? '100%' : 'auto' }} />
                   <label style={{ width: isMobile ? '100%' : 'auto', textAlign: isMobile ? 'left' : 'inherit' }}>Contraseña</label>
@@ -342,7 +342,10 @@ function RegistroPage() {
                   <label style={{ width: isMobile ? '100%' : 'auto', textAlign: isMobile ? 'left' : 'inherit' }}>Dirección</label>
                   <input type="text" value={direccion} onChange={e => setDireccion(e.target.value)} placeholder="Dirección completa" style={{ fontSize: isMobile ? 17 : 20, padding: isMobile ? '12px' : '16px', borderRadius: 12, width: isMobile ? '100%' : 'auto' }} />
                   <label style={{ width: isMobile ? '100%' : 'auto', textAlign: isMobile ? 'left' : 'inherit' }}>Teléfono de contacto</label>
-                  <input type="text" value={telefonoContacto} onChange={e => setTelefonoContacto(e.target.value)} placeholder="Ej: +56912345678" style={{ fontSize: isMobile ? 17 : 20, padding: isMobile ? '12px' : '16px', borderRadius: 12, width: isMobile ? '100%' : 'auto' }} />
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                        <input type="text" value="+569" disabled style={{ fontSize: isMobile ? 17 : 20, padding: isMobile ? '12px' : '16px', borderRadius: 12, border: '2px solid #eee', background: '#f5f5f5', width: 90, textAlign: 'center' }} />
+                        <input type="text" value={telefonoContactoSuffix} onChange={e => { const digits = (e.target.value || '').replace(/\D/g, ''); const suffix = digits.slice(0,8); setTelefonoContactoSuffix(suffix); }} placeholder="12345678" style={{ fontSize: isMobile ? 17 : 20, padding: isMobile ? '12px' : '16px', borderRadius: 12, width: isMobile ? '100%' : 'auto' }} />
+                      </div>
                   <label style={{ width: isMobile ? '100%' : 'auto', textAlign: isMobile ? 'left' : 'inherit' }}>Ubicación</label>
                   <input type="text" value={ubicacionEmpresa} onChange={e => setUbicacionEmpresa(e.target.value)} placeholder="Ciudad, Región" style={{ fontSize: isMobile ? 17 : 20, padding: isMobile ? '12px' : '16px', borderRadius: 12, width: isMobile ? '100%' : 'auto' }} />
                   <label style={{ width: isMobile ? '100%' : 'auto', textAlign: isMobile ? 'left' : 'inherit' }}>Certificado legal (PDF/JPG)</label>

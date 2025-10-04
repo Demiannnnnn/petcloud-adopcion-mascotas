@@ -1,9 +1,9 @@
 package com.example.pets_service.controller;
 
+import java.io.IOException;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,8 +13,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import com.example.pets_service.model.Mascota;
 import com.example.pets_service.service.MascotaService;
@@ -33,19 +31,10 @@ public class MascotaController {
 			// Retornar la URL pública
 			String imageUrl = "/uploads/" + file.getOriginalFilename();
 			return ResponseEntity.ok(imageUrl);
-		} catch (Exception e) {
+		} catch (IOException | IllegalStateException e) {
 			return ResponseEntity.status(500).body("Error al subir la imagen: " + e.getMessage());
 		}
 	}
-// Configuración para servir archivos estáticos desde /uploads
-@Configuration
-class WebConfig implements WebMvcConfigurer {
-	@Override
-	public void addResourceHandlers(ResourceHandlerRegistry registry) {
-		registry.addResourceHandler("/uploads/**")
-				.addResourceLocations("file:" + System.getProperty("user.dir") + "/uploads/");
-	}
-}
 	private final MascotaService mascotaService;
 
 	@Autowired
@@ -56,6 +45,11 @@ class WebConfig implements WebMvcConfigurer {
 	@GetMapping
 	public List<Mascota> listarMascotas() {
 		return mascotaService.listarMascotas();
+	}
+
+	@GetMapping("/refugio/{id}")
+	public List<Mascota> listarPorRefugio(@org.springframework.web.bind.annotation.PathVariable Long id) {
+		return mascotaService.listarPorRefugio(id);
 	}
 
 	@GetMapping("/propietario/{id}")
@@ -82,7 +76,7 @@ class WebConfig implements WebMvcConfigurer {
 		public String sexo;
 		public String tamaño;
 		public List<String> vacunas;
-		public String esterilizado;
+	public Boolean esterilizado;
 		public List<String> enfermedades;
 		public List<String> documentos;
 		public String descripcion;
@@ -109,8 +103,8 @@ class WebConfig implements WebMvcConfigurer {
 		public void setTamaño(String tamaño) { this.tamaño = tamaño; }
 		public List<String> getVacunas() { return vacunas; }
 		public void setVacunas(List<String> vacunas) { this.vacunas = vacunas; }
-		public String getEsterilizado() { return esterilizado; }
-		public void setEsterilizado(String esterilizado) { this.esterilizado = esterilizado; }
+	public Boolean getEsterilizado() { return esterilizado; }
+	public void setEsterilizado(Boolean esterilizado) { this.esterilizado = esterilizado; }
 		public List<String> getEnfermedades() { return enfermedades; }
 		public void setEnfermedades(List<String> enfermedades) { this.enfermedades = enfermedades; }
 		public List<String> getDocumentos() { return documentos; }
