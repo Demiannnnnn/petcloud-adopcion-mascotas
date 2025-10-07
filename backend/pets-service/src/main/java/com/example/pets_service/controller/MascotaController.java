@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.example.pets_service.dto.PublicMascotaDTO;
 import com.example.pets_service.model.Mascota;
 import com.example.pets_service.service.MascotaService;
 
@@ -43,7 +44,7 @@ public class MascotaController {
 	}
 
 	@GetMapping
-	public List<Mascota> listarMascotas() {
+	public List<PublicMascotaDTO> listarMascotas() {
 		return mascotaService.listarMascotas();
 	}
 

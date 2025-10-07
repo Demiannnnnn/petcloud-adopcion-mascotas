@@ -52,8 +52,7 @@ function PaginaPrincipal() {
   const navigate = useNavigate();
   const [modalOpen, setModalOpen] = useState(false);
   const [mascotas, setMascotas] = useState([]);
-  // eslint-disable-next-line no-unused-vars
-  const [publicMascotas, _setPublicMascotas] = useState([]);
+  const [publicMascotas, setPublicMascotas] = useState([]);
   const [search, setSearch] = useState('');
 
   // Cargar mascotas del usuario al iniciar sesión o recargar
@@ -80,6 +79,27 @@ function PaginaPrincipal() {
     fetchMascotasUsuario();
   }, [user]);
 
+  // Cargar mascotas públicas (disponibles para adopción)
+  React.useEffect(() => {
+    async function fetchPublicMascotas() {
+      try {
+        const API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8082';
+        const res = await fetch(`${API_BASE}/api/mascotas`);
+        if (res.ok) {
+          const data = await res.json();
+          // Filtrar sólo las que están disponibles para adopción
+          const disponibles = Array.isArray(data) ? data.filter(m => m.disponibleAdopcion) : [];
+          setPublicMascotas(disponibles);
+        } else {
+          setPublicMascotas([]);
+        }
+      } catch (err) {
+        setPublicMascotas([]);
+      }
+    }
+    fetchPublicMascotas();
+  }, []);
+
   // Cargar refugios asociados a la empresa cuando el usuario es empresa
   React.useEffect(() => {
     async function fetchRefugiosEmpresa() {
@@ -97,11 +117,14 @@ function PaginaPrincipal() {
     fetchRefugiosEmpresa();
   }, [user]);
 
-  // Filtro simple para el feed público
-  const filteredPublicMascotas = publicMascotas.filter(m =>
-    m.nombre.toLowerCase().includes(search.toLowerCase()) ||
-    m.especie.toLowerCase().includes(search.toLowerCase())
-  );
+  // Excluir mascotas del propio usuario y filtro simple para el feed público
+  const ownerId = user?.id || (user?.perfil && user.perfil.id);
+  const filteredPublicMascotas = publicMascotas
+    .filter(m => String(m.propietarioId) !== String(ownerId))
+    .filter(m =>
+      m.nombre.toLowerCase().includes(search.toLowerCase()) ||
+      m.especie.toLowerCase().includes(search.toLowerCase())
+    );
 
   // Detectar si es móvil
   const isMobile = window.innerWidth < 600;
@@ -223,15 +246,21 @@ function PaginaPrincipal() {
             {filteredPublicMascotas.length === 0 ? (
               <div style={{ color: '#a0522d', fontSize: isMobile ? 15 : 18, opacity: 0.7 }}>No hay mascotas disponibles para adopción.</div>
             ) : (
-              filteredPublicMascotas.map((m, i) => (
-                <MascotaCard
-                  key={i}
-                  mascota={m}
-                  onEdit={null}
-                  onDelete={null}
-                  isPublic={true}
-                />
-              ))
+              filteredPublicMascotas.map((m) => {
+                // Preferir el nombre resuelto por el backend si existe
+                const publicadoPor = m.publicadoPorName
+                  || (m.refugioId ? `Refugio #${m.refugioId}` : (m.propietarioId ? `Usuario #${m.propietarioId}` : undefined));
+                return (
+                  <MascotaCard
+                    key={m.id || `${m.nombre}-${m.propietarioId || m.refugioId}`}
+                    mascota={m}
+                    onEdit={null}
+                    onDelete={null}
+                    isPublic={true}
+                    publicadoPor={publicadoPor}
+                  />
+                );
+              })
             )}
           </div>
         </div>

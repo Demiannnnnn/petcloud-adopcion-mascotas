@@ -8,14 +8,28 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import com.example.pets_service.controller.MascotaController.MascotaRegistroDTO;
+import com.example.pets_service.dto.PublicMascotaDTO;
 import com.example.pets_service.model.Mascota;
 import com.example.pets_service.repository.MascotaRepository;
 
 @Service
 public class MascotaService {
+	@org.springframework.context.annotation.Configuration
+	public static class RestConfig {
+		@Bean
+		public RestTemplate restTemplate() {
+			org.springframework.http.client.SimpleClientHttpRequestFactory f = new org.springframework.http.client.SimpleClientHttpRequestFactory();
+			// Timeouts cortos para no bloquear la API pública si users-service está caído
+			f.setConnectTimeout(1000); // 1s
+			f.setReadTimeout(2000); // 2s
+			return new RestTemplate(f);
+		}
+	}
 	public List<Mascota> listarPorPropietario(Long propietarioId) {
 		return mascotaRepository.findByPropietarioId(propietarioId);
 	}
@@ -26,8 +40,69 @@ public class MascotaService {
 		this.mascotaRepository = mascotaRepository;
 	}
 
-	public List<Mascota> listarMascotas() {
-		return mascotaRepository.findAll();
+	@Autowired
+	private RestTemplate restTemplate;
+
+	// Caches simples para nombres de refugio y perfil (evita llamadas repetidas)
+	private final java.util.concurrent.ConcurrentMap<Long, String> refugioCache = new java.util.concurrent.ConcurrentHashMap<>();
+	private final java.util.concurrent.ConcurrentMap<Long, String> perfilCache = new java.util.concurrent.ConcurrentHashMap<>();
+
+	public List<PublicMascotaDTO> listarMascotas() {
+		List<Mascota> all = mascotaRepository.findAll();
+		java.util.List<PublicMascotaDTO> out = new java.util.ArrayList<>();
+		java.util.Map<String,String> env = System.getenv();
+		String usersBase = env.getOrDefault("USERS_API_BASE", "http://localhost:8081");
+		for (Mascota m : all) {
+			PublicMascotaDTO dto = new PublicMascotaDTO();
+			dto.id = m.getId();
+			dto.propietarioId = m.getPropietarioId();
+			dto.refugioId = m.getRefugioId();
+			dto.nombre = m.getNombre();
+			dto.especie = m.getEspecie();
+			dto.raza = m.getRaza();
+			dto.edad = m.getEdad();
+			dto.sexo = m.getSexo();
+			dto.ubicacion = m.getUbicacion();
+			dto.descripcion = m.getDescripcion();
+			dto.disponibleAdopcion = m.getDisponibleAdopcion();
+			dto.fechaRegistro = m.getFechaRegistro();
+			dto.imagenUrl = m.getImagenUrl();
+			dto.publicadoPorName = null;
+				try {
+				if (m.getRefugioId() != null) {
+					Long rid = m.getRefugioId();
+					dto.publicadoPorName = refugioCache.computeIfAbsent(rid, id -> {
+						try {
+							String url = usersBase + "/api/refugios/" + id;
+							java.util.Map resp = restTemplate.getForObject(url, java.util.Map.class);
+							if (resp != null && resp.get("nombre") != null) return String.valueOf(resp.get("nombre"));
+						} catch (org.springframework.web.client.RestClientException ex) {
+							// ignore
+						}
+						return null;
+					});
+				} else if (m.getPropietarioId() != null) {
+					Long pid = m.getPropietarioId();
+					dto.publicadoPorName = perfilCache.computeIfAbsent(pid, id -> {
+						try {
+							String url = usersBase + "/api/perfil/" + id;
+							java.util.Map resp = restTemplate.getForObject(url, java.util.Map.class);
+							if (resp != null) {
+								if (resp.get("nombreCompleto") != null) return String.valueOf(resp.get("nombreCompleto"));
+								if (resp.get("nombreEmpresa") != null) return String.valueOf(resp.get("nombreEmpresa"));
+							}
+						} catch (org.springframework.web.client.RestClientException ex) {
+							// ignore
+						}
+						return null;
+					});
+				}
+			} catch (org.springframework.web.client.RestClientException e) {
+				// ignore resolution errors from remote lookups
+			}
+			out.add(dto);
+		}
+		return out;
 	}
 
 	public List<Mascota> listarPorRefugio(Long refugioId) {

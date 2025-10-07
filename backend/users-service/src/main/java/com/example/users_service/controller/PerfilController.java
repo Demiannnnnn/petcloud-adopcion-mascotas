@@ -1,6 +1,9 @@
 package com.example.users_service.controller;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,6 +23,8 @@ public class PerfilController {
 	public PerfilController(SistemaAutenticacion sistemaAutenticacion) {
 		this.sistemaAutenticacion = sistemaAutenticacion;
 	}
+    
+	// GET /api/perfil/{id} - devuelve PerfilDTO si existe
 
 	@PostMapping("/login")
 	public Object login(@RequestBody LoginRequest loginRequest) {
@@ -77,6 +82,12 @@ public class PerfilController {
 			this.perfil = perfil;
 		}
 	}
+    @GetMapping("/perfil/{id}")
+    public ResponseEntity<?> getPerfilById(@PathVariable Long id) {
+        com.example.users_service.model.Perfil perfil = sistemaAutenticacion.getPerfilById(id);
+        if (perfil == null) return ResponseEntity.status(404).body(new LoginResponse(false, "Perfil no encontrado"));
+        return ResponseEntity.ok(new PerfilDTO(perfil));
+    }
 
 	static class PerfilDTO {
 		public Long id;

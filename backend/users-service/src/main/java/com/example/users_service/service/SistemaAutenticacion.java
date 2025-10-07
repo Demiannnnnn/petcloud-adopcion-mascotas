@@ -39,4 +39,13 @@ public class SistemaAutenticacion {
             .filter(empresa -> org.springframework.security.crypto.bcrypt.BCrypt.checkpw(contraseña, empresa.getContraseña()))
             .orElse(null);
     }
+
+    public com.example.users_service.model.Perfil getPerfilById(Long id) {
+        // Buscar primero en Persona
+        java.util.Optional<Persona> p = personaRepository.findById(id);
+        if (p.isPresent()) return p.get();
+        java.util.Optional<Empresa> e = empresaRepository.findById(id);
+        if (e.isPresent()) return e.get();
+        return null;
+    }
 }

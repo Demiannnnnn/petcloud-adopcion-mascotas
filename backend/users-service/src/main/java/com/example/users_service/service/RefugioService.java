@@ -20,4 +20,8 @@ public class RefugioService {
     public Refugio registrarRefugio(Refugio refugio) {
         return refugioRepository.save(refugio);
     }
+
+    public java.util.Optional<Refugio> getRefugioById(Long id) {
+        return refugioRepository.findById(id);
+    }
 }

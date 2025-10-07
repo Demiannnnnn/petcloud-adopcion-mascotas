@@ -26,6 +26,17 @@ public class RefugioController {
         return refugioService.getRefugiosByEmpresa(empresaId);
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getRefugioById(@PathVariable Long id) {
+        try {
+            java.util.Optional<com.example.users_service.model.Refugio> opt = refugioService.getRefugioById(id);
+            if (opt.isPresent()) return ResponseEntity.ok(opt.get());
+            return ResponseEntity.status(404).body(new ErrorResponse("Refugio no encontrado"));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(new ErrorResponse("Error interno"));
+        }
+    }
+
     @PostMapping
     public ResponseEntity<?> registrarRefugio(@RequestBody Refugio refugio) {
         // Validar contacto: debe ser +569 seguido de 8 dígitos

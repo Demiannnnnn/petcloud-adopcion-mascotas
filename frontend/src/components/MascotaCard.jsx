@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function MascotaCard({ mascota, onEdit, onDelete, refugioName }) {
+export default function MascotaCard({ mascota, onEdit, onDelete, refugioName, publicadoPor }) {
   const API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8082';
   const imagenSrc = mascota.imagenUrl
     ? (typeof mascota.imagenUrl === 'string'
@@ -28,6 +28,7 @@ export default function MascotaCard({ mascota, onEdit, onDelete, refugioName }) 
   <div style={{ fontWeight: 'bold', color: '#a0522d', fontSize: 18, marginBottom: 2 }}>{mascota.nombre}</div>
   <div style={{ fontSize: 15, color: '#400B19', opacity: 0.8 }}>{mascota.especie}</div>
   {refugioName && <div style={{ fontSize: 12, color: '#6b4b3a', opacity: 0.9, marginTop: 6 }}>Refugio: {refugioName}</div>}
+      {publicadoPor && <div style={{ fontSize: 12, color: '#6b4b3a', opacity: 0.9, marginTop: 6 }}>Publicado por: {publicadoPor}</div>}
       <div style={{ fontSize: 14, color: '#400B19', opacity: 0.6 }}>{mascota.raza}</div>
       <div style={{ fontSize: 13, color: '#400B19', opacity: 0.5 }}>{mascota.edad ? `${mascota.edad} años` : ''}</div>
       {/* íconos de editar y eliminar eliminados */}

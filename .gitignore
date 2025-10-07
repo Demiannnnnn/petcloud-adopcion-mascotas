@@ -33,3 +33,10 @@ coverage/
 # Others
 *.swp
 *.swo
+
+# Maven / Java
+target/
+**/target/
+
+# logs
+*.log
