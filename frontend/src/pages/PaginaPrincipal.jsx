@@ -54,6 +54,7 @@ function PaginaPrincipal() {
   const [mascotas, setMascotas] = useState([]);
   const [publicMascotas, setPublicMascotas] = useState([]);
   const [search, setSearch] = useState('');
+  const [speciesFilter, setSpeciesFilter] = useState('ALL');
 
   // Cargar mascotas del usuario al iniciar sesión o recargar
   React.useEffect(() => {
@@ -121,10 +122,21 @@ function PaginaPrincipal() {
   const ownerId = user?.id || (user?.perfil && user.perfil.id);
   const filteredPublicMascotas = publicMascotas
     .filter(m => String(m.propietarioId) !== String(ownerId))
-    .filter(m =>
-      m.nombre.toLowerCase().includes(search.toLowerCase()) ||
-      m.especie.toLowerCase().includes(search.toLowerCase())
-    );
+    .filter(m => {
+      // Species filter
+      if (speciesFilter && speciesFilter !== 'ALL') {
+        if (speciesFilter === 'OTROS') {
+          // treat especies other than Perro/Gato as OTROS
+          if (m.especie && ['perro', 'gato'].includes(m.especie.toLowerCase())) return false;
+        } else {
+          if (!m.especie || m.especie.toLowerCase() !== speciesFilter.toLowerCase()) return false;
+        }
+      }
+      // Text search across nombre and especie
+      const q = (search || '').toLowerCase();
+      if (!q) return true;
+      return (m.nombre || '').toLowerCase().includes(q) || (m.especie || '').toLowerCase().includes(q);
+    });
 
   // Detectar si es móvil
   const isMobile = window.innerWidth < 600;
@@ -236,9 +248,28 @@ function PaginaPrincipal() {
               style={{ flex: 1, height: isMobile ? 38 : 48, background: '#fff', borderRadius: 32, border: '3px solid #400B19', fontSize: isMobile ? 16 : 22, padding: '0 16px', color: '#400B19', boxShadow: '0 2px 8px rgba(64,11,25,0.10)', marginBottom: isMobile ? 8 : 0 }}
             />
             <div style={{ display: 'flex', flexDirection: 'row', gap: 8 }}>
-              <button style={{ background: '#F29C6B', color: '#fff', border: 'none', borderRadius: 14, padding: isMobile ? '6px 10px' : '8px 18px', fontWeight: 'bold', fontSize: isMobile ? 13 : 15, cursor: 'pointer', boxShadow: '0 2px 8px rgba(64,11,25,0.10)' }}>Perros</button>
-              <button style={{ background: '#F29C6B', color: '#fff', border: 'none', borderRadius: 14, padding: isMobile ? '6px 10px' : '8px 18px', fontWeight: 'bold', fontSize: isMobile ? 13 : 15, cursor: 'pointer', boxShadow: '0 2px 8px rgba(64,11,25,0.10)' }}>Gatos</button>
-              <button style={{ background: '#F29C6B', color: '#fff', border: 'none', borderRadius: 14, padding: isMobile ? '6px 10px' : '8px 18px', fontWeight: 'bold', fontSize: isMobile ? 13 : 15, cursor: 'pointer', boxShadow: '0 2px 8px rgba(64,11,25,0.10)' }}>Otros</button>
+              {['Perro', 'Gato', 'Otro'].map(spec => {
+                const isActive = speciesFilter === (spec === 'Otro' ? 'OTROS' : spec);
+                return (
+                  <button
+                    key={spec}
+                    onClick={() => setSpeciesFilter(isActive ? 'ALL' : (spec === 'Otro' ? 'OTROS' : spec))}
+                    style={{
+                      background: isActive ? '#400B19' : '#F29C6B',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: 14,
+                      padding: isMobile ? '6px 10px' : '8px 18px',
+                      fontWeight: 'bold',
+                      fontSize: isMobile ? 13 : 15,
+                      cursor: 'pointer',
+                      boxShadow: '0 2px 8px rgba(64,11,25,0.10)'
+                    }}
+                  >
+                    {spec === 'Otro' ? 'Otros' : spec + 's'}
+                  </button>
+                );
+              })}
             </div>
           </div>
           {/* Feed público de mascotas */}
