@@ -1,6 +1,7 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { formatRut } from '../utils/rut';
+import { Link } from 'react-router-dom';
 import { getRefugiosByEmpresa } from '../api/refugiosApi';
 import { getMascotasByRefugio } from '../api/petsApi';
 import MascotaCard from '../components/MascotaCard';
@@ -104,6 +105,7 @@ export default function PerfilPage() {
         <div style={{ display: 'flex', gap: 12, marginTop: 10 }}>
           <button style={{ background: '#F29C6B', color: '#fff', border: 'none', borderRadius: 14, padding: '8px 18px', fontWeight: 'bold', fontSize: 15, cursor: 'pointer', boxShadow: '0 2px 8px rgba(64,11,25,0.10)' }}>Editar datos</button>
           <button style={{ background: '#400B19', color: '#fff', border: 'none', borderRadius: 14, padding: '8px 18px', fontWeight: 'bold', fontSize: 15, cursor: 'pointer', boxShadow: '0 2px 8px rgba(64,11,25,0.10)' }}>Cambiar contraseña</button>
+          <Link to="/mis-solicitudes" style={{ background: '#F29C6B', color: '#fff', borderRadius: 14, padding: '8px 18px', fontWeight: 'bold', textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>Mis solicitudes</Link>
         </div>
         <button
           onClick={logout}

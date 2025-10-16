@@ -7,6 +7,7 @@ import LoginPage from './pages/LoginPage';
 import RegistroPage from './pages/RegistroPage';
 import PaginaPrincipal from './pages/PaginaPrincipal';
 import PerfilPage from './pages/PerfilPage';
+import MisSolicitudes from './pages/MisSolicitudes';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -25,6 +26,11 @@ function App() {
         <Route path="/perfil" element={
           <ProtectedRoute>
             <PerfilPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/mis-solicitudes" element={
+          <ProtectedRoute>
+            <MisSolicitudes />
           </ProtectedRoute>
         } />
         {/* Puedes agregar más rutas protegidas aquí */}

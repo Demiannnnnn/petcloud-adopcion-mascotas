@@ -4,6 +4,7 @@ import { toast } from 'react-toastify';
 import { getRefugiosByEmpresa, registrarRefugio } from '../api/refugiosApi';
 import { useNavigate } from 'react-router-dom';
 import MascotaRegistroModal from '../components/MascotaRegistroModal';
+import SolicitarAdopcionModal from '../components/SolicitarAdopcionModal';
 import MascotaCard from '../components/MascotaCard';
 import { AuthContext } from '../context/AuthContext';
 import './LoginPage.css';
@@ -51,8 +52,12 @@ function PaginaPrincipal() {
   };
   const navigate = useNavigate();
   const [modalOpen, setModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingMascota, setEditingMascota] = useState(null);
   const [mascotas, setMascotas] = useState([]);
   const [publicMascotas, setPublicMascotas] = useState([]);
+  const [adoptionModalOpen, setAdoptionModalOpen] = useState(false);
+  const [adoptingMascota, setAdoptingMascota] = useState(null);
   const [search, setSearch] = useState('');
   const [speciesFilter, setSpeciesFilter] = useState('ALL');
 
@@ -289,6 +294,7 @@ function PaginaPrincipal() {
                     onDelete={null}
                     isPublic={true}
                     publicadoPor={publicadoPor}
+                    onRequestAdoption={(mascota) => { setAdoptingMascota(mascota); setAdoptionModalOpen(true); }}
                   />
                 );
               })
@@ -366,7 +372,7 @@ function PaginaPrincipal() {
                 <MascotaCard
                   key={i}
                   mascota={m}
-                  onEdit={() => toast.info('Función editar próximamente')}
+                  onEdit={() => { setEditingMascota(m); setEditModalOpen(true); }}
                   onDelete={() => setMascotas(mascotas.filter((_, idx) => idx !== i))}
                   refugioName={(() => {
                     const r = refugios.find(x => x.id === m.refugioId || x.id === Number(m.refugioId));
@@ -402,6 +408,33 @@ function PaginaPrincipal() {
           }
         }}
       />
+      <MascotaRegistroModal
+        open={editModalOpen}
+        onClose={() => { setEditModalOpen(false); setEditingMascota(null); }}
+        onRegister={async () => {
+          // refresh user's mascotas
+          if (user && (user.id || (user.perfil && user.perfil.id))) {
+            const propietarioId = user.id || (user.perfil && user.perfil.id);
+            try {
+              const API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8082';
+              const response = await fetch(`${API_BASE}/api/mascotas/propietario/${propietarioId}`);
+              if (response.ok) {
+                const data = await response.json();
+                setMascotas(Array.isArray(data) ? data : []);
+              } else {
+                setMascotas([]);
+              }
+            } catch (err) {
+              setMascotas([]);
+            }
+          } else {
+            setMascotas([]);
+          }
+        }}
+        isEdit={true}
+        initialData={editingMascota}
+      />
+  <SolicitarAdopcionModal open={adoptionModalOpen} onClose={(sent) => { setAdoptionModalOpen(false); setAdoptingMascota(null); if (sent) { /* optionally refresh */ } }} mascota={adoptingMascota} user={user} />
       {/* Fondo decorativo */}
       <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: -1, background: "url('/assets/fondo.png') no-repeat center center fixed", backgroundSize: 'cover', pointerEvents: 'none' }} />
     </div>

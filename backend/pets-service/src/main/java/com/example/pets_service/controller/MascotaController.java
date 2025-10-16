@@ -49,13 +49,25 @@ public class MascotaController {
 	}
 
 	@GetMapping("/refugio/{id}")
-	public List<Mascota> listarPorRefugio(@org.springframework.web.bind.annotation.PathVariable Long id) {
-		return mascotaService.listarPorRefugio(id);
+	public List<PublicMascotaDTO> listarPorRefugio(@org.springframework.web.bind.annotation.PathVariable Long id) {
+		// Use the DTO-producing listarMascotas and filter by refugioId so `media` is included
+		List<PublicMascotaDTO> all = mascotaService.listarMascotas();
+		java.util.List<PublicMascotaDTO> out = new java.util.ArrayList<>();
+		for (PublicMascotaDTO d : all) {
+			if (d.refugioId != null && d.refugioId.equals(id)) out.add(d);
+		}
+		return out;
 	}
 
 	@GetMapping("/propietario/{id}")
-	public List<Mascota> listarPorPropietario(@org.springframework.web.bind.annotation.PathVariable Long id) {
-		return mascotaService.listarPorPropietario(id);
+	public List<PublicMascotaDTO> listarPorPropietario(@org.springframework.web.bind.annotation.PathVariable Long id) {
+		// Use the DTO-producing listarMascotas and filter by propietarioId so `media` is included
+		List<PublicMascotaDTO> all = mascotaService.listarMascotas();
+		java.util.List<PublicMascotaDTO> out = new java.util.ArrayList<>();
+		for (PublicMascotaDTO d : all) {
+			if (d.propietarioId != null && d.propietarioId.equals(id)) out.add(d);
+		}
+		return out;
 	}
 
 	@PostMapping("/registrar")
@@ -65,6 +77,19 @@ public class MascotaController {
 			return ResponseEntity.ok(new RespuestaRegistro(true, "Mascota registrada exitosamente", mascota));
 		} catch (Exception e) {
 			return ResponseEntity.badRequest().body(new RespuestaRegistro(false, "Error al registrar mascota: " + e.getMessage(), null));
+		}
+	}
+
+	// Endpoint para actualizar una mascota existente
+	@org.springframework.web.bind.annotation.PutMapping("/{id}")
+	public ResponseEntity<?> actualizarMascota(@org.springframework.web.bind.annotation.PathVariable Long id, @RequestBody MascotaRegistroDTO mascotaDTO) {
+		try {
+			Mascota updated = mascotaService.actualizarMascota(id, mascotaDTO);
+			return ResponseEntity.ok(new RespuestaRegistro(true, "Mascota actualizada", updated));
+		} catch (IllegalArgumentException ia) {
+			return ResponseEntity.status(403).body(new RespuestaRegistro(false, ia.getMessage(), null));
+		} catch (Exception e) {
+			return ResponseEntity.badRequest().body(new RespuestaRegistro(false, "Error al actualizar mascota: " + e.getMessage(), null));
 		}
 	}
 
@@ -82,6 +107,7 @@ public class MascotaController {
 		public List<String> documentos;
 		public String descripcion;
 		public String foto;
+		public java.util.List<java.util.Map<String,String>> media;
 		public String ubicacion;
 		public String chip;
 	public Long propietarioId;
@@ -114,6 +140,9 @@ public class MascotaController {
 		public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
 		public String getFoto() { return foto; }
 		public void setFoto(String foto) { this.foto = foto; }
+
+		public java.util.List<java.util.Map<String,String>> getMedia() { return media; }
+		public void setMedia(java.util.List<java.util.Map<String,String>> media) { this.media = media; }
 		public String getUbicacion() { return ubicacion; }
 		public void setUbicacion(String ubicacion) { this.ubicacion = ubicacion; }
 		public String getChip() { return chip; }

@@ -29,7 +29,9 @@ public class Mascota {
     private String descripcion;
     private Boolean disponibleAdopcion;
     private java.sql.Timestamp fechaRegistro;
+    private java.time.LocalDate fechaNacimiento;
     private String imagenUrl;
+    private String mediaJson; // JSON array with additional media items [{"url":"/uploads/..","type":"image/jpeg"}, ...]
     private java.math.BigDecimal peso;
     private Boolean esterilizado;
 
@@ -82,6 +84,9 @@ public class Mascota {
     public java.sql.Timestamp getFechaRegistro() { return fechaRegistro; }
     public void setFechaRegistro(java.sql.Timestamp fechaRegistro) { this.fechaRegistro = fechaRegistro; }
 
+    public java.time.LocalDate getFechaNacimiento() { return fechaNacimiento; }
+    public void setFechaNacimiento(java.time.LocalDate fechaNacimiento) { this.fechaNacimiento = fechaNacimiento; }
+
     public String getImagenUrl() { return imagenUrl; }
     public void setImagenUrl(String imagenUrl) { this.imagenUrl = imagenUrl; }
 
@@ -90,4 +95,7 @@ public class Mascota {
 
     public Boolean getEsterilizado() { return esterilizado; }
     public void setEsterilizado(Boolean esterilizado) { this.esterilizado = esterilizado; }
+
+    public String getMediaJson() { return mediaJson; }
+    public void setMediaJson(String mediaJson) { this.mediaJson = mediaJson; }
 }
