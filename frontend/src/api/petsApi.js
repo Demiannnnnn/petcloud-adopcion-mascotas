@@ -1,5 +1,5 @@
 // Use single API base env var with fallback to localhost. Keep backwards compatibility with older env names.
-const API_BASE =
+export const API_BASE =
 	process.env.REACT_APP_API_BASE_URL || process.env.REACT_APP_API_PETS || process.env.REACT_APP_API_IP_PETS || 'http://localhost:8082';
 
 // Obtener mascotas por refugio

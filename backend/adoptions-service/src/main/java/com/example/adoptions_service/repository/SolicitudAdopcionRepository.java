@@ -8,4 +8,8 @@ import com.example.adoptions_service.model.SolicitudAdopcion;
 
 public interface SolicitudAdopcionRepository extends JpaRepository<SolicitudAdopcion, Long> {
 	List<SolicitudAdopcion> findByAdoptanteId(Long adoptanteId);
+
+	List<SolicitudAdopcion> findByMascotaId(Long mascotaId);
+
+	List<SolicitudAdopcion> findByMascotaIdIn(java.util.List<Long> mascotaIds);
 }

@@ -12,4 +12,8 @@ public interface MascotaRepository extends JpaRepository<Mascota, Long> {
 	java.util.List<Mascota> findByPropietarioId(Long propietarioId);
 	// Buscar mascotas por refugio (null si no aplica)
 	java.util.List<Mascota> findByRefugioId(Long refugioId);
+
+	@org.springframework.data.jpa.repository.Modifying
+	@org.springframework.data.jpa.repository.Query("UPDATE Mascota m SET m.disponibleAdopcion = false WHERE m.id = :id AND (m.disponibleAdopcion = true OR m.disponibleAdopcion IS NULL)")
+	int reserveIfAvailable(@org.springframework.data.repository.query.Param("id") Long id);
 }

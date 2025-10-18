@@ -18,6 +18,8 @@ import com.example.pets_service.dto.PublicMascotaDTO;
 import com.example.pets_service.model.Mascota;
 import com.example.pets_service.service.MascotaService;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 @RestController
 @RequestMapping("/api/mascotas")
 @CrossOrigin(origins = {"http://localhost:3001", "http://localhost:3000"})
@@ -46,6 +48,30 @@ public class MascotaController {
 	@GetMapping
 	public List<PublicMascotaDTO> listarMascotas() {
 		return mascotaService.listarMascotas();
+	}
+
+	@GetMapping("/{id}")
+	public ResponseEntity<PublicMascotaDTO> obtenerMascota(@org.springframework.web.bind.annotation.PathVariable Long id) {
+		List<PublicMascotaDTO> all = mascotaService.listarMascotas();
+		for (PublicMascotaDTO d : all) {
+			if (d != null && d.id != null && d.id.equals(id)) {
+				return ResponseEntity.ok(d);
+			}
+		}
+		return ResponseEntity.notFound().build();
+	}
+
+	@org.springframework.web.bind.annotation.PatchMapping("/{id}/reserve")
+	public ResponseEntity<?> reserveMascota(@org.springframework.web.bind.annotation.PathVariable Long id) {
+		try {
+			boolean ok = mascotaService.reserveMascota(id);
+			if (ok) return ResponseEntity.ok().build();
+			return ResponseEntity.status(409).body("Mascota no disponible");
+		} catch (IllegalArgumentException ia) {
+			return ResponseEntity.status(404).body(ia.getMessage());
+		} catch (Exception e) {
+			return ResponseEntity.status(500).body(e.getMessage());
+		}
 	}
 
 	@GetMapping("/refugio/{id}")
@@ -90,6 +116,43 @@ public class MascotaController {
 			return ResponseEntity.status(403).body(new RespuestaRegistro(false, ia.getMessage(), null));
 		} catch (Exception e) {
 			return ResponseEntity.badRequest().body(new RespuestaRegistro(false, "Error al actualizar mascota: " + e.getMessage(), null));
+		}
+	}
+
+	// Endpoint to remove a specific media item from a mascota
+	@org.springframework.web.bind.annotation.DeleteMapping("/{id}/media")
+	public ResponseEntity<?> removeMedia(@org.springframework.web.bind.annotation.PathVariable Long id, @org.springframework.web.bind.annotation.RequestParam("url") String url, HttpServletRequest request) {
+		try {
+			// Authorization: prefer JWT in production; here accept headers from frontend
+			String headerUserId = request.getHeader("X-User-Id");
+			String headerPerfilId = request.getHeader("X-User-Perfil-Id");
+			String headerPerfilTipo = request.getHeader("X-User-Perfil-Tipo");
+			// load mascota to check ownership
+			Mascota m = mascotaService.listarPorId(id);
+			if (m == null) return ResponseEntity.status(404).body(new RespuestaRegistro(false, "Mascota no encontrada", null));
+			boolean authorized = false;
+			// parse numeric headers defensively
+			if (headerUserId != null && !headerUserId.isEmpty()) {
+					try {
+						if (m.getPropietarioId() != null && m.getPropietarioId().equals(Long.valueOf(headerUserId))) authorized = true;
+					} catch (NumberFormatException nfe) {
+					// ignore parse errors
+				}
+			}
+			if (!authorized && headerPerfilId != null && headerPerfilTipo != null) {
+					try {
+						if ("EMPRESA".equalsIgnoreCase(headerPerfilTipo) && m.getRefugioId() != null && m.getRefugioId().equals(Long.valueOf(headerPerfilId))) authorized = true;
+					} catch (NumberFormatException nfe) {
+					// ignore parse errors
+				}
+			}
+			if (!authorized) return ResponseEntity.status(403).body(new RespuestaRegistro(false, "No autorizado para eliminar esta media", null));
+			Mascota updated = mascotaService.removeMedia(id, url);
+			return ResponseEntity.ok(new RespuestaRegistro(true, "Media eliminada", updated));
+		} catch (IllegalArgumentException ia) {
+			return ResponseEntity.status(404).body(new RespuestaRegistro(false, ia.getMessage(), null));
+		} catch (Exception e) {
+			return ResponseEntity.badRequest().body(new RespuestaRegistro(false, "Error al eliminar media: " + e.getMessage(), null));
 		}
 	}
 

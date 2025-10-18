@@ -1,12 +1,15 @@
 -- Insertar solicitudes de adopción
 INSERT INTO solicitud_adopcion (id, mascota_id, adoptante_id, fecha_solicitud, estado, comentarios_adoptante, fecha_respuesta, evaluador_id) VALUES
-(1, 1, 1, '2024-02-10 14:30:00', 'PENDIENTE', 'Tengo experiencia con perros grandes y casa con patio', null, null),
-(2, 2, 2, '2024-02-12 10:15:00', 'APROBADA', 'Busco un gato tranquilo para mi departamento', '2024-02-13 16:20:00', 3),
-(3, 3, 4, '2024-02-14 09:45:00', 'PENDIENTE', 'Familia con experiencia en Pastor Alemán', null, null),
-(4, 1, 2, '2024-02-15 11:30:00', 'RECHAZADA', 'También me interesa Luna', '2024-02-16 14:10:00', 3),
-(5, 5, 5, '2024-02-18 09:10:00', 'PENDIENTE', 'Estoy buscando un perro guardián y compañero', null, null),
-(6, 6, 8, '2024-02-19 13:00:00', 'PENDIENTE', 'Quiero darle un hogar a Nala, soy amante de los gatos', null, null),
-(7, 7, 9, '2024-02-20 08:40:00', 'APROBADA', 'Perfecto para mis hijos pequeños', '2024-02-21 10:00:00', 7);
+(1, 1, 1, '2024-02-10 14:30:00', 0, 'Tengo experiencia con perros grandes y casa con patio', null, null),
+(2, 2, 2, '2024-02-12 10:15:00', 1, 'Busco un gato tranquilo para mi departamento', '2024-02-13 16:20:00', 3),
+(3, 3, 4, '2024-02-14 09:45:00', 0, 'Familia con experiencia en Pastor Alemán', null, null),
+(4, 1, 2, '2024-02-15 11:30:00', 2, 'También me interesa Luna', '2024-02-16 14:10:00', 3),
+(5, 5, 5, '2024-02-18 09:10:00', 0, 'Estoy buscando un perro guardián y compañero', null, null),
+(6, 6, 8, '2024-02-19 13:00:00', 0, 'Quiero darle un hogar a Nala, soy amante de los gatos', null, null),
+(7, 7, 9, '2024-02-20 08:40:00', 1, 'Perfecto para mis hijos pequeños', '2024-02-21 10:00:00', 7);
+
+-- Ensure identity sequence for id continues after explicit inserts
+ALTER TABLE solicitud_adopcion ALTER COLUMN id RESTART WITH 8;
 
 -- Insertar chats
 INSERT INTO chat (id, solicitud_adopcion_id, fecha_creacion, activo) VALUES

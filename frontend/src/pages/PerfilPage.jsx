@@ -106,6 +106,7 @@ export default function PerfilPage() {
           <button style={{ background: '#F29C6B', color: '#fff', border: 'none', borderRadius: 14, padding: '8px 18px', fontWeight: 'bold', fontSize: 15, cursor: 'pointer', boxShadow: '0 2px 8px rgba(64,11,25,0.10)' }}>Editar datos</button>
           <button style={{ background: '#400B19', color: '#fff', border: 'none', borderRadius: 14, padding: '8px 18px', fontWeight: 'bold', fontSize: 15, cursor: 'pointer', boxShadow: '0 2px 8px rgba(64,11,25,0.10)' }}>Cambiar contraseña</button>
           <Link to="/mis-solicitudes" style={{ background: '#F29C6B', color: '#fff', borderRadius: 14, padding: '8px 18px', fontWeight: 'bold', textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>Mis solicitudes</Link>
+          <Link to="/solicitudes-recibidas" style={{ background: '#F29C6B', color: '#fff', borderRadius: 14, padding: '8px 18px', fontWeight: 'bold', textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>Solicitudes recibidas</Link>
         </div>
         <button
           onClick={logout}

@@ -22,7 +22,7 @@ public class SolicitudAdopcion {
     private Long adoptanteId;
     @Temporal(TemporalType.TIMESTAMP)
     private Date fechaSolicitud;
-    private String estado;
+    private EstadoSolicitud estado;
     @Column(columnDefinition = "TEXT")
     private String motivoRechazo;
     @Column(columnDefinition = "TEXT")
@@ -43,8 +43,8 @@ public class SolicitudAdopcion {
     public Date getFechaSolicitud() { return fechaSolicitud; }
     public void setFechaSolicitud(Date fechaSolicitud) { this.fechaSolicitud = fechaSolicitud; }
 
-    public String getEstado() { return estado; }
-    public void setEstado(String estado) { this.estado = estado; }
+    public EstadoSolicitud getEstado() { return estado; }
+    public void setEstado(EstadoSolicitud estado) { this.estado = estado; }
 
     public String getMotivoRechazo() { return motivoRechazo; }
     public void setMotivoRechazo(String motivoRechazo) { this.motivoRechazo = motivoRechazo; }

@@ -6,8 +6,10 @@ import LoginPage from './pages/LoginPage';
 // HomePage removed (not used directly in routes)
 import RegistroPage from './pages/RegistroPage';
 import PaginaPrincipal from './pages/PaginaPrincipal';
+import AdopcionesPage from './pages/AdopcionesPage';
 import PerfilPage from './pages/PerfilPage';
 import MisSolicitudes from './pages/MisSolicitudes';
+import SolicitudesRecibidas from './pages/SolicitudesRecibidas';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -23,6 +25,11 @@ function App() {
             <PaginaPrincipal />
           </ProtectedRoute>
         } />
+        <Route path="/adopciones" element={
+          <ProtectedRoute>
+            <AdopcionesPage />
+          </ProtectedRoute>
+        } />
         <Route path="/perfil" element={
           <ProtectedRoute>
             <PerfilPage />
@@ -31,6 +38,11 @@ function App() {
         <Route path="/mis-solicitudes" element={
           <ProtectedRoute>
             <MisSolicitudes />
+          </ProtectedRoute>
+        } />
+        <Route path="/solicitudes-recibidas" element={
+          <ProtectedRoute>
+            <SolicitudesRecibidas />
           </ProtectedRoute>
         } />
         {/* Puedes agregar más rutas protegidas aquí */}

@@ -10,6 +10,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
 import com.example.pets_service.controller.MascotaController.MascotaRegistroDTO;
@@ -69,7 +70,8 @@ public class MascotaService {
 				dto.edadMonths = p.getMonths();
 			} else {
 				dto.fechaNacimiento = null;
-				dto.edadYears = dto.edad != null ? dto.edad : 0;
+				if (dto.edad == null) dto.edadYears = 0;
+				else dto.edadYears = dto.edad;
 				dto.edadMonths = 0;
 			}
 			dto.sexo = m.getSexo();
@@ -150,6 +152,20 @@ public class MascotaService {
 		return mascotaRepository.findByRefugioId(refugioId);
 	}
 
+	/**
+	 * Try to reserve a mascota (mark available=false) using an atomic conditional UPDATE at the repository level.
+	 * Returns true if reserved, false if already not available. Throws IllegalArgumentException if mascota not found.
+	 */
+	@Transactional
+	public boolean reserveMascota(Long id) {
+		// Use the repository conditional update which returns number of rows affected
+		int updated = mascotaRepository.reserveIfAvailable(id);
+		if (updated > 0) return true;
+		// If no rows were updated, it may be because the mascota doesn't exist or is already unavailable.
+		boolean exists = mascotaRepository.existsById(id);
+		if (!exists) throw new IllegalArgumentException("Mascota no encontrada");
+		return false; // already not available
+	}
 	public Mascota registrarMascota(MascotaRegistroDTO mascotaDTO) {
 		Mascota mascota = new Mascota();
 		
@@ -241,11 +257,101 @@ public class MascotaService {
 			} else {
 				mascota.setMediaJson(null);
 			}
-		} catch (Exception e) {
+		} catch (com.fasterxml.jackson.core.JsonProcessingException e) {
 			mascota.setMediaJson(null);
 		}
 	// Guardar y retornar
 	return mascotaRepository.save(mascota);
+	}
+
+	/**
+	 * Remove a media entry from a mascota by URL. Returns the updated Mascota.
+	 * Also attempts to delete the underlying file in /uploads if the URL refers to a local upload.
+	 */
+	public Mascota removeMedia(Long id, String rawUrl) {
+		java.util.Optional<Mascota> maybe = mascotaRepository.findById(id);
+		if (!maybe.isPresent()) throw new IllegalArgumentException("Mascota no encontrada");
+		Mascota mascota = maybe.get();
+		if (rawUrl == null || rawUrl.trim().isEmpty()) return mascota;
+		String apiBase = java.util.Optional.ofNullable(System.getenv().get("API_BASE")).orElse("http://localhost:8082");
+		// canonicalize incoming URL similar to normalizeAndDedupeMedia
+		String url = rawUrl.trim();
+		if (!url.startsWith("http")) url = (url.startsWith("/") ? apiBase + url : apiBase + "/" + url.replaceAll("^/+", ""));
+		int q = url.indexOf('?'); if (q >= 0) url = url.substring(0, q);
+		int h = url.indexOf('#'); if (h >= 0) url = url.substring(0, h);
+		while (url.length() > 1 && url.endsWith("/")) url = url.substring(0, url.length() - 1);
+		String canonical = url.toLowerCase();
+
+		com.fasterxml.jackson.databind.ObjectMapper om = new com.fasterxml.jackson.databind.ObjectMapper();
+		java.util.List<java.util.Map<String,String>> existing = new java.util.ArrayList<>();
+		if (mascota.getMediaJson() != null && !mascota.getMediaJson().isEmpty()) {
+			try {
+				existing = om.readValue(mascota.getMediaJson(), java.util.List.class);
+			} catch (java.io.IOException ex) {
+				existing = new java.util.ArrayList<>();
+			}
+		}
+		java.util.List<java.util.Map<String,String>> kept = new java.util.ArrayList<>();
+		boolean removed = false;
+		for (java.util.Map<String,String> it : existing) {
+			if (it == null) continue;
+			String u = it.getOrDefault("url", "");
+			if (u == null || u.trim().isEmpty()) continue;
+			String full = u.startsWith("http") ? u : (u.startsWith("/") ? apiBase + u : apiBase + "/" + u.replaceAll("^/+", ""));
+			int q2 = full.indexOf('?'); if (q2 >= 0) full = full.substring(0, q2);
+			int h2 = full.indexOf('#'); if (h2 >= 0) full = full.substring(0, h2);
+			while (full.length() > 1 && full.endsWith("/")) full = full.substring(0, full.length() - 1);
+			String canonFull = full.toLowerCase();
+			if (canonFull.equals(canonical)) {
+				// remove this one
+				removed = true;
+				// attempt to delete file on disk if it's a local upload
+				try {
+					String localPath = null;
+					if (full.startsWith(apiBase)) {
+						String rel = full.substring(apiBase.length());
+						if (rel.startsWith("/")) rel = rel.substring(1);
+						localPath = System.getProperty("user.dir") + System.getProperty("file.separator") + rel.replace('/', java.io.File.separatorChar);
+					} else if (full.contains("/uploads/")) {
+						int idx = full.indexOf("/uploads/");
+						String rel = full.substring(idx + 1);
+						localPath = System.getProperty("user.dir") + System.getProperty("file.separator") + rel.replace('/', java.io.File.separatorChar);
+					}
+					if (localPath != null) {
+						java.io.File f = new java.io.File(localPath);
+						if (f.exists() && f.isFile()) {
+							try {
+								// move to uploads/trash with timestamp prefix instead of deleting
+								String uploadsDir = System.getProperty("user.dir") + System.getProperty("file.separator") + "uploads";
+								java.io.File trashDir = new java.io.File(uploadsDir + System.getProperty("file.separator") + "trash");
+								if (!trashDir.exists()) trashDir.mkdirs();
+								String baseName = f.getName();
+								String targetName = System.currentTimeMillis() + "-" + baseName;
+								java.nio.file.Path src = f.toPath();
+								java.nio.file.Path dst = trashDir.toPath().resolve(targetName);
+								java.nio.file.Files.move(src, dst, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+							} catch (Exception e) {
+								// fallback: attempt delete if move fails
+								try { f.delete(); } catch (Exception ignore) {}
+							}
+						}
+					}
+				} catch (Exception e) {
+					// ignore file deletion errors
+				}
+				continue;
+			}
+			kept.add(it);
+		}
+		try {
+			mascota.setMediaJson(kept.isEmpty() ? null : om.writeValueAsString(kept));
+		} catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+			mascota.setMediaJson(null);
+		}
+		if (removed) {
+			return mascotaRepository.save(mascota);
+		}
+		return mascota;
 	}
 
 	/**
@@ -356,4 +462,10 @@ public class MascotaService {
 
 		return mascotaRepository.save(mascota);
 	}
+
+	// Helper to fetch mascota by id
+	public Mascota listarPorId(Long id) {
+		return mascotaRepository.findById(id).orElse(null);
+	}
+
 }

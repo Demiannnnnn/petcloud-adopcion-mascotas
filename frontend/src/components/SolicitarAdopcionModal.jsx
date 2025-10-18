@@ -10,7 +10,9 @@ export default function SolicitarAdopcionModal({ open, onClose, mascota, user })
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const req = { mascotaId: mascota.id, mensaje, contacto };
+      // Include adoptanteId (from user context passed to modal) so backend can persist ownership
+      const adoptanteId = user?.id || (user?.perfil && user.perfil.id) || null;
+      const req = { mascotaId: mascota.id, adoptanteId, mensaje, contacto };
       const res = await createAdoption(req);
       if (res.ok) {
         toast.success('Solicitud enviada');
