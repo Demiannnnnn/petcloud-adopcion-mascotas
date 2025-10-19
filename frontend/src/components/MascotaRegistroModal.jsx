@@ -1,6 +1,6 @@
 
 import React, { useState, useContext } from 'react';
-import { isPesoLike, formatPeso } from '../utils/mascotaUtils';
+import { isPesoLike } from '../utils/mascotaUtils';
 import MediaGalleryModal from './MediaGalleryModal';
 import { getRefugiosByEmpresa } from '../api/refugiosApi';
 import { registrarMascota } from '../api/petsApi';

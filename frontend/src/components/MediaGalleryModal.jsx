@@ -36,8 +36,8 @@ export default function MediaGalleryModal({ open, onClose, media = [], startInde
   const current = hasMedia ? media[index] : null;
 
   return (
-    <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(64,11,25,0.25)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()} style={{ background: '#fff', borderRadius: 24, padding: 32, minWidth: 340, maxWidth: 920, maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 4px 24px rgba(64,11,25,0.15)', display: 'flex', gap: 16 }}>
+    <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(64,11,25,0.25)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: '#fff', borderRadius: 24, padding: 32, minWidth: 340, maxWidth: 920, maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 4px 24px rgba(64,11,25,0.15)', display: 'flex', gap: 16, position: 'relative', zIndex: 100000 }}>
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
             <button type="button" onClick={onClose} style={{ background: 'transparent', border: 'none', fontSize: 20, cursor: 'pointer' }}>✕</button>
@@ -157,11 +157,11 @@ export default function MediaGalleryModal({ open, onClose, media = [], startInde
             <div><b>Registrada:</b> {mascota.fechaRegistro ? new Date(mascota.fechaRegistro).toLocaleDateString() : 'N/A'}</div>
           </div>
 
-          <div style={{ marginTop: 'auto' }}>
+          <div style={{ marginTop: 'auto', position: 'relative', zIndex: 100001 }}>
             {mascota.disponibleAdopcion ? (
-              <div style={{ background: '#4caf50', color: '#fff', padding: '8px 12px', borderRadius: 12, fontWeight: '700', display: 'inline-block' }}>Disponible</div>
+              <div style={{ position: 'relative', zIndex: 100002, background: '#4caf50', color: '#fff', padding: '8px 12px', borderRadius: 12, fontWeight: '700', display: 'inline-block' }}>Disponible</div>
             ) : (
-              <div style={{ background: '#9e9e9e', color: '#fff', padding: '8px 12px', borderRadius: 12, fontWeight: '700', display: 'inline-block' }}>No disponible</div>
+              <div style={{ position: 'relative', zIndex: 100002, background: '#9e9e9e', color: '#fff', padding: '8px 12px', borderRadius: 12, fontWeight: '700', display: 'inline-block' }}>No disponible</div>
             )}
           </div>
         </div>

@@ -66,7 +66,7 @@ export default function AdopcionesPage() {
         // Build final list: mascotas adoptadas por el usuario (por propiedad) + mascotas adoptadas por solicitudes
         const adoptadasNormalized = [
           ...myAdopted.map(m => ({ id: m.id, mascota: m, tipo: 'propia' })),
-          ...adoptedViaRequests.map(r => ({ id: `req-${r.id}`, mascota: r.mascota || { id: r.mascotaId, nombre: 'Mascota #' + r.mascotaId }, tipo: 'por_solicitud', solicitud: r, evaluador: r.evaluador || null }))
+          ...adoptedViaRequests.map(r => ({ id: `req-${r.id}`, mascota: (r.mascota ? { ...r.mascota, disponibleAdopcion: false } : { id: r.mascotaId, nombre: 'Mascota #' + r.mascotaId, disponibleAdopcion: false }), tipo: 'por_solicitud', solicitud: r, evaluador: r.evaluador || null }))
         ];
 
         setAdoptadas(adoptadasNormalized);
@@ -111,8 +111,8 @@ export default function AdopcionesPage() {
         adoptadas.length === 0 ? <div>No tienes mascotas adoptadas aún.</div> : (
           <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
             {adoptadas.map(a => (
-                  <div key={a.id} style={{ width: 220 }}>
-                    <MascotaCard mascota={a.mascota} />
+                    <div key={a.id} style={{ width: 220 }}>
+                    <MascotaCard mascota={a.mascota} hideAvailabilityBadge />
                     {a.tipo === 'por_solicitud' && a.solicitud ? (
                       <div style={{ marginTop: 8 }}>
                         <div style={{ background: '#fff', padding: 10, borderRadius: 10, boxShadow: '0 4px 12px rgba(0,0,0,0.08)', color: '#333', fontSize: 13 }}>

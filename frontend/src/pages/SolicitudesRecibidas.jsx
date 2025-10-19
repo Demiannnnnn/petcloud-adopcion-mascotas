@@ -37,8 +37,21 @@ export default function SolicitudesRecibidas() {
     const headers = { 'X-User-Perfil-Id': String(perfilId), 'X-User-Perfil-Tipo': (user.perfil && user.perfil.tipo) || 'USER' };
     const res = await approveRequest(id, headers, perfilId);
     if (res.ok) {
-      // remove locally and optionally reload list
-      setSolicitudes(prev => prev.filter(s => s.id !== id));
+  // remove locally and optionally reload list
+  setSolicitudes(prev => prev.filter(s => s.id !== id));
+      // fetch the updated mascota and dispatch an event so other parts of the app can update
+      try {
+        const PETS_BASE = process.env.REACT_APP_PETS_API_BASE || 'http://localhost:8082';
+        const body = await res.json();
+        const mascotaId = body.mascotaId || (body && body.mascotaId) || null;
+        if (mascotaId) {
+          const r = await fetch(`${PETS_BASE}/api/mascotas/${mascotaId}`);
+          if (r.ok) {
+            const mascota = await r.json();
+            window.dispatchEvent(new CustomEvent('mascota.updated', { detail: mascota }));
+          }
+        }
+      } catch (e) { /* ignore */ }
     } else {
       alert('Error al aprobar');
     }

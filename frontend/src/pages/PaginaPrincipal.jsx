@@ -5,6 +5,8 @@ import { getRefugiosByEmpresa, registrarRefugio } from '../api/refugiosApi';
 import { useNavigate } from 'react-router-dom';
 import MascotaRegistroModal from '../components/MascotaRegistroModal';
 import SolicitarAdopcionModal from '../components/SolicitarAdopcionModal';
+import { listReceivedRequestsForMascotas } from '../api/adoptionsApi';
+import { getUserById } from '../api/usersApi';
 import MascotaCard from '../components/MascotaCard';
 import { AuthContext } from '../context/AuthContext';
 import './LoginPage.css';
@@ -70,11 +72,47 @@ function PaginaPrincipal() {
           const API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8082';
           const response = await fetch(`${API_BASE}/api/mascotas/propietario/${propietarioId}`);
           if (response.ok) {
-            const data = await response.json();
-            setMascotas(Array.isArray(data) ? data : []);
-          } else {
-            setMascotas([]);
-          }
+              const data = await response.json();
+              const pets = Array.isArray(data) ? data : [];
+              // Attempt to detect approved adoptions for owner's pets and annotate them
+              try {
+                const ids = pets.map(p => p.id).filter(Boolean);
+                if (ids.length > 0) {
+                  const rec = await listReceivedRequestsForMascotas(ids);
+                  if (Array.isArray(rec) && rec.length > 0) {
+                    const approved = rec.filter(r => r && r.estado && (String(r.estado).toUpperCase() === 'APPROVED' || String(r.estado).toUpperCase() === 'APROBADO'));
+                    const byPet = {};
+                    approved.forEach(r => { if (r.mascotaId) byPet[r.mascotaId] = r; });
+                    // resolve adopter names
+                    const adopterIds = [...new Set(approved.map(a => a.adoptanteId).filter(Boolean))];
+                    const adopterMap = {};
+                    await Promise.all(adopterIds.map(async id => {
+                      try {
+                        const u = await getUserById(id);
+                        if (u) adopterMap[String(id)] = u;
+                      } catch (e) { /* ignore */ }
+                    }));
+                    // attach metadata to pets
+                    for (let i = 0; i < pets.length; i++) {
+                      const p = pets[i];
+                      const req = byPet[p.id];
+                      if (req) {
+                        p.disponibleAdopcion = false;
+                        p.adoptanteId = req.adoptanteId || req.solicitanteId || null;
+                        const u = adopterMap[String(p.adoptanteId)];
+                        if (u) p.adoptanteName = u.nombreCompleto || u.nombreEmpresa || u.username || (u.email ? u.email.split('@')[0] : undefined);
+                        p.adopcionSolicitud = req;
+                      }
+                    }
+                  }
+                }
+              } catch (e) {
+                // if anything fails, fall back to raw pets
+              }
+              setMascotas(pets);
+            } else {
+              setMascotas([]);
+            }
         } catch (err) {
           setMascotas([]);
         }
@@ -83,22 +121,59 @@ function PaginaPrincipal() {
       }
     }
     fetchMascotasUsuario();
+    // listen for global updates (dispatched after approval)
+    function onMascotaUpdated(e) {
+      const updated = e?.detail;
+      if (!updated) return;
+      setMascotas(prev => {
+        const found = prev.find(p => String(p.id) === String(updated.id));
+        if (found) return prev.map(p => String(p.id) === String(updated.id) ? updated : p);
+        return prev;
+      });
+      setPublicMascotas(prev => {
+        const found = prev.find(p => String(p.id) === String(updated.id));
+        if (found) return prev.map(p => String(p.id) === String(updated.id) ? updated : p);
+        return prev;
+      });
+    }
+    window.addEventListener('mascota.updated', onMascotaUpdated);
+    return () => window.removeEventListener('mascota.updated', onMascotaUpdated);
   }, [user]);
 
   // Cargar mascotas públicas (disponibles para adopción)
+  // NOTE: Some deployments rely on the adoptions microservice to record approvals
+  // and may not update the pet's `disponibleAdopcion` flag immediately. To avoid
+  // showing already-adopted pets as "Disponible" we query the adoptions service
+  // for received requests and mark pets with an approved request as not available.
   React.useEffect(() => {
     async function fetchPublicMascotas() {
       try {
         const API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8082';
         const res = await fetch(`${API_BASE}/api/mascotas`);
-        if (res.ok) {
-          const data = await res.json();
-          // Filtrar sólo las que están disponibles para adopción
-          const disponibles = Array.isArray(data) ? data.filter(m => m.disponibleAdopcion) : [];
-          setPublicMascotas(disponibles);
-        } else {
-          setPublicMascotas([]);
+        if (!res.ok) { setPublicMascotas([]); return; }
+        const data = await res.json();
+        let disponibles = Array.isArray(data) ? data.slice() : [];
+
+        try {
+          const mascotaIds = disponibles.map(m => m.id).filter(Boolean);
+          if (mascotaIds.length > 0) {
+            const solicitudes = await listReceivedRequestsForMascotas(mascotaIds);
+            if (Array.isArray(solicitudes) && solicitudes.length > 0) {
+              const aprobadas = new Set(solicitudes
+                .filter(r => r && r.estado && (String(r.estado).toUpperCase() === 'APPROVED' || String(r.estado).toUpperCase() === 'APROBADO'))
+                .map(r => r.mascotaId)
+              );
+              // mark mascotas with approved solicitudes as not available
+              disponibles = disponibles.map(m => ({ ...m, disponibleAdopcion: aprobadas.has(m.id) ? false : Boolean(m.disponibleAdopcion) }));
+            }
+          }
+        } catch (e) {
+          // if adoptions query fails, fallback to backend-provided flags
         }
+
+        // finally keep only those currently available
+        const filtradas = Array.isArray(disponibles) ? disponibles.filter(m => m.disponibleAdopcion) : [];
+        setPublicMascotas(filtradas);
       } catch (err) {
         setPublicMascotas([]);
       }

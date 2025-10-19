@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { normalizeTamanio, isPesoLike, formatPeso } from '../utils/mascotaUtils';
 import MediaGalleryModal from './MediaGalleryModal';
 
-export default function MascotaCard({ mascota, onEdit, onDelete, refugioName, refugioContacto, publicadoPor, isPublic, onRequestAdoption }) {
+export default function MascotaCard({ mascota, onEdit, onDelete, refugioName, refugioContacto, publicadoPor, isPublic, onRequestAdoption, hideAvailabilityBadge }) {
   const API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8082';
   const imagenSrc = mascota.imagenUrl
     ? (typeof mascota.imagenUrl === 'string'
@@ -10,7 +10,7 @@ export default function MascotaCard({ mascota, onEdit, onDelete, refugioName, re
       : URL.createObjectURL(mascota.imagenUrl))
     : null;
 
-  const [expanded, setExpanded] = useState(false);
+  const [expanded] = useState(false);
 
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [galleryMedia, setGalleryMedia] = useState([]);
@@ -86,21 +86,32 @@ export default function MascotaCard({ mascota, onEdit, onDelete, refugioName, re
     })();
   }
 
+  const cardStyle = {
+    background: '#fff',
+    borderRadius: 18,
+    boxShadow: '0 2px 8px rgba(64,11,25,0.10)',
+    padding: 16,
+    minWidth: 140,
+    maxWidth: 220,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    position: 'relative',
+    transition: 'box-shadow 0.2s',
+    cursor: 'pointer'
+  };
+
+  if (hideAvailabilityBadge) {
+    // When the availability badge is hidden (e.g. in "Mis mascotas adoptadas"),
+    // add some bottom padding and ensure the card content is visually centered.
+    const isMobile = (typeof window !== 'undefined') ? window.innerWidth < 600 : false;
+    cardStyle.paddingBottom = isMobile ? 16 : 20;
+    cardStyle.justifyContent = 'center';
+    cardStyle.minHeight = isMobile ? 160 : 200; // responsive height for mobile/desktop
+  }
+
   return (
-    <div onClick={handleCardClick} style={{
-      background: '#fff',
-      borderRadius: 18,
-      boxShadow: '0 2px 8px rgba(64,11,25,0.10)',
-      padding: 16,
-      minWidth: 140,
-      maxWidth: 220,
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      position: 'relative',
-      transition: 'box-shadow 0.2s',
-      cursor: 'pointer'
-    }}>
+    <div onClick={handleCardClick} style={cardStyle}>
       {/* Edit button - shown only when onEdit is provided (PaginaPrincipal pasa onEdit sólo para las mascotas del usuario) */}
       {onEdit && (
         <button
@@ -139,10 +150,17 @@ export default function MascotaCard({ mascota, onEdit, onDelete, refugioName, re
       {publicadoPor && <div style={{ fontSize: 12, color: '#6b4b3a', opacity: 0.9, marginTop: 6 }}>Publicado por: {publicadoPor}</div>}
 
       {/* Availability badge placed inline below avatar to avoid overlap */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
-        <span style={{ width:10, height:10, borderRadius:12, background: mascota.disponibleAdopcion ? '#a5f5b6' : '#e0e0e0', display:'inline-block' }} />
-        <span style={{ background: mascota.disponibleAdopcion ? '#4caf50' : '#9e9e9e', color: '#fff', padding: '4px 8px', borderRadius: 12, fontSize: 12, fontWeight: 700 }}>{mascota.disponibleAdopcion ? 'Disponible' : 'No disponible'}</span>
-      </div>
+      {!hideAvailabilityBadge && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
+          <span style={{ width:10, height:10, borderRadius:12, background: mascota.disponibleAdopcion ? '#a5f5b6' : '#e0e0e0', display:'inline-block' }} />
+          <span style={{ background: mascota.disponibleAdopcion ? '#4caf50' : '#9e9e9e', color: '#fff', padding: '4px 8px', borderRadius: 12, fontSize: 12, fontWeight: 700 }}>{mascota.disponibleAdopcion ? 'Disponible' : (mascota.adoptanteName ? 'Adoptada' : 'No disponible')}</span>
+        </div>
+      )}
+
+      {/* If we know who adopted the pet, show that info in a small subtitle */}
+      {mascota.adoptanteName && (
+        <div style={{ marginTop: 6, fontSize: 12, color: '#6b4b3a', opacity: 0.9 }}>Adoptada por: <b style={{ color: '#444' }}>{mascota.adoptanteName}</b></div>
+      )}
 
       <div style={{ fontSize: 14, color: '#400B19', opacity: 0.6 }}>{mascota.raza}</div>
       {/* Mostrar tamaño/peso si existe */}
@@ -173,7 +191,7 @@ export default function MascotaCard({ mascota, onEdit, onDelete, refugioName, re
       </div>
 
       {/* íconos de editar y eliminar eliminados */}
-      {isPublic && mascota.disponibleAdopcion && (
+      {isPublic && mascota.disponibleAdopcion && !hideAvailabilityBadge && (
         <button onClick={(e) => { e.stopPropagation(); onRequestAdoption && onRequestAdoption(mascota); }} style={{ marginTop: 12, background: '#F29C6B', color: '#fff', border: 'none', padding: '6px 10px', borderRadius: 12, cursor: 'pointer' }}>Solicitar adopción</button>
       )}
 
