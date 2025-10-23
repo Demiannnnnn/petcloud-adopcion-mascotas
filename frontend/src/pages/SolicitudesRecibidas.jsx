@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { listReceivedRequestsForMascotas, approveRequest, rejectRequest } from '../api/adoptionsApi';
+import { getApiBase } from '../api/apiBase';
 
 export default function SolicitudesRecibidas() {
   const { user } = useContext(AuthContext) || {};
@@ -15,7 +16,7 @@ export default function SolicitudesRecibidas() {
       if (!propietarioId) return;
       try {
   // pedir mascotas del propietario (pets-service) y luego solicitudes para esas mascotas
-  const PETS_BASE = process.env.REACT_APP_PETS_API_BASE || 'http://localhost:8082';
+  const PETS_BASE = getApiBase('PETS');
   const resp = await fetch(`${PETS_BASE}/api/mascotas/propietario/${propietarioId}`);
         const mascotas = resp.ok ? await resp.json() : [];
         const ids = mascotas.map(m => m.id).filter(Boolean);
@@ -41,8 +42,8 @@ export default function SolicitudesRecibidas() {
   setSolicitudes(prev => prev.filter(s => s.id !== id));
       // fetch the updated mascota and dispatch an event so other parts of the app can update
       try {
-        const PETS_BASE = process.env.REACT_APP_PETS_API_BASE || 'http://localhost:8082';
-        const body = await res.json();
+  const PETS_BASE = getApiBase('PETS');
+  const body = await res.json();
         const mascotaId = body.mascotaId || (body && body.mascotaId) || null;
         if (mascotaId) {
           const r = await fetch(`${PETS_BASE}/api/mascotas/${mascotaId}`);

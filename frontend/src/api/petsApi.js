@@ -1,6 +1,7 @@
-// Use single API base env var with fallback to localhost. Keep backwards compatibility with older env names.
-export const API_BASE =
-	process.env.REACT_APP_API_BASE_URL || process.env.REACT_APP_API_PETS || process.env.REACT_APP_API_IP_PETS || 'http://localhost:8082';
+import { getApiBase } from './apiBase';
+
+// Resolve pets service base at runtime
+export const API_BASE = getApiBase('PETS');
 
 // Obtener mascotas por refugio
 export async function getMascotasByRefugio(refugioId) {

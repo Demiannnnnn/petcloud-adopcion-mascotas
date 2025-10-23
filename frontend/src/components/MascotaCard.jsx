@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
+import { getApiBase } from '../api/apiBase';
 import { normalizeTamanio, isPesoLike, formatPeso } from '../utils/mascotaUtils';
 import MediaGalleryModal from './MediaGalleryModal';
 
 export default function MascotaCard({ mascota, onEdit, onDelete, refugioName, refugioContacto, publicadoPor, isPublic, onRequestAdoption, hideAvailabilityBadge }) {
-  const API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8082';
+  const API_BASE = getApiBase('PETS');
   const imagenSrc = mascota.imagenUrl
     ? (typeof mascota.imagenUrl === 'string'
       ? `${API_BASE}${mascota.imagenUrl.startsWith('/') ? mascota.imagenUrl : '/uploads/' + mascota.imagenUrl}`
@@ -197,7 +198,7 @@ export default function MascotaCard({ mascota, onEdit, onDelete, refugioName, re
 
       {/* Map media from various possible shapes and ensure absolute URLs when needed */}
       {(() => {
-        const API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8082';
+        // API_BASE is resolved above via getApiBase('PETS')
         const raw = mascota.media || mascota.imagenes || mascota.fotos || mascota.files || [];
         // map and filter only entries with a valid final URL
         let mediaMapped = Array.isArray(raw) ? raw.map(m => {

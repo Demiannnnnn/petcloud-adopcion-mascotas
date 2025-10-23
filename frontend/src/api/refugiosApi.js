@@ -1,8 +1,9 @@
 // API para refugios
-const BASE_URL =
-  window.location.hostname === "localhost"
-    ? process.env.REACT_APP_API_REFUGIOS
-    : process.env.REACT_APP_API_IP_REFUGIOS;
+import { getApiBase } from './apiBase';
+
+// Note: REACT_APP_API_REFUGIOS/REACT_APP_API_IP_REFUGIOS in .env may include the
+// path segment (e.g. http://localhost:8081/api/refugios). getApiBase keeps that.
+const BASE_URL = getApiBase('REFUGIOS');
 
 export async function getRefugiosByEmpresa(empresaId) {
   const res = await fetch(`${BASE_URL}/empresa/${empresaId}`);

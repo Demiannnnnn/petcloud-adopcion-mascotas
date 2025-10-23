@@ -1,4 +1,6 @@
-export const USERS_API_BASE = process.env.REACT_APP_API_USERS || process.env.REACT_APP_API_BASE_URL || 'http://localhost:8081';
+import { getApiBase } from './apiBase';
+
+export const USERS_API_BASE = getApiBase('USERS');
 
 // users-service exposes a Perfil endpoint at /api/perfil/{id} which returns PerfilDTO
 export async function getUserById(id) {

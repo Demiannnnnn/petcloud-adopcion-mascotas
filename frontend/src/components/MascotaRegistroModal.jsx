@@ -4,6 +4,7 @@ import { isPesoLike } from '../utils/mascotaUtils';
 import MediaGalleryModal from './MediaGalleryModal';
 import { getRefugiosByEmpresa } from '../api/refugiosApi';
 import { registrarMascota } from '../api/petsApi';
+import { getApiBase } from '../api/apiBase';
 import { AuthContext } from '../context/AuthContext';
 
 
@@ -233,8 +234,8 @@ export default function MascotaRegistroModal({ open, onClose, onRegister, isEdit
       setChip(initialData.chip || '');
       // preview main image
       if (initialData.foto || initialData.imagenUrl) {
-        // use full URL if needed (backend returns relative paths like /uploads/..)
-        const API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8082';
+  // use full URL if needed (backend returns relative paths like /uploads/..)
+  const API_BASE = getApiBase('PETS');
         const img = initialData.foto || initialData.imagenUrl;
         const previewUrl = (typeof img === 'string' && img.startsWith('/')) ? `${API_BASE}${img}` : img;
         setPreview(previewUrl);
@@ -349,7 +350,8 @@ export default function MascotaRegistroModal({ open, onClose, onRegister, isEdit
       if (foto && foto.name) {
         const formData = new FormData();
         formData.append('file', foto);
-        const uploadResp = await fetch('http://localhost:8082/api/mascotas/upload', {
+        const PETS_BASE = getApiBase('PETS');
+        const uploadResp = await fetch(`${PETS_BASE}/api/mascotas/upload`, {
           method: 'POST',
           body: formData
         });
@@ -376,7 +378,8 @@ export default function MascotaRegistroModal({ open, onClose, onRegister, isEdit
         try {
           const fm = new FormData();
           fm.append('file', f);
-          const resp = await fetch('http://localhost:8082/api/mascotas/upload', { method: 'POST', body: fm });
+          const PETS_BASE = getApiBase('PETS');
+          const resp = await fetch(`${PETS_BASE}/api/mascotas/upload`, { method: 'POST', body: fm });
           if (resp.ok) {
             const url = await resp.text();
             mediaUrls.push({ url, type: f.type });
@@ -404,7 +407,7 @@ export default function MascotaRegistroModal({ open, onClose, onRegister, isEdit
         return;
       }
       // Merge existing media (when editing) with newly uploaded, but dedupe by final URL
-      const API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8082';
+  const API_BASE = getApiBase('PETS');
       const canonicalize = (rawUrl) => {
         if (!rawUrl) return '';
         try {
@@ -471,7 +474,7 @@ export default function MascotaRegistroModal({ open, onClose, onRegister, isEdit
         refugioId: user?.perfil?.tipoPerfil === 'EMPRESA' && refugioId ? parseInt(refugioId) : undefined
       };
       if (isEdit && initialData && initialData.id) {
-        const API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8082';
+        const API_BASE = getApiBase('PETS');
         const resp = await fetch(`${API_BASE}/api/mascotas/${initialData.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(mascotaData) });
         if (!resp.ok) throw new Error('Error al actualizar mascota');
         // try to read response json to get persisted mascota (controllers return RespuestaRegistro)
@@ -487,7 +490,7 @@ export default function MascotaRegistroModal({ open, onClose, onRegister, isEdit
             setMediaFiles([]);
             // update main preview to persisted imagenUrl when available
             if (persisted.imagenUrl) {
-              const API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8082';
+              const API_BASE = getApiBase('PETS');
               const img = persisted.imagenUrl;
               const previewUrl = (typeof img === 'string' && img.startsWith('/')) ? `${API_BASE}${img}` : img;
               setPreview(previewUrl);
@@ -653,7 +656,7 @@ export default function MascotaRegistroModal({ open, onClose, onRegister, isEdit
             <input type="file" className="modal-input" accept="image/*,video/*" multiple onChange={handleMediaFiles} style={{ marginBottom: 8 }} />
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               {(() => {
-                const API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8082';
+                const API_BASE = getApiBase('PETS');
                 // map existingMedia to {url,type}
                 const existingMapped = (existingMedia || []).map(m => {
                   if (!m) return null;

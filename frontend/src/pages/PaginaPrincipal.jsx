@@ -8,6 +8,7 @@ import SolicitarAdopcionModal from '../components/SolicitarAdopcionModal';
 import { listReceivedRequestsForMascotas } from '../api/adoptionsApi';
 import { getUserById } from '../api/usersApi';
 import MascotaCard from '../components/MascotaCard';
+import { getApiBase } from '../api/apiBase';
 import { AuthContext } from '../context/AuthContext';
 import './LoginPage.css';
 
@@ -15,6 +16,7 @@ import './LoginPage.css';
 
 function PaginaPrincipal() {
   const { user } = useContext(AuthContext) || {};
+  const PETS_BASE = getApiBase('PETS');
   // Estado para refugios (solo empresa)
   const [refugios, setRefugios] = useState([]);
   const [modalRefugioOpen, setModalRefugioOpen] = useState(false);
@@ -69,8 +71,8 @@ function PaginaPrincipal() {
       if (user && (user.id || (user.perfil && user.perfil.id))) {
         const propietarioId = user.id || (user.perfil && user.perfil.id);
         try {
-          const API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8082';
-          const response = await fetch(`${API_BASE}/api/mascotas/propietario/${propietarioId}`);
+            const PETS_BASE = getApiBase('PETS');
+            const response = await fetch(`${PETS_BASE}/api/mascotas/propietario/${propietarioId}`);
           if (response.ok) {
               const data = await response.json();
               const pets = Array.isArray(data) ? data : [];
@@ -148,8 +150,8 @@ function PaginaPrincipal() {
   React.useEffect(() => {
     async function fetchPublicMascotas() {
       try {
-        const API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8082';
-        const res = await fetch(`${API_BASE}/api/mascotas`);
+  const PETS_BASE = getApiBase('PETS');
+  const res = await fetch(`${PETS_BASE}/api/mascotas`);
         if (!res.ok) { setPublicMascotas([]); return; }
         const data = await res.json();
         let disponibles = Array.isArray(data) ? data.slice() : [];
@@ -466,9 +468,8 @@ function PaginaPrincipal() {
         onRegister={async () => {
           if (user && (user.id || (user.perfil && user.perfil.id))) {
             const propietarioId = user.id || (user.perfil && user.perfil.id);
-            try {
-              const API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8082';
-              const response = await fetch(`${API_BASE}/api/mascotas/propietario/${propietarioId}`);
+              try {
+              const response = await fetch(`${PETS_BASE}/api/mascotas/propietario/${propietarioId}`);
               if (response.ok) {
                 const data = await response.json();
                 setMascotas(Array.isArray(data) ? data : []);
@@ -490,9 +491,8 @@ function PaginaPrincipal() {
           // refresh user's mascotas
           if (user && (user.id || (user.perfil && user.perfil.id))) {
             const propietarioId = user.id || (user.perfil && user.perfil.id);
-            try {
-              const API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8082';
-              const response = await fetch(`${API_BASE}/api/mascotas/propietario/${propietarioId}`);
+              try {
+              const response = await fetch(`${PETS_BASE}/api/mascotas/propietario/${propietarioId}`);
               if (response.ok) {
                 const data = await response.json();
                 setMascotas(Array.isArray(data) ? data : []);
