@@ -10,5 +10,8 @@ public class WebConfig implements WebMvcConfigurer {
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         registry.addResourceHandler("/uploads/**")
                 .addResourceLocations("file:" + System.getProperty("user.dir") + "/uploads/");
+    // Proxy endpoint for media to avoid adblocker patterns like '/uploads/' being blocked on some clients
+    registry.addResourceHandler("/api/media/**")
+        .addResourceLocations("file:" + System.getProperty("user.dir") + "/uploads/");
     }
 }

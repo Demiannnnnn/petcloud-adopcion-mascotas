@@ -5,6 +5,7 @@ import MediaGalleryModal from './MediaGalleryModal';
 import { getRefugiosByEmpresa } from '../api/refugiosApi';
 import { registrarMascota } from '../api/petsApi';
 import { getApiBase } from '../api/apiBase';
+import { buildMediaUrl } from '../utils/mediaUtils';
 import { AuthContext } from '../context/AuthContext';
 
 
@@ -234,10 +235,11 @@ export default function MascotaRegistroModal({ open, onClose, onRegister, isEdit
       setChip(initialData.chip || '');
       // preview main image
       if (initialData.foto || initialData.imagenUrl) {
-  // use full URL if needed (backend returns relative paths like /uploads/..)
-  const API_BASE = getApiBase('PETS');
+        // use full URL if needed (backend returns relative paths like /uploads/..)
+        const API_BASE = getApiBase('PETS');
         const img = initialData.foto || initialData.imagenUrl;
-        const previewUrl = (typeof img === 'string' && img.startsWith('/')) ? `${API_BASE}${img}` : img;
+        // prefer proxy-mapped URL to avoid adblocker patterns
+        const previewUrl = (typeof img === 'string') ? (img.startsWith('http') ? img : `${API_BASE}/api/media/${(img.startsWith('/uploads/') ? img.substring('/uploads/'.length) : img.replace(/^\/+/, ''))}`) : img;
         setPreview(previewUrl);
       }
       // existing media
@@ -273,15 +275,35 @@ export default function MascotaRegistroModal({ open, onClose, onRegister, isEdit
   };
 
   const handleFoto = e => {
+    // replaced by async compression routine below; kept for sync callers
     const file = e.target.files[0];
-    setFoto(file);
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => setPreview(reader.result);
-      reader.readAsDataURL(file);
-    } else {
+    if (!file) {
+      setFoto(null);
       setPreview(null);
+      return;
     }
+    // compress / resize image before storing
+    (async () => {
+      try {
+        const resized = await resizeImage(file, 1200, 0.8);
+        setFoto(resized);
+        try {
+          // create object url for preview (reliable and fast)
+          const previewUrl = URL.createObjectURL(resized);
+          setPreview(previewUrl);
+        } catch (err) {
+          const reader = new FileReader();
+          reader.onloadend = () => setPreview(reader.result);
+          reader.readAsDataURL(resized);
+        }
+      } catch (err) {
+        console.warn('Error al redimensionar imagen principal, usando original', err);
+        setFoto(file);
+        const reader = new FileReader();
+        reader.onloadend = () => setPreview(reader.result);
+        reader.readAsDataURL(file);
+      }
+    })();
   };
 
   const handleMediaFiles = e => {
@@ -292,6 +314,44 @@ export default function MascotaRegistroModal({ open, onClose, onRegister, isEdit
       return { type: 'image', url: URL.createObjectURL(f) };
     });
     setMediaPreviews(previews);
+  };
+
+  // Helper: resize/compress image File -> File (JPEG)
+  const resizeImage = (file, maxWidth = 1200, quality = 0.8) => {
+    return new Promise((resolve, reject) => {
+      try {
+        if (!file || !(file.type || '').startsWith('image')) return resolve(file);
+        const img = new Image();
+        const reader = new FileReader();
+        reader.onload = () => { img.src = reader.result; };
+        reader.onerror = (e) => reject(e);
+        img.onerror = (e) => reject(e);
+        img.onload = () => {
+          try {
+            const ratio = img.width / img.height || 1;
+            const width = Math.min(maxWidth, img.width);
+            const height = Math.round(width / ratio);
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            canvas.toBlob((blob) => {
+              if (!blob) return reject(new Error('No se pudo convertir la imagen'));
+              const ext = 'jpg';
+              const name = (file.name && file.name.replace(/\.[^/.]+$/, `.${ext}`)) || `photo-${Date.now()}.${ext}`;
+              const resizedFile = new File([blob], name, { type: 'image/jpeg' });
+              resolve(resizedFile);
+            }, 'image/jpeg', quality);
+          } catch (err) {
+            reject(err);
+          }
+        };
+        reader.readAsDataURL(file);
+      } catch (err) {
+        reject(err);
+      }
+    });
   };
 
   const handleDocumentos = e => {
@@ -376,13 +436,23 @@ export default function MascotaRegistroModal({ open, onClose, onRegister, isEdit
       const mediaUrls = [];
       for (const f of mediaFiles) {
         try {
-          const fm = new FormData();
-          fm.append('file', f);
           const PETS_BASE = getApiBase('PETS');
+          let uploadFile = f;
+          // compress images before upload to avoid 413 and reduce bandwidth
+          if (f && f.type && f.type.startsWith('image')) {
+            try {
+              uploadFile = await resizeImage(f, 1200, 0.8);
+            } catch (err) {
+              console.warn('No se pudo redimensionar archivo adicional, se usará original', err);
+              uploadFile = f;
+            }
+          }
+          const fm = new FormData();
+          fm.append('file', uploadFile);
           const resp = await fetch(`${PETS_BASE}/api/mascotas/upload`, { method: 'POST', body: fm });
           if (resp.ok) {
             const url = await resp.text();
-            mediaUrls.push({ url, type: f.type });
+            mediaUrls.push({ url, type: (uploadFile && uploadFile.type) ? uploadFile.type : f.type });
           }
         } catch (err) {
           // no bloquear todo si falla uno, pero notificar
@@ -561,18 +631,19 @@ export default function MascotaRegistroModal({ open, onClose, onRegister, isEdit
             </select>
           </div>
         )}
-        <h2 style={{ color: '#a0522d', textAlign: 'center', marginBottom: 8 }}>Registrar Mascota</h2>
-  <input type="text" className="modal-input" placeholder="Nombre" value={nombre} onChange={e => setNombre(e.target.value)} required style={inputStyle} />
+    <h2 style={{ color: '#a0522d', textAlign: 'center', marginBottom: 8 }}>Registrar Mascota</h2>
+    <div style={{ fontSize: 12, color: '#c62828', textAlign: 'center', marginBottom: 6 }}>Los campos marcados con <span style={{ fontWeight: 'bold' }}>*</span> son obligatorios</div>
+  <input type="text" className="modal-input" placeholder="Nombre *" value={nombre} onChange={e => setNombre(e.target.value)} required style={inputStyle} />
   {/* Solo para móvil: label explicativo y opción vacía sin texto largo */}
   <div className="combobox-label-mobile" style={{ display: 'none' }}>
     <label style={{ fontWeight: 'bold', color: '#a0522d', marginBottom: 2 }}>Selecciona la especie de la mascota</label>
   </div>
   <select className="modal-input" value={especie} onChange={e => setEspecie(e.target.value)} required style={inputStyle}>
-    <option value="" className="select-placeholder">Selecciona especie</option>
+    <option value="" className="select-placeholder">Selecciona especie *</option>
     {ESPECIES.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
   </select>
   <input type="text" className="modal-input" placeholder="Raza (opcional)" value={raza} onChange={e => setRaza(e.target.value)} style={inputStyle} />
-        <label style={{ fontWeight: 'bold', color: '#a0522d', marginBottom: 2 }}>Fecha de nacimiento de la mascota</label>
+  <label style={{ fontWeight: 'bold', color: '#a0522d', marginBottom: 2 }}>Fecha de nacimiento de la mascota *</label>
         <input
           type="date"
           className="modal-input"
@@ -589,7 +660,7 @@ export default function MascotaRegistroModal({ open, onClose, onRegister, isEdit
     <label style={{ fontWeight: 'bold', color: '#a0522d', marginBottom: 2 }}>Selecciona el sexo de la mascota</label>
   </div>
   <select className="modal-input" value={sexo} onChange={e => setSexo(e.target.value)} required style={inputStyle}>
-    <option value="" className="select-placeholder">Sexo</option>
+    <option value="" className="select-placeholder">Sexo *</option>
     <option value="Macho">Macho</option>
     <option value="Hembra">Hembra</option>
   </select>
@@ -644,9 +715,11 @@ export default function MascotaRegistroModal({ open, onClose, onRegister, isEdit
           <label style={{ fontWeight: 'bold', color: '#a0522d' }}>Documentos de salud</label>
           <input type="file" className="modal-input" multiple accept=".pdf,.jpg,.jpeg,.png" onChange={handleDocumentos} style={{ ...inputStyle, marginBottom: 0 }} />
         </div>
-  <textarea className="modal-input" placeholder="Descripción general para adopción" value={descripcion} onChange={e => setDescripcion(e.target.value)} required style={{ ...inputStyle, minHeight: 60 }} />
+  <textarea className="modal-input" placeholder="Descripción general para adopción *" value={descripcion} onChange={e => setDescripcion(e.target.value)} required style={{ ...inputStyle, minHeight: 60 }} />
+  {/* Ubicación: campo agregado para registrar desde perfil Persona */}
+  <input type="text" className="modal-input" placeholder="Ubicación *" value={ubicacion} onChange={e => setUbicacion(e.target.value)} required style={inputStyle} />
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 8 }}>
-          <label style={{ color: '#a0522d', fontWeight: 'bold', marginBottom: 4 }}>Foto de la mascota (principal)</label>
+          <label style={{ color: '#a0522d', fontWeight: 'bold', marginBottom: 4 }}>Foto de la mascota (principal) *</label>
           <span style={{ fontSize: 14, color: '#555', marginBottom: 4 }}>Sube una imagen clara y reciente de la mascota</span>
           <input type="file" className="modal-input" accept="image/*" onChange={handleFoto} {...(!isEdit ? { required: true } : {})} style={{ marginBottom: 8 }} />
           {preview && <img src={preview} alt="Preview" style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 12, margin: '0 auto' }} />}
@@ -661,11 +734,11 @@ export default function MascotaRegistroModal({ open, onClose, onRegister, isEdit
                 const existingMapped = (existingMedia || []).map(m => {
                   if (!m) return null;
                   if (typeof m === 'string') {
-                    const url = m.startsWith('http') ? m : `${API_BASE}${m.startsWith('/') ? m : '/uploads/' + m}`;
+                    const url = m.startsWith('http') ? m : buildMediaUrl(API_BASE, m);
                     return { url, type: '' };
                   }
                   const url = m.url || m.path || m.src || '';
-                  const finalUrl = url ? (url.startsWith('http') ? url : `${API_BASE}${url.startsWith('/') ? url : '/uploads/' + url}`) : '';
+                  const finalUrl = url ? (url.startsWith('http') ? url : buildMediaUrl(API_BASE, url)) : '';
                   return finalUrl ? { url: finalUrl, type: m.type || '' } : null;
                 }).filter(Boolean);
 

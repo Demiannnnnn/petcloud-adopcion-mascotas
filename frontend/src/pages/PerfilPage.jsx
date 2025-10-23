@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { getRefugiosByEmpresa } from '../api/refugiosApi';
 import { getMascotasByRefugio } from '../api/petsApi';
 import { getApiBase } from '../api/apiBase';
+import { buildMediaUrl } from '../utils/mediaUtils';
 import MascotaCard from '../components/MascotaCard';
 
 export default function PerfilPage() {
@@ -175,8 +176,8 @@ export default function PerfilPage() {
                       ) : (
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, justifyContent: 'center' }}>
                           {mascotasList.map((m, i) => (
-                            <MascotaCard key={i} mascota={m} refugioName={refugios.find(r => String(r.id) === String(m.refugioId))?.nombre} />
-                          ))}
+                                    <MascotaCard key={i} mascota={m} refugioName={refugios.find(r => String(r.id) === String(m.refugioId))?.nombre} />
+                                  ))}
                         </div>
                       )}
                     </div>
@@ -197,7 +198,7 @@ export default function PerfilPage() {
               {mascotas.filter(m => m.disponibleAdopcion).map((m, i) => (
                 <div key={i} style={{ background: '#fff', borderRadius: 18, boxShadow: '0 2px 8px rgba(64,11,25,0.10)', padding: 12, minWidth: 120, maxWidth: 160, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                   {m.imagenUrl && (
-                    <img src={`${getApiBase('PETS')}${m.imagenUrl.startsWith('/') ? m.imagenUrl : '/uploads/' + m.imagenUrl}`} alt={m.nombre} style={{ width: 50, height: 50, objectFit: 'cover', borderRadius: '50%', marginBottom: 6, border: '2px solid #F29C6B' }} />
+                    <img src={buildMediaUrl(getApiBase('PETS'), m.imagenUrl)} alt={m.nombre} style={{ width: 50, height: 50, objectFit: 'cover', borderRadius: '50%', marginBottom: 6, border: '2px solid #F29C6B' }} />
                   )}
                   <div style={{ fontWeight: 'bold', color: '#a0522d', fontSize: 15, marginBottom: 2 }}>{m.nombre}</div>
                   <div style={{ fontSize: 13, color: '#400B19', opacity: 0.8 }}>{m.especie}</div>

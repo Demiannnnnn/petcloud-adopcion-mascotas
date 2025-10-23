@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { getApiBase } from '../api/apiBase';
+import { buildMediaUrl } from '../utils/mediaUtils';
 import { normalizeTamanio, isPesoLike, formatPeso } from '../utils/mascotaUtils';
 import MediaGalleryModal from './MediaGalleryModal';
 
@@ -7,7 +8,7 @@ export default function MascotaCard({ mascota, onEdit, onDelete, refugioName, re
   const API_BASE = getApiBase('PETS');
   const imagenSrc = mascota.imagenUrl
     ? (typeof mascota.imagenUrl === 'string'
-      ? `${API_BASE}${mascota.imagenUrl.startsWith('/') ? mascota.imagenUrl : '/uploads/' + mascota.imagenUrl}`
+      ? buildMediaUrl(API_BASE, mascota.imagenUrl)
       : URL.createObjectURL(mascota.imagenUrl))
     : null;
 
@@ -61,16 +62,16 @@ export default function MascotaCard({ mascota, onEdit, onDelete, refugioName, re
           let mediaMapped = Array.isArray(raw) ? raw.map(m => {
             if (!m) return null;
             if (typeof m === 'string') {
-              const url = m.startsWith('http') ? m : `${API_BASE}${m.startsWith('/') ? m : '/uploads/' + m}`;
+              const url = buildMediaUrl(API_BASE, m);
               return { url, type: '' };
             }
             const url = m.url || m.path || m.src || '';
-            const finalUrl = url ? (url.startsWith('http') ? url : `${API_BASE}${url.startsWith('/') ? url : '/uploads/' + url}`) : '';
+            const finalUrl = url ? (url.startsWith('http') ? url : buildMediaUrl(API_BASE, url)) : '';
             return finalUrl ? { url: finalUrl, type: m.type || '' } : null;
           }).filter(Boolean) : [];
           if ((!mediaMapped || mediaMapped.length === 0) && source.imagenUrl) {
             const url = typeof source.imagenUrl === 'string'
-              ? `${API_BASE}${source.imagenUrl.startsWith('/') ? source.imagenUrl : '/uploads/' + source.imagenUrl}`
+              ? buildMediaUrl(API_BASE, source.imagenUrl)
               : '';
             if (url) mediaMapped.push({ url, type: 'image' });
           }
@@ -204,18 +205,18 @@ export default function MascotaCard({ mascota, onEdit, onDelete, refugioName, re
         let mediaMapped = Array.isArray(raw) ? raw.map(m => {
           if (!m) return null;
           if (typeof m === 'string') {
-            const url = m.startsWith('http') ? m : `${API_BASE}${m.startsWith('/') ? m : '/uploads/' + m}`;
+            const url = buildMediaUrl(API_BASE, m);
             return { url, type: '' };
           }
           const url = m.url || m.path || m.src || '';
-          const finalUrl = url ? (url.startsWith('http') ? url : `${API_BASE}${url.startsWith('/') ? url : '/uploads/' + url}`) : '';
+          const finalUrl = url ? (url.startsWith('http') ? url : buildMediaUrl(API_BASE, url)) : '';
           return finalUrl ? { url: finalUrl, type: m.type || '' } : null;
         }).filter(Boolean) : [];
 
         // if no media provided, fallback to main imagenUrl (if any)
         if ((!mediaMapped || mediaMapped.length === 0) && mascota.imagenUrl) {
           const url = typeof mascota.imagenUrl === 'string'
-            ? `${API_BASE}${mascota.imagenUrl.startsWith('/') ? mascota.imagenUrl : '/uploads/' + mascota.imagenUrl}`
+            ? buildMediaUrl(API_BASE, mascota.imagenUrl)
             : '';
           if (url) mediaMapped.push({ url, type: 'image' });
         }

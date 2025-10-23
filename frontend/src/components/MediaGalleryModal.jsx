@@ -4,6 +4,9 @@ import { normalizeTamanio, isPesoLike, formatPeso } from '../utils/mascotaUtils'
 export default function MediaGalleryModal({ open, onClose, media = [], startIndex = 0, mascota = {}, refugioName, refugioContacto, publicadoPor, onDelete }) {
   const [index, setIndex] = React.useState(startIndex || 0);
 
+  // Small inline SVG placeholder (data URL) to use when images are blocked or fail to load
+  const PLACEHOLDER_IMG = `data:image/svg+xml;utf8,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='400' height='300'><rect fill='#f5f5f5' width='100%' height='100%'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='#999' font-size='20'>No image</text></svg>`)}`;
+
   useEffect(() => {
     setIndex(startIndex || 0);
   }, [startIndex, open]);
@@ -30,6 +33,28 @@ export default function MediaGalleryModal({ open, onClose, media = [], startInde
     }
   }, [media, media.length, index]);
 
+  // Revoke any blob: object URLs when modal closes or component unmounts to avoid memory leaks
+  React.useEffect(() => {
+    if (!open) {
+      try {
+        (media || []).forEach(m => {
+          if (m && typeof m.url === 'string' && m.url.startsWith('blob:')) {
+            try { URL.revokeObjectURL(m.url); } catch (e) { /* ignore */ }
+          }
+        });
+      } catch (e) { /* ignore */ }
+    }
+    return () => {
+      try {
+        (media || []).forEach(m => {
+          if (m && typeof m.url === 'string' && m.url.startsWith('blob:')) {
+            try { URL.revokeObjectURL(m.url); } catch (e) { /* ignore */ }
+          }
+        });
+      } catch (e) { /* ignore */ }
+    };
+  }, [open, media]);
+
   if (!open) return null;
 
   const hasMedia = Array.isArray(media) && media.length > 0;
@@ -55,7 +80,12 @@ export default function MediaGalleryModal({ open, onClose, media = [], startInde
                 ) : (
                   <div style={{ position: 'relative' }}>
                     {current && current.url ? (
-                      <img src={current.url} alt={`${mascota.nombre || 'mascota'} - imagen ${index + 1}`} style={{ maxWidth: '100%', maxHeight: '70vh', borderRadius: 8, objectFit: 'contain' }} />
+                      <img
+                        src={current.url}
+                        alt={`${mascota.nombre || 'mascota'} - imagen ${index + 1}`}
+                        onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = PLACEHOLDER_IMG; }}
+                        style={{ maxWidth: '100%', maxHeight: '70vh', borderRadius: 8, objectFit: 'contain' }}
+                      />
                     ) : (
                       <div style={{ width: 420, height: 420, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8, background: '#f5f5f5', color: '#999', fontSize: 14 }}>No hay imagen disponible</div>
                     )}
@@ -80,7 +110,12 @@ export default function MediaGalleryModal({ open, onClose, media = [], startInde
                     {m.type && m.type.startsWith('video') ? (
                       <div style={{ width: 100, height: 70, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000', color: '#fff' }}>▶</div>
                     ) : (
-                      <img src={m.url} alt={`${mascota.nombre || 'mascota'} - miniatura ${i + 1}`} style={{ width: 100, height: 70, objectFit: 'cover', borderRadius: 6 }} />
+                      <img
+                        src={m.url}
+                        alt={`${mascota.nombre || 'mascota'} - miniatura ${i + 1}`}
+                        onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = PLACEHOLDER_IMG; }}
+                        style={{ width: 100, height: 70, objectFit: 'cover', borderRadius: 6 }}
+                      />
                     )}
                   </button>
                   {onDelete && (
