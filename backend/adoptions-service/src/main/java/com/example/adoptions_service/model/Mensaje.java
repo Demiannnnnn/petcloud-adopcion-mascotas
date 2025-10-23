@@ -1,7 +1,11 @@
 package com.example.adoptions_service.model;
 
-import jakarta.persistence.*;
 import java.util.Date;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 
 @Entity
 public class Mensaje {
@@ -10,10 +14,12 @@ public class Mensaje {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    private Perfil remitente;
+    private Long remitenteId;
 
     private String contenido;
     private Date fecha;
     private boolean leido;
+    private Long chatId;
+    private String tipoMensaje;
+    private String archivoUrl;
 }
