@@ -21,4 +21,6 @@ public class PublicMascotaDTO {
     public String imagenUrl;
     public java.util.List<java.util.Map<String,String>> media;
     public String publicadoPorName; // nuevo campo
+    public Long adoptanteId;
+    public String adoptanteName;
 }

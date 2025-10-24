@@ -50,9 +50,30 @@ export default function MisSolicitudes() {
             }
           } catch (e) { /* ignore */ }
         }));
-        // attach
+        // attach and patch mascota when the solicitud is approved so the card shows "Adoptada"
         const enriched = arr.map(a => ({ ...a, mascota: petMap[a.mascotaId] }));
-        setSolicitudes(enriched);
+
+        // If a solicitud was approved, the backend pet record might not have been updated yet
+        // (or the client may still have stale data). For the purposes of the "Mis solicitudes"
+        // view we override the mascota object so the `MascotaCard` displays Adoptada instead
+        // of Disponible when the request's estado indicates approval.
+        const approvedSet = new Set(['APPROVED', 'ACCEPTED', 'APROBADO', 'ACCEPTED']);
+        const userDisplayName = (user && (user.perfil?.nombreCompleto || user.nombreCompleto || user.nombre || user.username)) || (user && user.email ? user.email.split('@')[0] : 'Tú');
+
+        const adjusted = enriched.map(s => {
+          const estadoRaw = String(s.estado || '').trim().toUpperCase();
+          const pet = s.mascota ? { ...s.mascota } : { id: s.mascotaId, nombre: 'Mascota #' + s.mascotaId, imagenUrl: '' };
+          if (approvedSet.has(estadoRaw)) {
+            // mark as not available and show adopter (current user)
+            pet.disponibleAdopcion = false;
+            pet.adoptanteName = userDisplayName;
+            // also set an adoptanteId so other components can act on it if needed
+            pet.adoptanteId = user && (user.id || user.perfil?.id) ? (user.id || user.perfil?.id) : pet.adoptanteId;
+          }
+          return { ...s, mascota: pet };
+        });
+
+        setSolicitudes(adjusted);
       }
     }
     load();

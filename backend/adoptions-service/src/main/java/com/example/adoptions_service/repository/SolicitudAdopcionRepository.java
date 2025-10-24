@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.example.adoptions_service.model.SolicitudAdopcion;
+import com.example.adoptions_service.model.EstadoSolicitud;
 
 public interface SolicitudAdopcionRepository extends JpaRepository<SolicitudAdopcion, Long> {
 	List<SolicitudAdopcion> findByAdoptanteId(Long adoptanteId);
@@ -12,4 +13,6 @@ public interface SolicitudAdopcionRepository extends JpaRepository<SolicitudAdop
 	List<SolicitudAdopcion> findByMascotaId(Long mascotaId);
 
 	List<SolicitudAdopcion> findByMascotaIdIn(java.util.List<Long> mascotaIds);
+    
+	List<SolicitudAdopcion> findByEstado(EstadoSolicitud estado);
 }

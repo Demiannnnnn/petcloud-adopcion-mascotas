@@ -124,8 +124,12 @@ public class SolicitudAdopcionController {
 		try {
 			String petsBase = System.getenv().getOrDefault("PETS_API_BASE", "http://localhost:8082");
 			String url = petsBase + "/api/mascotas/" + s.getMascotaId() + "/reserve";
+			if (s.getAdoptanteId() != null) {
+				url += "?adoptanteId=" + s.getAdoptanteId();
+			}
 			org.springframework.http.HttpEntity<Void> entity = new org.springframework.http.HttpEntity<>(null);
-			restTemplate.exchange(url, org.springframework.http.HttpMethod.PATCH, entity, Void.class);
+			// Use POST here to avoid dependence on Apache HttpClient for PATCH support when running locally
+			restTemplate.exchange(url, org.springframework.http.HttpMethod.POST, entity, Void.class);
 		} catch (org.springframework.web.client.HttpClientErrorException.Conflict cex) {
 			// If pets-service reports conflict (already reserved), revert the saved approval and return 409
 			s.setEstado(EstadoSolicitud.PENDING);
@@ -134,8 +138,17 @@ public class SolicitudAdopcionController {
 			repo.save(s);
 			return ResponseEntity.status(409).build();
 		} catch (RestClientException ex) {
-			// Leave the saved approval (external error). Proxy a 502 to the client with saved resource
-			return ResponseEntity.status(502).body(saved);
+			// On any reservation error, revert the approval so we don't leave orphan APPROVED records.
+			try {
+				s.setEstado(EstadoSolicitud.PENDING);
+				s.setEvaluadorId(null);
+				s.setFechaRespuesta(null);
+				repo.save(s);
+			} catch (Exception re) {
+				log.error("Failed to revert solicitud {} after reservation error: {}", id, re.getMessage(), re);
+			}
+			log.warn("Reservation failed for solicitud {}: {}", id, ex.getMessage());
+			return ResponseEntity.status(502).body(java.util.Map.of("error", "reservation_failed", "message", ex.getMessage()));
 		}
 
 		return ResponseEntity.ok(saved);
@@ -188,4 +201,49 @@ public class SolicitudAdopcionController {
 		s.setFechaRespuesta(new java.util.Date());
 		return ResponseEntity.ok(repo.save(s));
 	}
+
+	// One-off reconciliation endpoint to repair mismatches where solicitudes are APPROVED
+	// but the corresponding mascota is still available. This can be invoked manually by an admin
+	// or by a scheduled job later. For safety it's a POST and returns a quick summary.
+	@PostMapping("/reconcile")
+	public ResponseEntity<?> reconcileApproved() {
+		java.util.List<SolicitudAdopcion> approved = repo.findByEstado(EstadoSolicitud.APPROVED);
+		int attempted = 0, repaired = 0, conflicts = 0, errors = 0;
+		String petsBase = System.getenv().getOrDefault("PETS_API_BASE", "http://localhost:8082");
+		for (SolicitudAdopcion s : approved) {
+			attempted++;
+			try {
+				String url = petsBase + "/api/mascotas/" + s.getMascotaId() + "/reserve";
+				if (s.getAdoptanteId() != null) url += "?adoptanteId=" + s.getAdoptanteId();
+				org.springframework.http.HttpEntity<Void> entity = new org.springframework.http.HttpEntity<>(null);
+				// Use POST for the same reason as above
+				restTemplate.exchange(url, org.springframework.http.HttpMethod.POST, entity, Void.class);
+				repaired++;
+			} catch (org.springframework.web.client.HttpClientErrorException.Conflict cex) {
+				// If already reserved by someone else, revert the approval to PENDING
+				try {
+					s.setEstado(EstadoSolicitud.PENDING);
+					s.setEvaluadorId(null);
+					s.setFechaRespuesta(null);
+					repo.save(s);
+				} catch (Exception re) {
+					log.error("Failed to revert solicitud {} during reconcile: {}", s.getId(), re.getMessage(), re);
+				}
+				conflicts++;
+			} catch (RestClientException rex) {
+				// For other errors, revert to PENDING to avoid leaving ghost approvals
+				try {
+					s.setEstado(EstadoSolicitud.PENDING);
+					s.setEvaluadorId(null);
+					s.setFechaRespuesta(null);
+					repo.save(s);
+				} catch (Exception re) {
+					log.error("Failed to revert solicitud {} during reconcile (error): {}", s.getId(), re.getMessage(), re);
+				}
+				errors++;
+			}
+		}
+		return ResponseEntity.ok(java.util.Map.of("attempted", attempted, "repaired", repaired, "conflicts_reverted", conflicts, "errors_reverted", errors));
+	}
+
 }

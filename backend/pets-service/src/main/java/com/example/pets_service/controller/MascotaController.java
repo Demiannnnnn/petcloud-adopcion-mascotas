@@ -62,9 +62,9 @@ public class MascotaController {
 	}
 
 	@org.springframework.web.bind.annotation.PatchMapping("/{id}/reserve")
-	public ResponseEntity<?> reserveMascota(@org.springframework.web.bind.annotation.PathVariable Long id) {
+	public ResponseEntity<?> reserveMascota(@org.springframework.web.bind.annotation.PathVariable Long id, @org.springframework.web.bind.annotation.RequestParam(required = false) Long adoptanteId) {
 		try {
-			boolean ok = mascotaService.reserveMascota(id);
+			boolean ok = (adoptanteId == null) ? mascotaService.reserveMascota(id) : mascotaService.reserveMascota(id, adoptanteId);
 			if (ok) return ResponseEntity.ok().build();
 			return ResponseEntity.status(409).body("Mascota no disponible");
 		} catch (IllegalArgumentException ia) {
@@ -72,6 +72,12 @@ public class MascotaController {
 		} catch (Exception e) {
 			return ResponseEntity.status(500).body(e.getMessage());
 		}
+	}
+
+	@org.springframework.web.bind.annotation.PostMapping("/{id}/reserve")
+	public ResponseEntity<?> reserveMascotaPost(@org.springframework.web.bind.annotation.PathVariable Long id, @org.springframework.web.bind.annotation.RequestParam(required = false) Long adoptanteId) {
+		// Accept POST as an alternative to PATCH so other services can call this without needing a PATCH-capable HTTP client
+		return reserveMascota(id, adoptanteId);
 	}
 
 	@GetMapping("/refugio/{id}")

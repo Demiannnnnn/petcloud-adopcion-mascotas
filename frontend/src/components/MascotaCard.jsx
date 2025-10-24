@@ -4,12 +4,14 @@ import { buildMediaUrl } from '../utils/mediaUtils';
 import { normalizeTamanio, isPesoLike, formatPeso } from '../utils/mascotaUtils';
 import MediaGalleryModal from './MediaGalleryModal';
 
-export default function MascotaCard({ mascota, onEdit, onDelete, refugioName, refugioContacto, publicadoPor, isPublic, onRequestAdoption, hideAvailabilityBadge }) {
+export default function MascotaCard({ mascota, overrideMascota, onEdit, onDelete, refugioName, refugioContacto, publicadoPor, isPublic, onRequestAdoption, hideAvailabilityBadge }) {
   const API_BASE = getApiBase('PETS');
-  const imagenSrc = mascota.imagenUrl
-    ? (typeof mascota.imagenUrl === 'string'
-      ? buildMediaUrl(API_BASE, mascota.imagenUrl)
-      : URL.createObjectURL(mascota.imagenUrl))
+  // allow callers to override display-only fields (useful when a solicitud indicates adoption)
+  const displayMascota = { ...(mascota || {}), ...(overrideMascota || {}) };
+  const imagenSrc = displayMascota.imagenUrl
+    ? (typeof displayMascota.imagenUrl === 'string'
+      ? buildMediaUrl(API_BASE, displayMascota.imagenUrl)
+      : URL.createObjectURL(displayMascota.imagenUrl))
     : null;
 
   const [expanded] = useState(false);
@@ -18,8 +20,8 @@ export default function MascotaCard({ mascota, onEdit, onDelete, refugioName, re
   const [galleryMedia, setGalleryMedia] = useState([]);
 
   // Prefer detailed age (years + months) when provided by the backend, otherwise fall back to the legacy `edad` field
-  const edadYears = mascota.edadYears;
-  const edadMonths = mascota.edadMonths;
+  const edadYears = displayMascota.edadYears;
+  const edadMonths = displayMascota.edadMonths;
   const ageParts = [];
   // If backend didn't return edadYears/edadMonths but fechaNacimiento exists, compute on client
   let calcYears = Number.isInteger(edadYears) ? edadYears : null;
@@ -143,28 +145,28 @@ export default function MascotaCard({ mascota, onEdit, onDelete, refugioName, re
         </button>
       )}
       {imagenSrc && (
-        <img src={imagenSrc} alt={mascota.nombre} style={{ width: 70, height: 70, objectFit: 'cover', borderRadius: '50%', marginBottom: 8, border: '3px solid #F29C6B' }} />
+        <img src={imagenSrc} alt={displayMascota.nombre} style={{ width: 70, height: 70, objectFit: 'cover', borderRadius: '50%', marginBottom: 8, border: '3px solid #F29C6B' }} />
       )}
 
-      <div style={{ fontWeight: 'bold', color: '#a0522d', fontSize: 18, marginBottom: 2 }}>{mascota.nombre}</div>
-      <div style={{ fontSize: 15, color: '#400B19', opacity: 0.8 }}>{mascota.especie}</div>
+  <div style={{ fontWeight: 'bold', color: '#a0522d', fontSize: 18, marginBottom: 2 }}>{displayMascota.nombre}</div>
+  <div style={{ fontSize: 15, color: '#400B19', opacity: 0.8 }}>{displayMascota.especie}</div>
       {refugioName && <div style={{ fontSize: 12, color: '#6b4b3a', opacity: 0.9, marginTop: 6 }}>Refugio: {refugioName}</div>}
       {publicadoPor && <div style={{ fontSize: 12, color: '#6b4b3a', opacity: 0.9, marginTop: 6 }}>Publicado por: {publicadoPor}</div>}
 
       {/* Availability badge placed inline below avatar to avoid overlap */}
       {!hideAvailabilityBadge && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
-          <span style={{ width:10, height:10, borderRadius:12, background: mascota.disponibleAdopcion ? '#a5f5b6' : '#e0e0e0', display:'inline-block' }} />
-          <span style={{ background: mascota.disponibleAdopcion ? '#4caf50' : '#9e9e9e', color: '#fff', padding: '4px 8px', borderRadius: 12, fontSize: 12, fontWeight: 700 }}>{mascota.disponibleAdopcion ? 'Disponible' : (mascota.adoptanteName ? 'Adoptada' : 'No disponible')}</span>
+          <span style={{ width:10, height:10, borderRadius:12, background: displayMascota.disponibleAdopcion ? '#a5f5b6' : '#e0e0e0', display:'inline-block' }} />
+          <span style={{ background: displayMascota.disponibleAdopcion ? '#4caf50' : '#9e9e9e', color: '#fff', padding: '4px 8px', borderRadius: 12, fontSize: 12, fontWeight: 700 }}>{displayMascota.disponibleAdopcion ? 'Disponible' : (displayMascota.adoptanteName ? 'Adoptada' : 'No disponible')}</span>
         </div>
       )}
 
       {/* If we know who adopted the pet, show that info in a small subtitle */}
-      {mascota.adoptanteName && (
-        <div style={{ marginTop: 6, fontSize: 12, color: '#6b4b3a', opacity: 0.9 }}>Adoptada por: <b style={{ color: '#444' }}>{mascota.adoptanteName}</b></div>
+      {displayMascota.adoptanteName && (
+        <div style={{ marginTop: 6, fontSize: 12, color: '#6b4b3a', opacity: 0.9 }}>Adoptada por: <b style={{ color: '#444' }}>{displayMascota.adoptanteName}</b></div>
       )}
 
-      <div style={{ fontSize: 14, color: '#400B19', opacity: 0.6 }}>{mascota.raza}</div>
+      <div style={{ fontSize: 14, color: '#400B19', opacity: 0.6 }}>{displayMascota.raza}</div>
       {/* Mostrar tamaño/peso si existe */}
       {(() => {
         const rawTam = mascota.tamaño || mascota.tamanio || mascota.tamano || mascota.peso || mascota.pesoKg || '';
@@ -200,7 +202,7 @@ export default function MascotaCard({ mascota, onEdit, onDelete, refugioName, re
       {/* Map media from various possible shapes and ensure absolute URLs when needed */}
       {(() => {
         // API_BASE is resolved above via getApiBase('PETS')
-        const raw = mascota.media || mascota.imagenes || mascota.fotos || mascota.files || [];
+  const raw = displayMascota.media || displayMascota.imagenes || displayMascota.fotos || displayMascota.files || [];
         // map and filter only entries with a valid final URL
         let mediaMapped = Array.isArray(raw) ? raw.map(m => {
           if (!m) return null;
@@ -214,9 +216,9 @@ export default function MascotaCard({ mascota, onEdit, onDelete, refugioName, re
         }).filter(Boolean) : [];
 
         // if no media provided, fallback to main imagenUrl (if any)
-        if ((!mediaMapped || mediaMapped.length === 0) && mascota.imagenUrl) {
-          const url = typeof mascota.imagenUrl === 'string'
-            ? buildMediaUrl(API_BASE, mascota.imagenUrl)
+        if ((!mediaMapped || mediaMapped.length === 0) && displayMascota.imagenUrl) {
+          const url = typeof displayMascota.imagenUrl === 'string'
+            ? buildMediaUrl(API_BASE, displayMascota.imagenUrl)
             : '';
           if (url) mediaMapped.push({ url, type: 'image' });
         }

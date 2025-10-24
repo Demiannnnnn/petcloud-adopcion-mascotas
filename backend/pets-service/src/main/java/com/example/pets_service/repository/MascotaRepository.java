@@ -16,4 +16,8 @@ public interface MascotaRepository extends JpaRepository<Mascota, Long> {
 	@org.springframework.data.jpa.repository.Modifying
 	@org.springframework.data.jpa.repository.Query("UPDATE Mascota m SET m.disponibleAdopcion = false WHERE m.id = :id AND (m.disponibleAdopcion = true OR m.disponibleAdopcion IS NULL)")
 	int reserveIfAvailable(@org.springframework.data.repository.query.Param("id") Long id);
+
+	@org.springframework.data.jpa.repository.Modifying
+	@org.springframework.data.jpa.repository.Query("UPDATE Mascota m SET m.disponibleAdopcion = false, m.adoptanteId = :adoptanteId WHERE m.id = :id AND (m.disponibleAdopcion = true OR m.disponibleAdopcion IS NULL)")
+	int reserveIfAvailableWithAdoptante(@org.springframework.data.repository.query.Param("id") Long id, @org.springframework.data.repository.query.Param("adoptanteId") Long adoptanteId);
 }

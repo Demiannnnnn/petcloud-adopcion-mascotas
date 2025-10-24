@@ -4,6 +4,7 @@ import { listReceivedRequestsForMascotas, approveRequest, rejectRequest } from '
 import { getApiBase } from '../api/apiBase';
 import { getUserById } from '../api/usersApi';
 import { buildMediaUrl } from '../utils/mediaUtils';
+import { toast } from 'react-toastify';
 
 export default function SolicitudesRecibidas() {
   const { user } = useContext(AuthContext) || {};
@@ -13,6 +14,12 @@ export default function SolicitudesRecibidas() {
   const [viewerOpen, setViewerOpen] = useState(false);
   const [viewerImages, setViewerImages] = useState([]);
   const [viewerIndex, setViewerIndex] = useState(0);
+  const [animating, setAnimating] = useState(false);
+  const [animFromSrc, setAnimFromSrc] = useState(null);
+  const [animToSrc, setAnimToSrc] = useState(null);
+  const [animDirection, setAnimDirection] = useState(1); // 1 = forward, -1 = back
+  const [animPhase, setAnimPhase] = useState('idle');
+  const touchStartRef = React.useRef(null);
 
   // close viewer on ESC key
   useEffect(() => {
@@ -21,6 +28,52 @@ export default function SolicitudesRecibidas() {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [viewerOpen]);
+
+  // helper to animate between images (crossfade + slight slide)
+  const animateTo = (newIndex) => {
+    if (animating || !viewerImages || newIndex === viewerIndex) return;
+    const next = buildMediaUrl(getApiBase('PETS'), viewerImages[newIndex]);
+    const current = buildMediaUrl(getApiBase('PETS'), viewerImages[viewerIndex]);
+    setAnimDirection(newIndex > viewerIndex ? 1 : -1);
+    setAnimFromSrc(current);
+    setAnimToSrc(next);
+    setAnimating(true);
+    setAnimPhase('start');
+    // kick to 'run' on next frame so transitions occur
+    requestAnimationFrame(() => requestAnimationFrame(() => setAnimPhase('run')));
+    // duration must match CSS transition below
+    const DURATION = 380;
+    window.setTimeout(() => {
+      setViewerIndex(newIndex);
+      setAnimating(false);
+      setAnimFromSrc(null);
+      setAnimToSrc(null);
+      setAnimPhase('idle');
+    }, DURATION);
+  };
+
+  // touch handlers for swipe support on mobile
+  const onTouchStart = (e) => {
+    if (!e.touches || e.touches.length === 0) return;
+    touchStartRef.current = e.touches[0].clientX;
+  };
+  const onTouchEnd = (e) => {
+    if (touchStartRef.current == null) return;
+    const endX = (e.changedTouches && e.changedTouches[0] && e.changedTouches[0].clientX) || null;
+    if (endX == null) { touchStartRef.current = null; return; }
+    const delta = endX - touchStartRef.current;
+    const THRESHOLD = 50; // pixels
+    if (delta > THRESHOLD) {
+      // swipe right -> previous
+      const prev = (viewerIndex - 1 + viewerImages.length) % viewerImages.length;
+      animateTo(prev);
+    } else if (delta < -THRESHOLD) {
+      // swipe left -> next
+      const next = (viewerIndex + 1) % viewerImages.length;
+      animateTo(next);
+    }
+    touchStartRef.current = null;
+  };
 
   useEffect(() => {
     async function load() {
@@ -43,6 +96,8 @@ export default function SolicitudesRecibidas() {
   // Enrich requests with mascota name and adoptante name to avoid showing raw IDs
   const petCache = {};
   const userCache = {};
+
+        const approvedSet = new Set(['APPROVED', 'ACCEPTED', 'APROBADO', 'ACCEPTED']);
 
         const enriched = await Promise.all((pending || []).map(async (r) => {
           const mascotaId = r.mascotaId;
@@ -95,12 +150,23 @@ export default function SolicitudesRecibidas() {
             }
           }
 
+          const estadoRaw = String(r.estado || '').trim().toUpperCase();
+          const isApproved = approvedSet.has(estadoRaw);
+          // if the request was approved, show the pet as adopted in this view
+          if (isApproved) {
+            pet = pet ? { ...pet } : { id: mascotaId };
+            pet.disponibleAdopcion = false;
+            pet.adoptanteName = adoptanteName;
+          }
+
           return {
             ...r,
+            pet,
             petName,
             petImages,
             adoptanteName,
             adoptantePerfil: adopter || null,
+            isApproved
           };
         }));
 
@@ -117,12 +183,13 @@ export default function SolicitudesRecibidas() {
     const headers = { 'X-User-Perfil-Id': String(perfilId), 'X-User-Perfil-Tipo': (user.perfil && user.perfil.tipo) || 'USER' };
     const res = await approveRequest(id, headers, perfilId);
     if (res.ok) {
-  // remove locally and optionally reload list
-  setSolicitudes(prev => prev.filter(s => s.id !== id));
+      // show success toast, remove locally and optionally reload list
+      toast.success('Solicitud aprobada correctamente');
+      setSolicitudes(prev => prev.filter(s => s.id !== id));
       // fetch the updated mascota and dispatch an event so other parts of the app can update
       try {
-  const PETS_BASE = getApiBase('PETS');
-  const body = await res.json();
+        const PETS_BASE = getApiBase('PETS');
+        const body = await res.json();
         const mascotaId = body.mascotaId || (body && body.mascotaId) || null;
         if (mascotaId) {
           const r = await fetch(`${PETS_BASE}/api/mascotas/${mascotaId}`);
@@ -133,7 +200,13 @@ export default function SolicitudesRecibidas() {
         }
       } catch (e) { /* ignore */ }
     } else {
-      alert('Error al aprobar');
+      // try to show server-provided error message
+      let msg = 'Error al aprobar';
+      try {
+        const err = await res.json();
+        if (err && err.message) msg = err.message;
+      } catch (e) { /* ignore parse error */ }
+      toast.error(msg);
     }
   };
 
@@ -165,21 +238,64 @@ export default function SolicitudesRecibidas() {
             <div style={{ flex: '1 1 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, position: 'relative', flexDirection: 'column' }}>
               {/* left arrow */}
               {viewerImages.length > 1 && (
-                <button aria-label="Anterior" onClick={() => setViewerIndex(i => (i - 1 + viewerImages.length) % viewerImages.length)} style={{ position: 'absolute', left: 32, top: '50%', transform: 'translateY(-50%)', zIndex: 4100, background: 'transparent', border: 'none', fontSize: 28, cursor: 'pointer' }}>◀</button>
+                <button aria-label="Anterior" onClick={() => animateTo((viewerIndex - 1 + viewerImages.length) % viewerImages.length)} style={{ position: 'absolute', left: 32, top: '50%', transform: 'translateY(-50%)', zIndex: 4100, background: 'transparent', border: 'none', fontSize: 28, cursor: 'pointer' }}>◀</button>
               )}
-              <img src={buildMediaUrl(getApiBase('PETS'), viewerImages[viewerIndex])} alt="foto mascota" style={{ maxHeight: '72vh', maxWidth: '100%', objectFit: 'contain', borderRadius: 8 }} />
-              {/* thumbnails strip */}
-              {viewerImages.length > 1 && (
-                <div style={{ display: 'flex', gap: 8, marginTop: 12, overflowX: 'auto', paddingBottom: 6 }}>
-                  {viewerImages.map((mi, idx) => (
-                    <button key={idx} onClick={() => setViewerIndex(idx)} style={{ border: idx === viewerIndex ? '2px solid #F29C6B' : '1px solid #ddd', padding: 0, borderRadius: 6, background: '#fff', cursor: 'pointer' }}>
-                      <img src={buildMediaUrl(getApiBase('PETS'), mi)} alt={`foto ${idx+1}`} style={{ width: 72, height: 72, objectFit: 'cover', display: 'block', borderRadius: 6 }} />
-                    </button>
-                  ))}
+
+              {/* main image area with animation and touch support */}
+              <div onTouchStart={onTouchStart} onTouchEnd={onTouchEnd} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', flexDirection: 'column', minHeight: 360 }}>
+                <div style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', padding: 8 }}>
+                  {!animating && (
+                    <img src={buildMediaUrl(getApiBase('PETS'), viewerImages[viewerIndex])} alt="foto mascota" style={{ maxHeight: '72vh', maxWidth: '100%', objectFit: 'contain', borderRadius: 8, transition: 'transform 300ms ease' }} />
+                  )}
+                  {animating && (
+                    <>
+                      <img
+                        src={animFromSrc}
+                        alt="prev"
+                        style={{
+                          position: 'absolute',
+                          maxHeight: '72vh',
+                          maxWidth: '100%',
+                          objectFit: 'contain',
+                          borderRadius: 8,
+                          transition: 'opacity 360ms ease, transform 360ms ease',
+                          opacity: animPhase === 'run' ? 0 : 1,
+                          transform: animPhase === 'run' ? `translateX(${animDirection === 1 ? '-20%' : '20%'})` : 'translateX(0)'
+                        }}
+                      />
+                      <img
+                        src={animToSrc}
+                        alt="next"
+                        style={{
+                          position: 'absolute',
+                          maxHeight: '72vh',
+                          maxWidth: '100%',
+                          objectFit: 'contain',
+                          borderRadius: 8,
+                          transition: 'opacity 360ms ease, transform 360ms ease',
+                          opacity: animPhase === 'run' ? 1 : 0,
+                          transform: animPhase === 'run' ? 'translateX(0)' : `translateX(${animDirection === 1 ? '20%' : '-20%'})`
+                        }}
+                      />
+                    </>
+                  )}
                 </div>
-              )}
+
+                {/* thumbnails strip (normal flow, below image) */}
+                {viewerImages.length > 1 && (
+                  <div style={{ display: 'flex', gap: 8, marginTop: 12, overflowX: 'auto', paddingBottom: 6 }}>
+                    {viewerImages.map((mi, idx) => (
+                      <button key={idx} onClick={() => animateTo(idx)} style={{ border: idx === viewerIndex ? '2px solid #F29C6B' : '1px solid #ddd', padding: 0, borderRadius: 6, background: '#fff', cursor: 'pointer' }}>
+                        <img src={buildMediaUrl(getApiBase('PETS'), mi)} alt={`foto ${idx+1}`} style={{ width: 72, height: 72, objectFit: 'cover', display: 'block', borderRadius: 6 }} />
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+              </div>
+
               {viewerImages.length > 1 && (
-                <button aria-label="Siguiente" onClick={() => setViewerIndex(i => (i + 1) % viewerImages.length)} style={{ position: 'absolute', right: 32, top: '50%', transform: 'translateY(-50%)', zIndex: 4100, background: 'transparent', border: 'none', fontSize: 28, cursor: 'pointer' }}>▶</button>
+                <button aria-label="Siguiente" onClick={() => animateTo((viewerIndex + 1) % viewerImages.length)} style={{ position: 'absolute', right: 32, top: '50%', transform: 'translateY(-50%)', zIndex: 4100, background: 'transparent', border: 'none', fontSize: 28, cursor: 'pointer' }}>▶</button>
               )}
             </div>
             <div style={{ width: 320, padding: 18, borderLeft: '1px solid #eee', overflowY: 'auto' }}>

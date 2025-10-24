@@ -28,6 +28,7 @@ public class Mascota {
     private String ubicacion;
     private String descripcion;
     private Boolean disponibleAdopcion;
+    private Long adoptanteId; // Id del usuario que adoptó (si aplica)
     private java.sql.Timestamp fechaRegistro;
     private java.time.LocalDate fechaNacimiento;
     private String imagenUrl;
@@ -80,6 +81,9 @@ public class Mascota {
 
     public Boolean getDisponibleAdopcion() { return disponibleAdopcion; }
     public void setDisponibleAdopcion(Boolean disponibleAdopcion) { this.disponibleAdopcion = disponibleAdopcion; }
+
+    public Long getAdoptanteId() { return adoptanteId; }
+    public void setAdoptanteId(Long adoptanteId) { this.adoptanteId = adoptanteId; }
 
     public java.sql.Timestamp getFechaRegistro() { return fechaRegistro; }
     public void setFechaRegistro(java.sql.Timestamp fechaRegistro) { this.fechaRegistro = fechaRegistro; }

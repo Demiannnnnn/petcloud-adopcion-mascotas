@@ -143,6 +143,21 @@ public class MascotaService {
 			} catch (org.springframework.web.client.RestClientException e) {
 				// ignore resolution errors from remote lookups
 			}
+
+			 // include adoptanteId/adoptanteName if present in entity
+			 dto.adoptanteId = m.getAdoptanteId();
+			 if (dto.adoptanteId != null) {
+				 try {
+					 String url = usersBase + "/api/perfil/" + dto.adoptanteId;
+					 java.util.Map resp = restTemplate.getForObject(url, java.util.Map.class);
+					 if (resp != null) {
+						 if (resp.get("nombreCompleto") != null) dto.adoptanteName = String.valueOf(resp.get("nombreCompleto"));
+						 else if (resp.get("nombre") != null) dto.adoptanteName = String.valueOf(resp.get("nombre"));
+					 }
+				 } catch (org.springframework.web.client.RestClientException ex) {
+					 // ignore
+				 }
+			 }
 			out.add(dto);
 		}
 		return out;
@@ -158,13 +173,22 @@ public class MascotaService {
 	 */
 	@Transactional
 	public boolean reserveMascota(Long id) {
-		// Use the repository conditional update which returns number of rows affected
+		// backward-compatible: reserve without adoptanteId
 		int updated = mascotaRepository.reserveIfAvailable(id);
 		if (updated > 0) return true;
-		// If no rows were updated, it may be because the mascota doesn't exist or is already unavailable.
 		boolean exists = mascotaRepository.existsById(id);
 		if (!exists) throw new IllegalArgumentException("Mascota no encontrada");
-		return false; // already not available
+		return false;
+	}
+
+	@Transactional
+	public boolean reserveMascota(Long id, Long adoptanteId) {
+		// Try to reserve and set adoptanteId atomically
+		int updated = mascotaRepository.reserveIfAvailableWithAdoptante(id, adoptanteId);
+		if (updated > 0) return true;
+		boolean exists = mascotaRepository.existsById(id);
+		if (!exists) throw new IllegalArgumentException("Mascota no encontrada");
+		return false;
 	}
 	public Mascota registrarMascota(MascotaRegistroDTO mascotaDTO) {
 		Mascota mascota = new Mascota();
