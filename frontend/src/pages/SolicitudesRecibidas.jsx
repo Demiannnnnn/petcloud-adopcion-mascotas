@@ -20,6 +20,8 @@ export default function SolicitudesRecibidas() {
   const [animDirection, setAnimDirection] = useState(1); // 1 = forward, -1 = back
   const [animPhase, setAnimPhase] = useState('idle');
   const touchStartRef = React.useRef(null);
+  const [filter, setFilter] = useState('ALL'); // ALL | PENDING | APPROVED | REJECTED
+  const [search, setSearch] = useState('');
 
   // close viewer on ESC key
   useEffect(() => {
@@ -28,6 +30,18 @@ export default function SolicitudesRecibidas() {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [viewerOpen]);
+
+  // helper to format dates safely
+  const formatDate = (raw) => {
+    if (!raw) return 'N/D';
+    try {
+      const d = new Date(raw);
+      if (isNaN(d.getTime())) return String(raw);
+      return d.toLocaleString();
+    } catch (e) {
+      return String(raw);
+    }
+  };
 
   // helper to animate between images (crossfade + slight slide)
   const animateTo = (newIndex) => {
@@ -90,8 +104,18 @@ export default function SolicitudesRecibidas() {
         if (ids.length === 0) { setSolicitudes([]); return; }
         setLoading(true);
         const rec = await listReceivedRequestsForMascotas(ids);
-        // show only pending requests to the owner
-        const pending = Array.isArray(rec) ? rec.filter(r => r.estado === 'PENDING' || r.estado === 0 || r.estado === '0') : [];
+        // show all requests for the owner's mascotas (do not filter by estado)
+        const allRequests = Array.isArray(rec) ? rec : [];
+        // sort newest first if fechaSolicitud exists
+        try {
+          allRequests.sort((a, b) => {
+            const da = new Date(a.fechaSolicitud || a.fechaSolicitudUtc || 0).getTime() || 0;
+            const db = new Date(b.fechaSolicitud || b.fechaSolicitudUtc || 0).getTime() || 0;
+            return db - da;
+          });
+        } catch (e) {
+          // ignore sort errors and continue
+        }
 
   // Enrich requests with mascota name and adoptante name to avoid showing raw IDs
   const petCache = {};
@@ -99,7 +123,7 @@ export default function SolicitudesRecibidas() {
 
         const approvedSet = new Set(['APPROVED', 'ACCEPTED', 'APROBADO', 'ACCEPTED']);
 
-        const enriched = await Promise.all((pending || []).map(async (r) => {
+  const enriched = await Promise.all((allRequests || []).map(async (r) => {
           const mascotaId = r.mascotaId;
           const adoptanteId = r.adoptanteId;
           let pet = petCache[mascotaId];
@@ -152,6 +176,8 @@ export default function SolicitudesRecibidas() {
 
           const estadoRaw = String(r.estado || '').trim().toUpperCase();
           const isApproved = approvedSet.has(estadoRaw);
+          const pendingSet = new Set(['PENDING', 'PENDIENTE', '0']);
+          const isPending = !isApproved && pendingSet.has(estadoRaw);
           // if the request was approved, show the pet as adopted in this view
           if (isApproved) {
             pet = pet ? { ...pet } : { id: mascotaId };
@@ -166,8 +192,10 @@ export default function SolicitudesRecibidas() {
             petImages,
             adoptanteName,
             adoptantePerfil: adopter || null,
-            isApproved
-          };
+            isApproved,
+            isPending,
+            estadoRaw
+           };
         }));
 
         setSolicitudes(enriched || []);
@@ -177,6 +205,41 @@ export default function SolicitudesRecibidas() {
     }
     load();
   }, [user]);
+
+  // derive visible list based on selected filter and search
+  const visibleSolicitudes = React.useMemo(() => {
+    if (!Array.isArray(solicitudes)) return [];
+    const rejectedSet = new Set(['REJECTED', 'RECHAZADO', 'REJECT']);
+    const q = (search || '').toString().trim().toLowerCase();
+    return solicitudes.filter(s => {
+      // filter by state
+      if (filter === 'PENDING' && !s.isPending) return false;
+      if (filter === 'APPROVED' && !s.isApproved) return false;
+      if (filter === 'REJECTED' && !rejectedSet.has(String(s.estadoRaw || s.estado || '').toUpperCase())) return false;
+      // search by pet name or adoptante name
+      if (q) {
+        const pet = (s.petName || '').toString().toLowerCase();
+        const adopt = (s.adoptanteName || '').toString().toLowerCase();
+        if (!pet.includes(q) && !adopt.includes(q)) return false;
+      }
+      return true;
+    });
+  }, [solicitudes, filter, search]);
+
+
+  // compute counts for filters
+  const counts = React.useMemo(() => {
+    const result = { ALL: 0, PENDING: 0, APPROVED: 0, REJECTED: 0 };
+    if (!Array.isArray(solicitudes)) return result;
+    const rejectedSet = new Set(['REJECTED', 'RECHAZADO', 'REJECT']);
+    solicitudes.forEach(s => {
+      result.ALL += 1;
+      if (s.isPending) result.PENDING += 1;
+      if (s.isApproved) result.APPROVED += 1;
+      if (rejectedSet.has(String(s.estadoRaw || s.estado || '').toUpperCase())) result.REJECTED += 1;
+    });
+    return result;
+  }, [solicitudes]);
 
   const handleApprove = async (id) => {
     const perfilId = user.id || (user.perfil && user.perfil.id) || '';
@@ -224,6 +287,42 @@ export default function SolicitudesRecibidas() {
   return (
     <div style={{ padding: 20 }}>
       <h2>Solicitudes recibidas</h2>
+      {/* filtros */}
+  <div style={{ marginBottom: 12, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+        {['ALL','PENDING','APPROVED','REJECTED'].map(key => {
+          const isSelected = filter === key;
+          // define a small color cue per key
+          let accent = '#ddd';
+          if (key === 'PENDING') accent = '#f57c00';
+          if (key === 'APPROVED') accent = '#2e7d32';
+          if (key === 'REJECTED') accent = '#c62828';
+          const label = key === 'ALL' ? `Todos (${counts.ALL})` : key === 'PENDING' ? `Pendientes (${counts.PENDING})` : key === 'APPROVED' ? `Aprobadas (${counts.APPROVED})` : `Rechazadas (${counts.REJECTED})`;
+          return (
+            <button
+              key={key}
+              onClick={() => setFilter(key)}
+              style={{
+                padding: '6px 10px',
+                borderRadius: 6,
+                border: isSelected ? `2px solid ${accent}` : '1px solid #ddd',
+                background: isSelected ? '#fff5ee' : '#fff',
+                cursor: 'pointer',
+                color: isSelected ? accent : '#222'
+              }}
+            >
+              {label}
+            </button>
+          );
+        })}
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <input
+            placeholder="Buscar por mascota o adoptante..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid #ddd', minWidth: 220 }}
+          />
+        </div>
+      </div>
       {/* Image viewer modal */}
       {viewerOpen && (
         <div
@@ -310,10 +409,11 @@ export default function SolicitudesRecibidas() {
           </div>
         </div>
       )}
-      {loading ? <div>Cargando...</div> : (
-        solicitudes.length === 0 ? <div>No hay solicitudes para tus mascotas</div> : (
-          solicitudes.map(s => (
-            <div key={s.id} style={{ background: '#fff', border: '1px solid #eee', padding: 12, borderRadius: 8, marginBottom: 8 }}>
+      {loading && <div>Cargando...</div>}
+      {!loading && solicitudes.length === 0 && <div>No hay solicitudes para tus mascotas</div>}
+      {!loading && solicitudes.length > 0 && visibleSolicitudes.length === 0 && <div>No hay solicitudes para el filtro seleccionado</div>}
+      {!loading && visibleSolicitudes.length > 0 && visibleSolicitudes.map(s => (
+        <div key={s.id} style={{ background: '#fff', border: '1px solid #eee', padding: 12, borderRadius: 8, marginBottom: 8 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <div style={{ flex: '0 0 auto', display: 'flex', alignItems: 'center', gap: 10 }}>
                   {s.petImages && s.petImages.length > 0 ? (
@@ -374,14 +474,31 @@ export default function SolicitudesRecibidas() {
               </div>
 
               <div style={{ marginTop: 8 }}><b>Mensaje:</b> {s.comentariosAdoptante || s.mensaje}</div>
+              <div style={{ marginTop: 6 }}><b>Fecha:</b> <span style={{ marginLeft: 8 }}>{formatDate(s.fechaSolicitud || s.fechaSolicitudUtc || s.fecha || s.createdAt)}</span></div>
+              <div style={{ marginTop: 6 }}>
+                <b>Estado:</b>
+                {(() => {
+                  const raw = String(s.estadoRaw || s.estado || '').toUpperCase();
+                  let color = '#a0522d';
+                  if (s.isApproved || raw === 'APPROVED' || raw === 'APROBADO' || raw === 'ACCEPTED') color = '#2e7d32';
+                  if (raw === 'REJECTED' || raw === 'RECHAZADO' || raw === 'REJECT') color = '#c62828';
+                  if (s.isPending) color = '#f57c00';
+                  return (
+                    <span style={{ marginLeft: 8, fontWeight: 700, color }}>{String(s.estadoRaw || s.estado || (s.isApproved ? 'APROBADO' : 'N/D'))}</span>
+                  );
+                })()}
+              </div>
+              {s.motivoRechazo ? <div style={{ color: '#c62828', marginTop: 6 }}><b>Motivo de rechazo:</b> {s.motivoRechazo}</div> : null}
               <div style={{ marginTop: 8 }}>
-                <button onClick={() => handleApprove(s.id)} style={{ marginRight: 8 }}>Aceptar</button>
-                <button onClick={() => handleReject(s.id)}>Rechazar</button>
+                {s.isPending ? (
+                  <>
+                    <button onClick={() => handleApprove(s.id)} style={{ marginRight: 8 }}>Aceptar</button>
+                    <button onClick={() => handleReject(s.id)}>Rechazar</button>
+                  </>
+                ) : null}
               </div>
             </div>
-          ))
-        )
-      )}
+      ))}
     </div>
   );
 }

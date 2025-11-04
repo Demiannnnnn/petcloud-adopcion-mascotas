@@ -25,5 +25,30 @@ public class Notificacion {
     private Long solicitudAdopcionId;
     private Long chatId;
     private Long destinatarioId;
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
+    public String getMensaje() { return mensaje; }
+    public void setMensaje(String mensaje) { this.mensaje = mensaje; }
+
+    public String getTipo() { return tipo; }
+    public void setTipo(String tipo) { this.tipo = tipo; }
+
+    public String getTitulo() { return titulo; }
+    public void setTitulo(String titulo) { this.titulo = titulo; }
+
+    public Date getFecha() { return fecha; }
+    public void setFecha(Date fecha) { this.fecha = fecha; }
+
+    public Boolean getLeida() { return leida; }
+    public void setLeida(Boolean leida) { this.leida = leida; }
+
+    public Long getSolicitudAdopcionId() { return solicitudAdopcionId; }
+    public void setSolicitudAdopcionId(Long solicitudAdopcionId) { this.solicitudAdopcionId = solicitudAdopcionId; }
+
+    public Long getChatId() { return chatId; }
+    public void setChatId(Long chatId) { this.chatId = chatId; }
+
+    public Long getDestinatarioId() { return destinatarioId; }
+    public void setDestinatarioId(Long destinatarioId) { this.destinatarioId = destinatarioId; }
 }

@@ -11,6 +11,7 @@ import PerfilPage from './pages/PerfilPage';
 import MisSolicitudes from './pages/MisSolicitudes';
 import SolicitudesRecibidas from './pages/SolicitudesRecibidas';
 import ProtectedRoute from './components/ProtectedRoute';
+import ChatBubble from './components/ChatBubble';
 
 function App() {
   return (
@@ -48,6 +49,7 @@ function App() {
         {/* Puedes agregar más rutas protegidas aquí */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
+      <ChatBubble />
       <ToastContainer position="top-right" autoClose={4000} hideProgressBar={false} newestOnTop closeOnClick pauseOnHover />
     </BrowserRouter>
   );

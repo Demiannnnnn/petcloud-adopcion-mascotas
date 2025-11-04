@@ -18,8 +18,15 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import com.example.adoptions_service.model.Chat;
+import com.example.adoptions_service.model.ChatParticipante;
 import com.example.adoptions_service.model.EstadoSolicitud;
+import com.example.adoptions_service.model.Notificacion;
 import com.example.adoptions_service.model.SolicitudAdopcion;
+import com.example.adoptions_service.repository.ChatParticipanteRepository;
+import com.example.adoptions_service.repository.ChatRepository;
+import com.example.adoptions_service.repository.MensajeRepository;
+import com.example.adoptions_service.repository.NotificacionRepository;
 import com.example.adoptions_service.repository.SolicitudAdopcionRepository;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -28,15 +35,23 @@ import jakarta.servlet.http.HttpServletRequest;
 @RequestMapping("/api/adoptions")
 public class SolicitudAdopcionController {
 	private final SolicitudAdopcionRepository repo;
+	private final NotificacionRepository notificacionRepo;
+	private final ChatRepository chatRepo;
+	private final ChatParticipanteRepository chatParticipanteRepo;
+	private final MensajeRepository mensajeRepo;
 	private static final Logger log = LoggerFactory.getLogger(SolicitudAdopcionController.class);
 
 	@Autowired
 	private RestTemplate restTemplate;
 
 	@Autowired
-	public SolicitudAdopcionController(SolicitudAdopcionRepository repo, RestTemplate restTemplate) {
+	public SolicitudAdopcionController(SolicitudAdopcionRepository repo, RestTemplate restTemplate, NotificacionRepository notificacionRepo, ChatRepository chatRepo, ChatParticipanteRepository chatParticipanteRepo, MensajeRepository mensajeRepo) {
 		this.repo = repo;
 		this.restTemplate = restTemplate;
+		this.notificacionRepo = notificacionRepo;
+		this.chatRepo = chatRepo;
+		this.chatParticipanteRepo = chatParticipanteRepo;
+		this.mensajeRepo = mensajeRepo;
 	}
 
 	@PostMapping
@@ -58,7 +73,102 @@ public class SolicitudAdopcionController {
 			s.setFechaSolicitud(new java.util.Date());
 			s.setEstado(EstadoSolicitud.PENDING);
 			SolicitudAdopcion saved = repo.save(s);
-			return ResponseEntity.created(URI.create("/api/adoptions/" + saved.getId())).body(saved);
+
+			// create chat for this solicitud so both parties can communicate immediately
+			try {
+				// avoid duplicate chat
+				Chat existing = chatRepo.findBySolicitudAdopcionId(saved.getId());
+				if (existing == null) {
+					Chat c = new Chat();
+					c.setSolicitudAdopcionId(saved.getId());
+					c.setFechaCreacion(new java.util.Date());
+					c.setActivo(true);
+					Chat persisted = chatRepo.save(c);
+					log.info("Created chat {} for solicitud {}", persisted.getId(), saved.getId());
+
+					// determine propietario (owner) via pets-service
+					Long propietarioId = null;
+					try {
+						String petsBase = System.getenv().getOrDefault("PETS_API_BASE", "http://localhost:8082");
+						java.util.Map map = restTemplate.getForObject(petsBase + "/api/mascotas/" + saved.getMascotaId(), java.util.Map.class);
+						if (map != null) {
+							Object pid = map.get("propietarioId");
+							if (pid == null) pid = map.get("propietario");
+							if (pid instanceof Number) propietarioId = ((Number)pid).longValue();
+							else if (pid instanceof String) {
+								try { propietarioId = Long.valueOf((String)pid); } catch (Exception x) { }
+							}
+						}
+					} catch (Exception e) {
+						log.debug("Could not fetch mascota owner for chat creation: {}", e.getMessage());
+					}
+
+					// create participants: adoptante and propietario (if available)
+					Long adoptanteId = saved.getAdoptanteId();
+					try {
+						var existingParts = chatParticipanteRepo.findByChatId(persisted.getId());
+						final Long adoptanteFinal = adoptanteId;
+						final Long propietarioFinal = propietarioId;
+						if (adoptanteFinal != null) {
+							boolean found = existingParts.stream().anyMatch(p -> adoptanteFinal.equals(p.getPerfilId()));
+							if (!found) {
+								ChatParticipante p1 = new ChatParticipante();
+								p1.setChatId(persisted.getId());
+								p1.setPerfilId(adoptanteFinal);
+								p1.setFechaUnion(new java.util.Date());
+								chatParticipanteRepo.save(p1);
+							}
+						}
+						if (propietarioFinal != null && !propietarioFinal.equals(adoptanteFinal)) {
+							boolean found2 = existingParts.stream().anyMatch(p -> propietarioFinal.equals(p.getPerfilId()));
+							if (!found2) {
+								ChatParticipante p2 = new ChatParticipante();
+								p2.setChatId(persisted.getId());
+								p2.setPerfilId(propietarioFinal);
+								p2.setFechaUnion(new java.util.Date());
+								chatParticipanteRepo.save(p2);
+							}
+						}
+					} catch (Exception exParts) {
+						// fallback: attempt to save participants, may create duplicates but avoid failing chat creation
+						if (adoptanteId != null) {
+							try {
+								ChatParticipante p1 = new ChatParticipante();
+								p1.setChatId(persisted.getId());
+								p1.setPerfilId(adoptanteId);
+								p1.setFechaUnion(new java.util.Date());
+								chatParticipanteRepo.save(p1);
+							} catch (Exception __) {}
+						}
+						if (propietarioId != null && !propietarioId.equals(adoptanteId)) {
+							try {
+								ChatParticipante p2 = new ChatParticipante();
+								p2.setChatId(persisted.getId());
+								p2.setPerfilId(propietarioId);
+								p2.setFechaUnion(new java.util.Date());
+								chatParticipanteRepo.save(p2);
+							} catch (Exception __) {}
+						}
+					}
+				}
+			} catch (Exception e) {
+				log.warn("Failed to create chat for solicitud {}: {}", saved.getId(), e.getMessage());
+			}
+
+			// compose response including created chat, participants and messages if available
+			java.util.Map<String, Object> out = new java.util.HashMap<>();
+			out.put("solicitud", saved);
+			try {
+				Chat created = chatRepo.findBySolicitudAdopcionId(saved.getId());
+				if (created != null) {
+					out.put("chat", created);
+					out.put("participantes", chatParticipanteRepo.findByChatId(created.getId()));
+					try { out.put("mensajes", mensajeRepo.findByChatIdOrderByFechaAsc(created.getId())); } catch (Exception e) { out.put("mensajes", java.util.Collections.emptyList()); }
+				}
+			} catch (Exception e) {
+				// ignore
+			}
+			return ResponseEntity.created(URI.create("/api/adoptions/" + saved.getId())).body(out);
 		} catch (Exception e) {
 			return ResponseEntity.status(500).body(java.util.Map.of("error", "internal", "message", e.getMessage()));
 		}
@@ -151,6 +261,31 @@ public class SolicitudAdopcionController {
 			return ResponseEntity.status(502).body(java.util.Map.of("error", "reservation_failed", "message", ex.getMessage()));
 		}
 
+		// create a notification for the adoptante informing approval (include mascota name when available)
+		try {
+			if (saved.getAdoptanteId() != null) {
+				String petsBase = System.getenv().getOrDefault("PETS_API_BASE", "http://localhost:8082");
+				String petName = String.valueOf(saved.getMascotaId());
+				try {
+					java.util.Map map = restTemplate.getForObject(petsBase + "/api/mascotas/" + saved.getMascotaId(), java.util.Map.class);
+					if (map != null && map.get("nombre") != null) petName = String.valueOf(map.get("nombre"));
+				} catch (Exception fetchEx) {
+					log.debug("Could not fetch mascota name for notification: {}", fetchEx.getMessage());
+				}
+				Notificacion n = new Notificacion();
+				n.setDestinatarioId(saved.getAdoptanteId());
+				n.setTipo("ADOPTION_APPROVED");
+				n.setTitulo("Solicitud aprobada");
+				n.setMensaje("Tu solicitud de adopción para la mascota " + petName + " fue aprobada.");
+				n.setFecha(new java.util.Date());
+				n.setLeida(false);
+				n.setSolicitudAdopcionId(saved.getId());
+				notificacionRepo.save(n);
+			}
+		} catch (Exception e) {
+			log.warn("Failed to create notification for approval: {}", e.getMessage());
+		}
+
 		return ResponseEntity.ok(saved);
 	}
 
@@ -176,7 +311,63 @@ public class SolicitudAdopcionController {
 		s.setEstado(EstadoSolicitud.REJECTED);
 		s.setMotivoRechazo(motivo);
 		s.setFechaRespuesta(new java.util.Date());
-		return ResponseEntity.ok(repo.save(s));
+		SolicitudAdopcion saved = repo.save(s);
+		// create notification for rejection
+		try {
+			if (saved.getAdoptanteId() != null) {
+				String petsBase = System.getenv().getOrDefault("PETS_API_BASE", "http://localhost:8082");
+				String petName = String.valueOf(saved.getMascotaId());
+				try {
+					java.util.Map map = restTemplate.getForObject(petsBase + "/api/mascotas/" + saved.getMascotaId(), java.util.Map.class);
+					if (map != null && map.get("nombre") != null) petName = String.valueOf(map.get("nombre"));
+				} catch (Exception fetchEx) {
+					log.debug("Could not fetch mascota name for notification: {}", fetchEx.getMessage());
+				}
+				Notificacion n = new Notificacion();
+				n.setDestinatarioId(saved.getAdoptanteId());
+				n.setTipo("ADOPTION_REJECTED");
+				n.setTitulo("Solicitud rechazada");
+				String msg = "Tu solicitud de adopción para la mascota " + petName + " fue rechazada.";
+				if (motivo != null && !motivo.isBlank()) msg += " Motivo: " + motivo;
+				n.setMensaje(msg);
+				n.setFecha(new java.util.Date());
+				n.setLeida(false);
+				n.setSolicitudAdopcionId(saved.getId());
+				notificacionRepo.save(n);
+			}
+		} catch (Exception e) {
+			log.warn("Failed to create notification for rejection: {}", e.getMessage());
+		}
+		// delete any chat and its related resources associated with this solicitud (cleanup)
+		try {
+			Chat c = chatRepo.findBySolicitudAdopcionId(saved.getId());
+			if (c != null) {
+				// delete messages
+				try {
+					var msgs = mensajeRepo.findByChatIdOrderByFechaAsc(c.getId());
+					if (msgs != null && !msgs.isEmpty()) mensajeRepo.deleteAll(msgs);
+				} catch (Exception exm) {
+					log.warn("Failed to delete mensajes for chat {}: {}", c.getId(), exm.getMessage());
+				}
+				// delete participants
+				try {
+					var parts = chatParticipanteRepo.findByChatId(c.getId());
+					if (parts != null && !parts.isEmpty()) chatParticipanteRepo.deleteAll(parts);
+				} catch (Exception exp) {
+					log.warn("Failed to delete participantes for chat {}: {}", c.getId(), exp.getMessage());
+				}
+				// finally delete the chat record
+				try {
+					chatRepo.delete(c);
+					log.info("Deleted chat {} due to solicitud {} rejection", c.getId(), saved.getId());
+				} catch (Exception exc) {
+					log.warn("Failed to delete chat {}: {}", c.getId(), exc.getMessage());
+				}
+			}
+		} catch (Exception cleanupEx) {
+			log.warn("Error during chat cleanup for solicitud {}: {}", saved.getId(), cleanupEx.getMessage());
+		}
+		return ResponseEntity.ok(saved);
 	}
 
 	@PatchMapping("/{id}/cancel")

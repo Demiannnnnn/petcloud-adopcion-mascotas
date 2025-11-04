@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { createAdoption } from '../api/adoptionsApi';
+import { getChatBySolicitud } from '../api/chatsApi';
 import { toast } from 'react-toastify';
 
 export default function SolicitarAdopcionModal({ open, onClose, mascota, user }) {
@@ -15,7 +16,23 @@ export default function SolicitarAdopcionModal({ open, onClose, mascota, user })
       const req = { mascotaId: mascota.id, adoptanteId, mensaje, contacto };
       const res = await createAdoption(req);
       if (res.ok) {
+        const body = await res.json();
         toast.success('Solicitud enviada');
+        // backend now returns { solicitud, chat?, participantes?, mensajes? }
+        // If chat is included in the response, dispatch it directly. Otherwise try to fetch by solicitud id.
+        try {
+          if (body && body.chat) {
+            // the response already contains chat + participants + mensajes
+            window.dispatchEvent(new CustomEvent('chat.created', { detail: { chat: body.chat, mensajes: body.mensajes || [], participantes: body.participantes || [] } }));
+          } else {
+            // handle older/newer shapes: try body.id or body.solicitud.id
+            const solicitudId = (body && body.id) || (body && body.solicitud && body.solicitud.id) || null;
+            if (solicitudId != null) {
+              const chat = await getChatBySolicitud(solicitudId);
+              if (chat) window.dispatchEvent(new CustomEvent('chat.created', { detail: chat }));
+            }
+          }
+        } catch (e) { /* ignore */ }
         onClose(true);
       } else {
         toast.error('Error al enviar solicitud');

@@ -1,0 +1,4 @@
+2025-11-03 21:55:34.136677-03:00 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Tabla "CHAT_MENSAJE" no encontrada
+Table "CHAT_MENSAJE" not found; SQL statement:
+select * from chat_mensaje [42102-232]

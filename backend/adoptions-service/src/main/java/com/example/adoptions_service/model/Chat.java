@@ -30,4 +30,22 @@ public class Chat {
     private Date fechaCreacion;
 
     private Boolean activo;
+    
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public java.util.List<Long> getParticipantes() { return participantes; }
+    public void setParticipantes(java.util.List<Long> participantes) { this.participantes = participantes; }
+
+    public List<Mensaje> getMensajes() { return mensajes; }
+    public void setMensajes(List<Mensaje> mensajes) { this.mensajes = mensajes; }
+
+    public Long getSolicitudAdopcionId() { return solicitudAdopcionId; }
+    public void setSolicitudAdopcionId(Long solicitudAdopcionId) { this.solicitudAdopcionId = solicitudAdopcionId; }
+
+    public Date getFechaCreacion() { return fechaCreacion; }
+    public void setFechaCreacion(Date fechaCreacion) { this.fechaCreacion = fechaCreacion; }
+
+    public Boolean getActivo() { return activo; }
+    public void setActivo(Boolean activo) { this.activo = activo; }
 }
