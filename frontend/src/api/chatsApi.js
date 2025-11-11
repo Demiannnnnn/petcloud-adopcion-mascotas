@@ -35,6 +35,20 @@ export async function getChatById(chatId) {
   return res.ok ? res.json() : null;
 }
 
+export async function createChatBetween(perfilA, perfilB) {
+  try {
+    const res = await fetch(`${API_BASE}/api/chats/create`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ perfilA, perfilB })
+    });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (e) {
+    return null;
+  }
+}
+
 export async function getChatsByParticipant(perfilId) {
   if (!perfilId) return [];
   if (_notFoundParticipantCache.has(String(perfilId))) return [];

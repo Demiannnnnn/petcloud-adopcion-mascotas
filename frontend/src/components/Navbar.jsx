@@ -1,11 +1,13 @@
 import React, { useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import NotificationBadge from './NotificationBadge';
+import ContactsModal from './ContactsModal';
 import { getApiBase } from '../api/apiBase';
 import { Link } from 'react-router-dom';
 
 export default function Navbar() {
 	const { user } = useContext(AuthContext) || {};
+	const [contactsOpen, setContactsOpen] = React.useState(false);
 	const displayName = user?.perfil?.tipoPerfil === 'EMPRESA'
 		? (user?.perfil?.nombreEmpresa || user?.perfil?.nombre || user?.username || 'Usuario')
 		: (user?.perfil?.nombreCompleto || user?.username || (user?.perfil && user.perfil.nombre) || 'Usuario');
@@ -25,12 +27,17 @@ export default function Navbar() {
 			</div>
 
 			<div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 12 }}>
+				<button onClick={() => setContactsOpen(true)} style={{ background: '#fff', border: '1px solid #f0e6df', padding: '6px 10px', borderRadius: 10, cursor: 'pointer' }}>Contactos</button>
+
 				<div style={{ textAlign: 'right', marginRight: 8 }}>
 					<div style={{ fontSize: 13, fontWeight: 700 }}>{displayName}</div>
 					<div style={{ fontSize: 12, color: '#888' }}>Bienvenido</div>
 				</div>
 				<NotificationBadge />
 			</div>
+
+			{/* Contacts modal */}
+			<ContactsModal open={contactsOpen} onClose={() => setContactsOpen(false)} ownerPerfilId={user?.perfil?.id || user?.id} />
 		</header>
 	);
 }

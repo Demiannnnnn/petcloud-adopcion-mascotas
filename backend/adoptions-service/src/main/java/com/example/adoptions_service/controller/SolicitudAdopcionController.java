@@ -54,6 +54,116 @@ public class SolicitudAdopcionController {
 		this.mensajeRepo = mensajeRepo;
 	}
 
+	/**
+	 * Idempotent endpoint to ensure a chat exists for an existing solicitud.
+	 * Useful to backfill chats for solicitudes created before this logic was deployed.
+	 */
+	@PostMapping("/{id}/ensure-chat")
+	public ResponseEntity<?> ensureChatForSolicitud(@PathVariable Long id) {
+		var opt = repo.findById(id);
+		if (opt.isEmpty()) return ResponseEntity.notFound().build();
+		SolicitudAdopcion s = opt.get();
+		try {
+			// if already exists, return it
+			Chat existing = chatRepo.findBySolicitudAdopcionId(s.getId());
+			if (existing != null) {
+				java.util.Map<String,Object> out = new java.util.HashMap<>();
+				out.put("chat", existing);
+				out.put("participantes", chatParticipanteRepo.findByChatId(existing.getId()));
+				try { out.put("mensajes", mensajeRepo.findByChatIdOrderByFechaAsc(existing.getId())); } catch (Exception e) { out.put("mensajes", java.util.Collections.emptyList()); }
+				return ResponseEntity.ok(out);
+			}
+
+			// determine propietario via pets-service if possible
+			Long propietarioId = null;
+			try {
+				String petsBase = System.getenv().getOrDefault("PETS_API_BASE", "http://localhost:8082");
+				java.util.Map map = restTemplate.getForObject(petsBase + "/api/mascotas/" + s.getMascotaId(), java.util.Map.class);
+				if (map != null) {
+					Object pid = map.get("propietarioId");
+					if (pid == null) pid = map.get("propietario");
+					if (pid instanceof Number) propietarioId = ((Number)pid).longValue();
+					else if (pid instanceof String) {
+						try { propietarioId = Long.valueOf((String)pid); } catch (Exception x) { }
+					}
+				}
+			} catch (Exception e) {
+				log.debug("Could not fetch mascota owner for ensure-chat: {}", e.getMessage());
+			}
+
+			Long adoptanteId = s.getAdoptanteId();
+			Chat persisted = null;
+			try {
+				if (adoptanteId != null && propietarioId != null) {
+					var partsOfAdoptante = chatParticipanteRepo.findByPerfilId(adoptanteId);
+					for (var pa : partsOfAdoptante) {
+						Long candidateChatId = pa.getChatId();
+						var parts = chatParticipanteRepo.findByChatId(candidateChatId);
+						boolean hasProp = false;
+						for (var p : parts) {
+							if (propietarioId.equals(p.getPerfilId())) { hasProp = true; break; }
+						}
+						if (hasProp) {
+							persisted = chatRepo.findById(candidateChatId).orElse(null);
+							log.info("Reusing existing chat {} between {} and {} for solicitud {}", candidateChatId, adoptanteId, propietarioId, s.getId());
+							break;
+						}
+					}
+				}
+				if (persisted == null) {
+					Chat c = new Chat();
+					c.setSolicitudAdopcionId(s.getId());
+					c.setFechaCreacion(new java.util.Date());
+					c.setActivo(true);
+					persisted = chatRepo.save(c);
+					log.info("Created chat {} for solicitud {} (ensure)", persisted.getId(), s.getId());
+					// add participants
+					if (adoptanteId != null) {
+						ChatParticipante p1 = new ChatParticipante();
+						p1.setChatId(persisted.getId());
+						p1.setPerfilId(adoptanteId);
+						p1.setFechaUnion(new java.util.Date());
+						chatParticipanteRepo.save(p1);
+					}
+					if (propietarioId != null && !propietarioId.equals(adoptanteId)) {
+						ChatParticipante p2 = new ChatParticipante();
+						p2.setChatId(persisted.getId());
+						p2.setPerfilId(propietarioId);
+						p2.setFechaUnion(new java.util.Date());
+						chatParticipanteRepo.save(p2);
+					}
+				}
+			} catch (Exception ex) {
+				log.warn("ensure-chat failed for solicitud {}: {}", s.getId(), ex.getMessage());
+			}
+
+			// attempt to create contactos in users-service if both known
+			try {
+				if (adoptanteId != null && propietarioId != null) {
+					String usersBase = System.getenv().getOrDefault("USERS_API_BASE", "http://localhost:8081");
+					java.util.Map<String,Object> b1 = new java.util.HashMap<>();
+					b1.put("ownerPerfilId", propietarioId);
+					b1.put("contactoPerfilId", adoptanteId);
+					try { restTemplate.postForEntity(usersBase + "/api/contactos", b1, java.util.Map.class); } catch (Exception x) { log.debug("could not add contacto: {}", x.getMessage()); }
+					java.util.Map<String,Object> b2 = new java.util.HashMap<>();
+					b2.put("ownerPerfilId", adoptanteId);
+					b2.put("contactoPerfilId", propietarioId);
+					try { restTemplate.postForEntity(usersBase + "/api/contactos", b2, java.util.Map.class); } catch (Exception x) { log.debug("could not add contacto reverse: {}", x.getMessage()); }
+				}
+			} catch (Exception e) { log.debug("contacts create failed: {}", e.getMessage()); }
+
+			// return created chat info
+			Chat created = chatRepo.findBySolicitudAdopcionId(s.getId());
+			java.util.Map<String,Object> out = new java.util.HashMap<>();
+			out.put("chat", created);
+			out.put("participantes", created == null ? java.util.Collections.emptyList() : chatParticipanteRepo.findByChatId(created.getId()));
+			try { out.put("mensajes", created == null ? java.util.Collections.emptyList() : mensajeRepo.findByChatIdOrderByFechaAsc(created.getId())); } catch (Exception e) { out.put("mensajes", java.util.Collections.emptyList()); }
+			return ResponseEntity.status(created == null ? 500 : 201).body(out);
+		} catch (Exception e) {
+			return ResponseEntity.status(500).body(java.util.Map.of("error","internal","message", e.getMessage()));
+		}
+	}
+
 	@PostMapping
 	public ResponseEntity<?> create(@RequestBody AdopcionRequest req) {
 		// basic validation
@@ -79,13 +189,6 @@ public class SolicitudAdopcionController {
 				// avoid duplicate chat
 				Chat existing = chatRepo.findBySolicitudAdopcionId(saved.getId());
 				if (existing == null) {
-					Chat c = new Chat();
-					c.setSolicitudAdopcionId(saved.getId());
-					c.setFechaCreacion(new java.util.Date());
-					c.setActivo(true);
-					Chat persisted = chatRepo.save(c);
-					log.info("Created chat {} for solicitud {}", persisted.getId(), saved.getId());
-
 					// determine propietario (owner) via pets-service
 					Long propietarioId = null;
 					try {
@@ -103,57 +206,222 @@ public class SolicitudAdopcionController {
 						log.debug("Could not fetch mascota owner for chat creation: {}", e.getMessage());
 					}
 
-					// create participants: adoptante and propietario (if available)
+					// Attempt to reuse an existing chat between adoptante and propietario (if both known)
 					Long adoptanteId = saved.getAdoptanteId();
+					Chat persisted = null;
 					try {
-						var existingParts = chatParticipanteRepo.findByChatId(persisted.getId());
-						final Long adoptanteFinal = adoptanteId;
-						final Long propietarioFinal = propietarioId;
-						if (adoptanteFinal != null) {
-							boolean found = existingParts.stream().anyMatch(p -> adoptanteFinal.equals(p.getPerfilId()));
-							if (!found) {
-								ChatParticipante p1 = new ChatParticipante();
-								p1.setChatId(persisted.getId());
-								p1.setPerfilId(adoptanteFinal);
-								p1.setFechaUnion(new java.util.Date());
-								chatParticipanteRepo.save(p1);
+						if (adoptanteId != null && propietarioId != null) {
+							// find participant entries for adoptante and check chats where propietario also participates
+							var partsOfAdoptante = chatParticipanteRepo.findByPerfilId(adoptanteId);
+							for (var pa : partsOfAdoptante) {
+								Long candidateChatId = pa.getChatId();
+								var parts = chatParticipanteRepo.findByChatId(candidateChatId);
+								boolean hasProp = false;
+								for (var p : parts) {
+									if (propietarioId.equals(p.getPerfilId())) { hasProp = true; break; }
+								}
+								if (hasProp) {
+									// reuse this chat
+									persisted = chatRepo.findById(candidateChatId).orElse(null);
+									log.info("Reusing existing chat {} between {} and {} for solicitud {}", candidateChatId, adoptanteId, propietarioId, saved.getId());
+									break;
+								}
 							}
 						}
-						if (propietarioFinal != null && !propietarioFinal.equals(adoptanteFinal)) {
-							boolean found2 = existingParts.stream().anyMatch(p -> propietarioFinal.equals(p.getPerfilId()));
-							if (!found2) {
-								ChatParticipante p2 = new ChatParticipante();
-								p2.setChatId(persisted.getId());
-								p2.setPerfilId(propietarioFinal);
-								p2.setFechaUnion(new java.util.Date());
-								chatParticipanteRepo.save(p2);
+						if (persisted == null) {
+							// no existing chat found, create a new one and attach participants
+							Chat c = new Chat();
+							c.setSolicitudAdopcionId(saved.getId());
+							c.setFechaCreacion(new java.util.Date());
+							c.setActivo(true);
+							persisted = chatRepo.save(c);
+							log.info("Created chat {} for solicitud {}", persisted.getId(), saved.getId());
+
+							// create participants: adoptante and propietario (if available)
+							var existingParts = chatParticipanteRepo.findByChatId(persisted.getId());
+							final Long adoptanteFinal = adoptanteId;
+							final Long propietarioFinal = propietarioId;
+							if (adoptanteFinal != null) {
+								boolean found = existingParts.stream().anyMatch(p -> adoptanteFinal.equals(p.getPerfilId()));
+								if (!found) {
+									ChatParticipante p1 = new ChatParticipante();
+									p1.setChatId(persisted.getId());
+									p1.setPerfilId(adoptanteFinal);
+									p1.setFechaUnion(new java.util.Date());
+									chatParticipanteRepo.save(p1);
+								}
+							}
+							if (propietarioFinal != null && !propietarioFinal.equals(adoptanteFinal)) {
+								boolean found2 = existingParts.stream().anyMatch(p -> propietarioFinal.equals(p.getPerfilId()));
+								if (!found2) {
+									ChatParticipante p2 = new ChatParticipante();
+									p2.setChatId(persisted.getId());
+									p2.setPerfilId(propietarioFinal);
+									p2.setFechaUnion(new java.util.Date());
+									chatParticipanteRepo.save(p2);
+								}
 							}
 						}
 					} catch (Exception exParts) {
-						// fallback: attempt to save participants, may create duplicates but avoid failing chat creation
-						if (adoptanteId != null) {
+						// fallback: if any issue, try to create participants on a newly created chat
+						if (persisted == null) {
 							try {
-								ChatParticipante p1 = new ChatParticipante();
-								p1.setChatId(persisted.getId());
-								p1.setPerfilId(adoptanteId);
-								p1.setFechaUnion(new java.util.Date());
-								chatParticipanteRepo.save(p1);
-							} catch (Exception __) {}
+								Chat c = new Chat();
+								c.setSolicitudAdopcionId(saved.getId());
+								c.setFechaCreacion(new java.util.Date());
+								c.setActivo(true);
+								persisted = chatRepo.save(c);
+							} catch (Exception ee) { persisted = null; }
 						}
-						if (propietarioId != null && !propietarioId.equals(adoptanteId)) {
-							try {
-								ChatParticipante p2 = new ChatParticipante();
-								p2.setChatId(persisted.getId());
-								p2.setPerfilId(propietarioId);
-								p2.setFechaUnion(new java.util.Date());
-								chatParticipanteRepo.save(p2);
-							} catch (Exception __) {}
+						// attempt to create contacts between adoptante and propietario in users-service
+						try {
+							if (adoptanteId != null && propietarioId != null) {
+								String usersBase = System.getenv().getOrDefault("USERS_API_BASE", "http://localhost:8081");
+								java.util.Map<String, Object> body1 = new java.util.HashMap<>();
+								body1.put("ownerPerfilId", propietarioId);
+								body1.put("contactoPerfilId", adoptanteId);
+								try {
+									restTemplate.postForEntity(usersBase + "/api/contactos", body1, java.util.Map.class);
+									log.info("Added contacto: owner={} contacto={}", propietarioId, adoptanteId);
+								} catch (Exception e2) {
+									log.debug("Could not add contacto (owner->contacto): {}", e2.getMessage());
+								}
+
+								java.util.Map<String, Object> body2 = new java.util.HashMap<>();
+								body2.put("ownerPerfilId", adoptanteId);
+								body2.put("contactoPerfilId", propietarioId);
+								try {
+									restTemplate.postForEntity(usersBase + "/api/contactos", body2, java.util.Map.class);
+									log.info("Added contacto: owner={} contacto={}", adoptanteId, propietarioId);
+								} catch (Exception e3) {
+									log.debug("Could not add contacto (contacto->owner): {}", e3.getMessage());
+								}
+							}
+						} catch (Exception exContact) {
+							log.debug("Failed to call users-service to add contactos: {}", exContact.getMessage());
+						}
+						// If frontend supplied an explicit contacto id in request, try to create contacto(s) with that id
+						try {
+							if (req != null && req.getContacto() != null && !req.getContacto().isBlank()) {
+								Long supplied = null;
+								try { supplied = Long.valueOf(req.getContacto().trim()); } catch (Exception x) { supplied = null; }
+								if (supplied != null && adoptanteId != null) {
+									String usersBase = System.getenv().getOrDefault("USERS_API_BASE", "http://localhost:8081");
+									// add contacto: adoptante -> supplied
+									java.util.Map<String,Object> bodyA = new java.util.HashMap<>();
+									bodyA.put("ownerPerfilId", adoptanteId);
+									bodyA.put("contactoPerfilId", supplied);
+									try {
+										restTemplate.postForEntity(usersBase + "/api/contactos", bodyA, java.util.Map.class);
+										log.info("Added explicit contacto: owner={} contacto={}", adoptanteId, supplied);
+									} catch (Exception e4) {
+										log.debug("Could not add explicit contacto (adoptante->supplied): {}", e4.getMessage());
+									}
+									// also add reverse if propietario unknown: supplied -> adoptante
+									java.util.Map<String,Object> bodyB = new java.util.HashMap<>();
+									bodyB.put("ownerPerfilId", supplied);
+									bodyB.put("contactoPerfilId", adoptanteId);
+									try {
+										restTemplate.postForEntity(usersBase + "/api/contactos", bodyB, java.util.Map.class);
+										log.info("Added explicit contacto: owner={} contacto={}", supplied, adoptanteId);
+									} catch (Exception e5) {
+										log.debug("Could not add explicit contacto (supplied->adoptante): {}", e5.getMessage());
+									}
+								}
+							}
+						} catch (Exception exExplicit) {
+							log.debug("Failed to add explicit contacto from request: {}", exExplicit.getMessage());
+						}
+						if (persisted != null) {
+							if (adoptanteId != null) {
+								try {
+									ChatParticipante p1 = new ChatParticipante();
+									p1.setChatId(persisted.getId());
+									p1.setPerfilId(adoptanteId);
+									p1.setFechaUnion(new java.util.Date());
+									chatParticipanteRepo.save(p1);
+								} catch (Exception __) {}
+							}
+							if (propietarioId != null && !propietarioId.equals(adoptanteId)) {
+								try {
+									ChatParticipante p2 = new ChatParticipante();
+									p2.setChatId(persisted.getId());
+									p2.setPerfilId(propietarioId);
+									p2.setFechaUnion(new java.util.Date());
+									chatParticipanteRepo.save(p2);
+								} catch (Exception __) {}
+							}
 						}
 					}
 				}
 			} catch (Exception e) {
 				log.warn("Failed to create chat for solicitud {}: {}", saved.getId(), e.getMessage());
 			}
+
+			// After creating/reusing chat and participants, attempt to persist contactos in users-service
+			try {
+				Long adoptanteIdLocal = saved.getAdoptanteId();
+				Long propietarioIdLocal = null;
+				try {
+					Chat created = chatRepo.findBySolicitudAdopcionId(saved.getId());
+					if (created != null) {
+						var parts = chatParticipanteRepo.findByChatId(created.getId());
+						if (parts != null) {
+							for (var p : parts) {
+								Long pid = p.getPerfilId();
+								if (pid != null && adoptanteIdLocal != null && !pid.equals(adoptanteIdLocal)) {
+									propietarioIdLocal = pid;
+									break;
+								}
+							}
+						}
+					}
+				} catch (Exception xx) { /* ignore */ }
+
+				String usersBase = System.getenv().getOrDefault("USERS_API_BASE", "http://localhost:8081");
+				if (adoptanteIdLocal != null && propietarioIdLocal != null) {
+					java.util.Map<String, Object> b1 = new java.util.HashMap<>();
+					b1.put("ownerPerfilId", propietarioIdLocal);
+					b1.put("contactoPerfilId", adoptanteIdLocal);
+					try {
+						var resp1 = restTemplate.postForEntity(usersBase + "/api/contactos", b1, java.util.Map.class);
+						log.info("Created contacto (owner->contacto) {} -> {} status={}", propietarioIdLocal, adoptanteIdLocal, resp1 != null ? resp1.getStatusCodeValue() : "n/a");
+					} catch (Exception ecc) { log.debug("Failed to create contacto owner->adoptante: {}", ecc.getMessage()); }
+
+					java.util.Map<String, Object> b2 = new java.util.HashMap<>();
+					b2.put("ownerPerfilId", adoptanteIdLocal);
+					b2.put("contactoPerfilId", propietarioIdLocal);
+					try {
+						var resp2 = restTemplate.postForEntity(usersBase + "/api/contactos", b2, java.util.Map.class);
+						log.info("Created contacto (adoptante->owner) {} -> {} status={}", adoptanteIdLocal, propietarioIdLocal, resp2 != null ? resp2.getStatusCodeValue() : "n/a");
+					} catch (Exception ecd) { log.debug("Failed to create contacto adoptante->owner: {}", ecd.getMessage()); }
+				}
+
+				// If frontend supplied an explicit contacto id, try to use that too
+				try {
+					if (req != null && req.getContacto() != null && !req.getContacto().isBlank()) {
+						Long supplied = null;
+						try { supplied = Long.valueOf(req.getContacto().trim()); } catch (Exception x) { supplied = null; }
+						if (supplied != null && adoptanteIdLocal != null) {
+							java.util.Map<String,Object> bodyA = new java.util.HashMap<>();
+							bodyA.put("ownerPerfilId", adoptanteIdLocal);
+							bodyA.put("contactoPerfilId", supplied);
+							try {
+								var rA = restTemplate.postForEntity(usersBase + "/api/contactos", bodyA, java.util.Map.class);
+								log.info("Created explicit contacto {} -> {} status={}", adoptanteIdLocal, supplied, rA != null ? rA.getStatusCodeValue() : "n/a");
+							} catch (Exception e4) { log.debug("Could not add explicit contacto (adoptante->supplied): {}", e4.getMessage()); }
+
+							java.util.Map<String,Object> bodyB = new java.util.HashMap<>();
+							bodyB.put("ownerPerfilId", supplied);
+							bodyB.put("contactoPerfilId", adoptanteIdLocal);
+							try {
+								var rB = restTemplate.postForEntity(usersBase + "/api/contactos", bodyB, java.util.Map.class);
+								log.info("Created explicit contacto {} -> {} status={}", supplied, adoptanteIdLocal, rB != null ? rB.getStatusCodeValue() : "n/a");
+							} catch (Exception e5) { log.debug("Could not add explicit contacto (supplied->adoptante): {}", e5.getMessage()); }
+						}
+					}
+				} catch (Exception exx) { log.debug("Error while trying explicit contacto: {}", exx.getMessage()); }
+			} catch (Exception exAll) { log.debug("Contacts creation overall failed: {}", exAll.getMessage()); }
 
 			// compose response including created chat, participants and messages if available
 			java.util.Map<String, Object> out = new java.util.HashMap<>();

@@ -4,7 +4,7 @@ import { buildMediaUrl } from '../utils/mediaUtils';
 import { normalizeTamanio, isPesoLike, formatPeso } from '../utils/mascotaUtils';
 import MediaGalleryModal from './MediaGalleryModal';
 
-export default function MascotaCard({ mascota, overrideMascota, onEdit, onDelete, refugioName, refugioContacto, publicadoPor, isPublic, onRequestAdoption, hideAvailabilityBadge }) {
+export default function MascotaCard({ mascota, overrideMascota, onEdit, onDelete, refugioName, refugioContacto, publicadoPor, isPublic, onRequestAdoption, hideAvailabilityBadge, onGalleryOpenChange }) {
   const API_BASE = getApiBase('PETS');
   // allow callers to override display-only fields (useful when a solicitud indicates adoption)
   const displayMascota = { ...(mascota || {}), ...(overrideMascota || {}) };
@@ -18,6 +18,15 @@ export default function MascotaCard({ mascota, overrideMascota, onEdit, onDelete
 
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [galleryMedia, setGalleryMedia] = useState([]);
+
+  // notify parent when gallery/modal open state changes so parent can hide overlays (e.g., welcome banner)
+  React.useEffect(() => {
+    try {
+      if (typeof onGalleryOpenChange === 'function') onGalleryOpenChange(Boolean(galleryOpen));
+    } catch (e) {
+      // ignore
+    }
+  }, [galleryOpen, onGalleryOpenChange]);
 
   // Prefer detailed age (years + months) when provided by the backend, otherwise fall back to the legacy `edad` field
   const edadYears = displayMascota.edadYears;

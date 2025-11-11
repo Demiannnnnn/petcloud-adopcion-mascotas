@@ -64,6 +64,7 @@ function PaginaPrincipal() {
   const [adoptingMascota, setAdoptingMascota] = useState(null);
   const [search, setSearch] = useState('');
   const [speciesFilter, setSpeciesFilter] = useState('ALL');
+  const [isMascotaDetailOpen, setIsMascotaDetailOpen] = useState(false);
 
   // Cargar mascotas del usuario al iniciar sesión o recargar
   React.useEffect(() => {
@@ -226,6 +227,7 @@ function PaginaPrincipal() {
   return (
     <div style={{ width: '100vw', minHeight: '100vh', position: 'relative', overflow: 'hidden', background: "url('/assets/fondo.png') no-repeat center center fixed", backgroundSize: 'cover' }}>
       {/* Header y logo */}
+      {!isMascotaDetailOpen && (
       <div style={{
         position: 'absolute',
         top: isMobile ? 8 : 32,
@@ -254,8 +256,9 @@ function PaginaPrincipal() {
             ? `, ${user.perfil.nombreEmpresa}`
             : ''
         ) : ''}!`}
-      </div>
-  <img src="/assets/petcloud-logo.png" alt="PetCloud Logo" style={{ position: isMobile ? 'absolute' : 'absolute', top: isMobile ? 90 : 24, left: isMobile ? 8 : 24, width: isMobile ? 60 : 100, height: isMobile ? 60 : 100, zIndex: 101 }} />
+    </div>
+    )}
+  <img src="/assets/petcloud-logo.png" alt="PetCloud Logo" style={{ position: isMobile ? 'absolute' : 'absolute', top: isMobile ? 90 : 24, left: isMobile ? 8 : 24, width: isMobile ? 60 : 100, height: isMobile ? 60 : 100, zIndex: 101, opacity: isMascotaDetailOpen ? 0.18 : 1, transition: 'opacity 180ms ease' }} />
       
       {/* Botones de Adopciones y Donaciones */}
   <div style={{ position: isMobile ? 'absolute' : 'absolute', top: isMobile ? 90 : 24, right: isMobile ? 76 : 130, display: 'flex', gap: 8, alignItems: 'center', zIndex: 102 }}>
@@ -372,6 +375,7 @@ function PaginaPrincipal() {
                     isPublic={true}
                     publicadoPor={publicadoPor}
                     onRequestAdoption={(mascota) => { setAdoptingMascota(mascota); setAdoptionModalOpen(true); }}
+                    onGalleryOpenChange={setIsMascotaDetailOpen}
                   />
                 );
               })

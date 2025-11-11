@@ -305,45 +305,47 @@ export default function ChatBubble() {
               <div style={{ color:'#666' }}>{chat ? 'No hay mensajes aún. Puedes escribir al otro usuario cuando quieras.' : 'No hay chats abiertos. Crea una solicitud para empezar una conversación.'}</div>
             )}
           </div>
-          <div style={{ padding:8, borderTop:'1px solid #eee', display:'flex', gap:8, alignItems:'center' }}>
-            <form style={{ display:'flex', flex:1, gap:8 }} onSubmit={async (ev) => {
-              ev.preventDefault();
-              const chatId = chat.chat.id || chat.id || (chat.chatId && chat.chatId);
-              const remitenteId = user?.id || (user?.perfil && user.perfil.id) || null;
-              if (!chatId || !remitenteId) { toast.error('No se puede enviar mensaje (falta chat o usuario)'); return; }
-              const content = (text || '').trim();
-              if (!content) return;
-              // optimistic append
-              const temp = { remitenteId, contenido: content, fecha: new Date().toISOString(), leido: false, destinatarios: [] };
-              const prevMsgs = (chat && chat.mensajes) || [];
-              setChat(prev => ({ ...prev, mensajes: [...prevMsgs, temp] }));
-              setText('');
-              try {
-                const saved = await sendMessage(chatId, { remitenteId, contenido: content });
-                if (saved) {
-                  const savedMsg = saved.mensaje ? saved.mensaje : saved;
-                  const dests = saved.destinatarios || [];
-                  if (dests.length) savedMsg.destinatarios = dests;
-                  // replace last temp message with savedMsg
-                  setChat(prev => {
-                    const msgs = (prev.mensajes || []).map(m => (m === temp ? savedMsg : m));
-                    return { ...prev, mensajes: msgs };
-                  });
-                } else {
-                  toast.error('No se pudo enviar el mensaje');
+          {chat ? (
+            <div style={{ padding:8, borderTop:'1px solid #eee', display:'flex', gap:8, alignItems:'center' }}>
+              <form style={{ display:'flex', flex:1, gap:8 }} onSubmit={async (ev) => {
+                ev.preventDefault();
+                const chatId = chat && (chat.chat && chat.chat.id) || (chat && chat.id) || (chat && chat.chatId);
+                const remitenteId = user?.id || (user?.perfil && user.perfil.id) || null;
+                if (!chatId || !remitenteId) { toast.error('No se puede enviar mensaje (falta chat o usuario)'); return; }
+                const content = (text || '').trim();
+                if (!content) return;
+                // optimistic append
+                const temp = { remitenteId, contenido: content, fecha: new Date().toISOString(), leido: false, destinatarios: [] };
+                const prevMsgs = (chat && chat.mensajes) || [];
+                setChat(prev => ({ ...prev, mensajes: [...prevMsgs, temp] }));
+                setText('');
+                try {
+                  const saved = await sendMessage(chatId, { remitenteId, contenido: content });
+                  if (saved) {
+                    const savedMsg = saved.mensaje ? saved.mensaje : saved;
+                    const dests = saved.destinatarios || [];
+                    if (dests.length) savedMsg.destinatarios = dests;
+                    // replace last temp message with savedMsg
+                    setChat(prev => {
+                      const msgs = (prev.mensajes || []).map(m => (m === temp ? savedMsg : m));
+                      return { ...prev, mensajes: msgs };
+                    });
+                  } else {
+                    toast.error('No se pudo enviar el mensaje');
+                  }
+                } catch (e) {
+                  toast.error('Error enviando mensaje');
+                  // revert optimistic
+                  setChat(prev => ({ ...prev, mensajes: (prev.mensajes || []).filter(m => m !== temp) }));
+                } finally {
+                  setTimeout(() => { if (scrollerRef.current) scrollerRef.current.scrollTop = scrollerRef.current.scrollHeight; }, 80);
                 }
-              } catch (e) {
-                toast.error('Error enviando mensaje');
-                // revert optimistic
-                setChat(prev => ({ ...prev, mensajes: (prev.mensajes || []).filter(m => m !== temp) }));
-              } finally {
-                setTimeout(() => { if (scrollerRef.current) scrollerRef.current.scrollTop = scrollerRef.current.scrollHeight; }, 80);
-              }
-            }}>
-              <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Escribe un mensaje" style={{ width:'100%', padding:10, borderRadius:20, border:'1px solid #ddd', outline:'none' }} />
-              <button type="submit" style={{ background:'#F29C6B', color:'#fff', border:'none', padding:'8px 12px', borderRadius:18, cursor:'pointer' }}>Enviar</button>
-            </form>
-          </div>
+              }}>
+                <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Escribe un mensaje" style={{ width:'100%', padding:10, borderRadius:20, border:'1px solid #ddd', outline:'none' }} />
+                <button type="submit" style={{ background:'#F29C6B', color:'#fff', border:'none', padding:'8px 12px', borderRadius:18, cursor:'pointer' }}>Enviar</button>
+              </form>
+            </div>
+          ) : null}
         </div>
       )}
     </div>
