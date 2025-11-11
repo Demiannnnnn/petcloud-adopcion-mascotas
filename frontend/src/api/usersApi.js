@@ -14,3 +14,34 @@ export async function getUserById(id) {
 		return null;
 	}
 }
+
+export async function updatePerfil(id, payload) {
+	if (!id) return null;
+	try {
+		const res = await fetch(`${USERS_API_BASE}/api/perfil/${id}`, {
+			method: 'PUT',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(payload)
+		});
+		if (!res.ok) return null;
+		return await res.json();
+	} catch (e) {
+		console.warn('updatePerfil failed', e);
+		return null;
+	}
+}
+
+export async function changePassword(perfilId, currentPassword, newPassword) {
+	if (!perfilId) return { ok: false };
+	try {
+		const res = await fetch(`${USERS_API_BASE}/api/perfil/${perfilId}/change-password`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ currentPassword, newPassword })
+		});
+		return { ok: res.ok, status: res.status };
+	} catch (e) {
+		console.warn('changePassword failed', e);
+		return { ok: false };
+	}
+}

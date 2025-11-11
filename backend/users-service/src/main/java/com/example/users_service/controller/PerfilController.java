@@ -1,10 +1,12 @@
 package com.example.users_service.controller;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -19,6 +21,12 @@ import com.example.users_service.service.SistemaAutenticacion;
 public class PerfilController {
 
 	private final SistemaAutenticacion sistemaAutenticacion;
+
+	@Autowired
+	private com.example.users_service.repository.PersonaRepository personaRepository;
+
+	@Autowired
+	private com.example.users_service.repository.EmpresaRepository empresaRepository;
 
 	public PerfilController(SistemaAutenticacion sistemaAutenticacion) {
 		this.sistemaAutenticacion = sistemaAutenticacion;
@@ -55,6 +63,64 @@ public class PerfilController {
 			return new LoginResponse(false, "Credenciales inválidas para persona");
 		}
 	}
+
+		@PutMapping("/perfil/{id}")
+		public ResponseEntity<?> updatePerfil(@PathVariable Long id, @RequestBody PerfilDTO dto) {
+			com.example.users_service.model.Perfil perfil = sistemaAutenticacion.getPerfilById(id);
+			if (perfil == null) return ResponseEntity.status(404).body(new LoginResponse(false, "Perfil no encontrado"));
+			try {
+				if (perfil instanceof com.example.users_service.model.Empresa empresa) {
+					if (dto.nombreEmpresa != null) empresa.setNombreEmpresa(dto.nombreEmpresa);
+					if (dto.direccion != null) empresa.setDireccion(dto.direccion);
+					if (dto.telefonoContacto != null) empresa.setTelefonoContacto(dto.telefonoContacto);
+					if (dto.correo != null) empresa.setCorreo(dto.correo);
+					com.example.users_service.model.Empresa saved = empresaRepository.save(empresa);
+					return ResponseEntity.ok(new PerfilDTO(saved));
+				} else if (perfil instanceof com.example.users_service.model.Persona persona) {
+					if (dto.nombreCompleto != null) persona.setNombreCompleto(dto.nombreCompleto);
+					if (dto.ubicacion != null) persona.setUbicacion(dto.ubicacion);
+					if (dto.numeroWhatsapp != null) persona.setNumeroWhatsapp(dto.numeroWhatsapp);
+					if (dto.correo != null) persona.setCorreo(dto.correo);
+					com.example.users_service.model.Persona saved = personaRepository.save(persona);
+					return ResponseEntity.ok(new PerfilDTO(saved));
+				}
+				return ResponseEntity.status(400).body(new LoginResponse(false, "Tipo de perfil no soportado"));
+			} catch (Exception e) {
+				e.printStackTrace();
+				return ResponseEntity.status(500).body(new LoginResponse(false, "Error al actualizar perfil: " + e.getMessage()));
+			}
+		}
+
+		public static class ChangePasswordRequest {
+			public String currentPassword;
+			public String newPassword;
+		}
+
+		@PostMapping("/perfil/{id}/change-password")
+		public ResponseEntity<?> changePassword(@PathVariable Long id, @RequestBody ChangePasswordRequest req) {
+			com.example.users_service.model.Perfil perfil = sistemaAutenticacion.getPerfilById(id);
+			if (perfil == null) return ResponseEntity.status(404).body(new LoginResponse(false, "Perfil no encontrado"));
+			if (req == null || req.currentPassword == null || req.newPassword == null) {
+				return ResponseEntity.badRequest().body(new LoginResponse(false, "Payload inválido"));
+			}
+			// verificar contraseña actual
+			if (!org.springframework.security.crypto.bcrypt.BCrypt.checkpw(req.currentPassword, perfil.getContraseña())) {
+				return ResponseEntity.status(403).body(new LoginResponse(false, "Contraseña actual incorrecta"));
+			}
+			String hash = org.springframework.security.crypto.bcrypt.BCrypt.hashpw(req.newPassword, org.springframework.security.crypto.bcrypt.BCrypt.gensalt());
+			perfil.setContraseña(hash);
+			try {
+				if (perfil instanceof com.example.users_service.model.Empresa) {
+					empresaRepository.save((com.example.users_service.model.Empresa) perfil);
+				} else if (perfil instanceof com.example.users_service.model.Persona) {
+					personaRepository.save((com.example.users_service.model.Persona) perfil);
+				}
+				return ResponseEntity.ok(new LoginResponse(true, "Contraseña actualizada"));
+			} catch (Exception e) {
+				e.printStackTrace();
+				return ResponseEntity.status(500).body(new LoginResponse(false, "No se pudo actualizar la contraseña: " + e.getMessage()));
+			}
+		}
 
 	public static class LoginRequest {
 	private String rut;
@@ -104,6 +170,9 @@ public class PerfilController {
 		public String ubicacion;
 		public String numeroWhatsapp;
 		public java.sql.Date fechaNacimiento;
+
+		// Default constructor needed for Jackson deserialization when receiving JSON payloads
+		public PerfilDTO() { }
 
 		public PerfilDTO(com.example.users_service.model.Perfil perfil) {
 			this.id = perfil.getId();

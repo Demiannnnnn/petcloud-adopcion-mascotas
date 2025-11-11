@@ -7,9 +7,12 @@ import { getMascotasByRefugio } from '../api/petsApi';
 import { getApiBase } from '../api/apiBase';
 import { buildMediaUrl } from '../utils/mediaUtils';
 import MascotaCard from '../components/MascotaCard';
+import EditProfileModal from '../components/EditProfileModal';
+import ChangePasswordModal from '../components/ChangePasswordModal';
 
 export default function PerfilPage() {
   const { user, logout } = useContext(AuthContext);
+  const { login } = useContext(AuthContext) || {};
   const [mascotas, setMascotas] = useState([]);
   const [refugios, setRefugios] = useState([]);
   const [mascotasPorRefugio, setMascotasPorRefugio] = useState({});
@@ -18,6 +21,8 @@ export default function PerfilPage() {
   const [modalRefugioOpen, setModalRefugioOpen] = useState(false);
   // eslint-disable-next-line no-unused-vars
   const [modalMascotaOpen, setModalMascotaOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [changePwdOpen, setChangePwdOpen] = useState(false);
 
   useEffect(() => {
     async function fetchRefugiosYmascotas() {
@@ -79,13 +84,17 @@ export default function PerfilPage() {
   const rut = user.perfil?.rut;
 
   return (
+    <>
     <div style={{ maxWidth: 520, margin: '40px auto', background: '#fff', borderRadius: 24, boxShadow: '0 4px 24px rgba(64,11,25,0.10)', padding: 32 }}>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
         <div style={{ width: 90, height: 90, borderRadius: '50%', background: '#F29C6B', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 44, color: '#fff', fontWeight: 'bold', marginBottom: 8 }}>
           {tipo === 'EMPRESA' ? <span>🏢</span> : (user.nombre ? user.nombre[0].toUpperCase() : <span>👤</span>)}
         </div>
         <h2 style={{ color: '#a0522d', marginBottom: 4 }}>
-          {user.perfil?.nombreCompleto || user.nombre || 'Usuario'}
+          {tipo === 'EMPRESA'
+            ? (user.perfil?.nombreEmpresa || user.perfil?.nombre || user.nombre || 'Usuario')
+            : (user.perfil?.nombreCompleto || user.nombre || 'Usuario')
+          }
         </h2>
         <div style={{ color: '#400B19', fontSize: 16, marginBottom: 8 }}>{correo ? correo : 'Sin email'}</div>
         <div style={{ color: '#400B19', fontSize: 15, marginBottom: 8 }}>
@@ -105,8 +114,8 @@ export default function PerfilPage() {
           )}
         </div>
         <div style={{ display: 'flex', gap: 12, marginTop: 10 }}>
-          <button style={{ background: '#F29C6B', color: '#fff', border: 'none', borderRadius: 14, padding: '8px 18px', fontWeight: 'bold', fontSize: 15, cursor: 'pointer', boxShadow: '0 2px 8px rgba(64,11,25,0.10)' }}>Editar datos</button>
-          <button style={{ background: '#400B19', color: '#fff', border: 'none', borderRadius: 14, padding: '8px 18px', fontWeight: 'bold', fontSize: 15, cursor: 'pointer', boxShadow: '0 2px 8px rgba(64,11,25,0.10)' }}>Cambiar contraseña</button>
+          <button onClick={() => setEditOpen(true)} style={{ background: '#F29C6B', color: '#fff', border: 'none', borderRadius: 14, padding: '8px 18px', fontWeight: 'bold', fontSize: 15, cursor: 'pointer', boxShadow: '0 2px 8px rgba(64,11,25,0.10)' }}>Editar datos</button>
+          <button onClick={() => setChangePwdOpen(true)} style={{ background: '#400B19', color: '#fff', border: 'none', borderRadius: 14, padding: '8px 18px', fontWeight: 'bold', fontSize: 15, cursor: 'pointer', boxShadow: '0 2px 8px rgba(64,11,25,0.10)' }}>Cambiar contraseña</button>
           <Link to="/mis-solicitudes" style={{ background: '#F29C6B', color: '#fff', borderRadius: 14, padding: '8px 18px', fontWeight: 'bold', textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>Mis solicitudes</Link>
           <Link to="/solicitudes-recibidas" style={{ background: '#F29C6B', color: '#fff', borderRadius: 14, padding: '8px 18px', fontWeight: 'bold', textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>Solicitudes recibidas</Link>
         </div>
@@ -210,6 +219,29 @@ export default function PerfilPage() {
           )}
         </div>
       )}
-    </div>
+  </div>
+      {/* Modals for editing and changing password */}
+      <EditProfileModal
+        open={editOpen}
+        onClose={() => setEditOpen(false)}
+        perfil={user.perfil}
+        onSaved={(updatedPerfil) => {
+          try {
+            // update local auth user with new perfil
+            if (typeof login === 'function') {
+              const newUser = { ...user, perfil: updatedPerfil };
+              login(newUser);
+            }
+          } catch (e) {
+            console.warn('Failed to update local user after edit', e);
+          }
+        }}
+      />
+      <ChangePasswordModal
+        open={changePwdOpen}
+        onClose={() => setChangePwdOpen(false)}
+        perfilId={user.perfil?.id || user.id}
+      />
+    </>
   );
 }
