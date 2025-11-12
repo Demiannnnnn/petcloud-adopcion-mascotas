@@ -1,59 +1,90 @@
 services:
-  mysql-users:
-    image: mysql:8.0
-    environment:
-      MYSQL_ROOT_PASSWORD: rootpass
+  # Nginx Reverse Proxy with HTTPS
+  nginx:
+    image: nginx:alpine
+    container_name: nginx-proxy
     ports:
-      - "33061:3306"
+      - "80:80"
+      - "443:443"
     volumes:
-      - mysql-users-data:/var/lib/mysql
-      - ./db/users_service_schema.sql:/docker-entrypoint-initdb.d/1_users.sql:ro
-
-  mysql-pets:
-    image: mysql:8.0
-    environment:
-      MYSQL_ROOT_PASSWORD: rootpass
-    ports:
-      - "33062:3306"
-    volumes:
-      - mysql-pets-data:/var/lib/mysql
-      - ./db/pets_service_schema.sql:/docker-entrypoint-initdb.d/1_pets.sql:ro
-
-  mysql-adoptions:
-    image: mysql:8.0
-    environment:
-      MYSQL_ROOT_PASSWORD: rootpass
-    ports:
-      - "33063:3306"
-    volumes:
-      - mysql-adoptions-data:/var/lib/mysql
-      - ./db/adoptions_service_schema.sql:/docker-entrypoint-initdb.d/1_adoptions.sql:ro
-
-  mysql-donations:
-    image: mysql:8.0
-    environment:
-      MYSQL_ROOT_PASSWORD: rootpass
-    ports:
-      - "33064:3306"
-    volumes:
-      - mysql-donations-data:/var/lib/mysql
-      - ./db/donations_service_schema.sql:/docker-entrypoint-initdb.d/1_donations.sql:ro
-
-  phpmyadmin:
-    image: phpmyadmin:latest
-    environment:
-      PMA_HOST: mysql-users,mysql-pets,mysql-adoptions,mysql-donations
-      PMA_PORT: 3306
-    ports:
-      - "8088:80"
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    networks:
+      - app-network
     depends_on:
-      - mysql-users
-      - mysql-pets
-      - mysql-adoptions
-      - mysql-donations
+      - frontend
+      - users-service
+      - pets-service
+      - adoptions-service
+      - donations-service
+    restart: unless-stopped
 
-volumes:
-  mysql-users-data:
-  mysql-pets-data:
-  mysql-adoptions-data:
-  mysql-donations-data:
+  # Frontend React
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: frontend
+    expose:
+      - "3000"
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  # Backend Services (Spring Boot + H2 embedded)
+  users-service:
+    build:
+      context: ./backend/users-service
+      dockerfile: Dockerfile
+    container_name: users-service
+    expose:
+      - "8081"
+    volumes:
+      - ./backend/users-service/data:/app/data
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  pets-service:
+    build:
+      context: ./backend/pets-service
+      dockerfile: Dockerfile
+    container_name: pets-service
+    expose:
+      - "8082"
+    volumes:
+      - ./backend/pets-service/data:/app/data
+      - ./backend/pets-service/uploads:/app/uploads
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  adoptions-service:
+    build:
+      context: ./backend/adoptions-service
+      dockerfile: Dockerfile
+    container_name: adoptions-service
+    expose:
+      - "8083"
+    volumes:
+      - ./backend/adoptions-service/data:/app/data
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  donations-service:
+    build:
+      context: ./backend/donations-service
+      dockerfile: Dockerfile
+    container_name: donations-service
+    expose:
+      - "8084"
+    volumes:
+      - ./backend/donations-service/data:/app/data
+    networks:
+      - app-network
+    restart: unless-stopped
+
+networks:
+  app-network:
+    driver: bridge

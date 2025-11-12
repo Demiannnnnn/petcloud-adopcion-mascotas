@@ -1,0 +1,59 @@
+services:
+  mysql-users:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+    ports:
+      - "33061:3306"
+    volumes:
+      - mysql-users-data:/var/lib/mysql
+      - ./db/users_service_schema.sql:/docker-entrypoint-initdb.d/1_users.sql:ro
+
+  mysql-pets:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+    ports:
+      - "33062:3306"
+    volumes:
+      - mysql-pets-data:/var/lib/mysql
+      - ./db/pets_service_schema.sql:/docker-entrypoint-initdb.d/1_pets.sql:ro
+
+  mysql-adoptions:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+    ports:
+      - "33063:3306"
+    volumes:
+      - mysql-adoptions-data:/var/lib/mysql
+      - ./db/adoptions_service_schema.sql:/docker-entrypoint-initdb.d/1_adoptions.sql:ro
+
+  mysql-donations:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+    ports:
+      - "33064:3306"
+    volumes:
+      - mysql-donations-data:/var/lib/mysql
+      - ./db/donations_service_schema.sql:/docker-entrypoint-initdb.d/1_donations.sql:ro
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    environment:
+      PMA_HOST: mysql-users,mysql-pets,mysql-adoptions,mysql-donations
+      PMA_PORT: 3306
+    ports:
+      - "8088:80"
+    depends_on:
+      - mysql-users
+      - mysql-pets
+      - mysql-adoptions
+      - mysql-donations
+
+volumes:
+  mysql-users-data:
+  mysql-pets-data:
+  mysql-adoptions-data:
+  mysql-donations-data:

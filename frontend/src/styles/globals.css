@@ -97,3 +97,72 @@
 		height: 60px !important;
 	}
 }
+
+/* ========================================
+   ESTILOS RESPONSIVE MEJORADOS
+   ======================================== */
+
+/* Prevenir zoom en inputs en iOS */
+@media (max-width: 768px) {
+	input[type="text"],
+	input[type="email"],
+	input[type="password"],
+	input[type="tel"],
+	input[type="number"],
+	textarea,
+	select {
+		font-size: 16px !important;
+	}
+}
+
+/* Mejorar el touch en botones y enlaces */
+button, a {
+	-webkit-tap-highlight-color: rgba(242, 156, 107, 0.2);
+	min-height: 44px;
+	min-width: 44px;
+}
+
+/* Imágenes responsive */
+img {
+	max-width: 100%;
+	height: auto;
+}
+
+/* Grid responsive para cards */
+.grid-responsive {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+	gap: 20px;
+	width: 100%;
+}
+
+@media (max-width: 768px) {
+	.grid-responsive {
+		grid-template-columns: 1fr;
+		gap: 12px;
+	}
+}
+
+/* Ocultar/mostrar según dispositivo */
+.hide-on-mobile {
+	display: block;
+}
+
+.show-on-mobile {
+	display: none;
+}
+
+@media (max-width: 768px) {
+	.hide-on-mobile {
+		display: none !important;
+	}
+	.show-on-mobile {
+		display: block !important;
+	}
+}
+
+/* Scroll suave */
+html {
+	scroll-behavior: smooth;
+	-webkit-overflow-scrolling: touch;
+}
