@@ -9,6 +9,7 @@ import PaginaPrincipal from './pages/PaginaPrincipal';
 import AdopcionesPage from './pages/AdopcionesPage';
 import PerfilPage from './pages/PerfilPage';
 import MisSolicitudes from './pages/MisSolicitudes';
+import DonacionesPage from './pages/DonacionesPage';
 import SolicitudesRecibidas from './pages/SolicitudesRecibidas';
 import ProtectedRoute from './components/ProtectedRoute';
 import ChatBubble from './components/ChatBubble';
@@ -34,6 +35,11 @@ function App() {
         <Route path="/perfil" element={
           <ProtectedRoute>
             <PerfilPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/donaciones" element={
+          <ProtectedRoute>
+            <DonacionesPage />
           </ProtectedRoute>
         } />
         <Route path="/mis-solicitudes" element={
