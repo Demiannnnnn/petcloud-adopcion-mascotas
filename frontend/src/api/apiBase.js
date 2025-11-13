@@ -8,16 +8,13 @@ function stripTrailingSlash(url) {
 }
 
 const DEFAULTS = {
-  PETS: 'http://localhost:8082',
-  USERS: 'http://localhost:8081',
-  ADOPTIONS: 'http://localhost:8083',
-  REFUGIOS: 'http://localhost:8084'
+  PETS: 'https://localhost/api/pets',
+  USERS: 'https://localhost/api/users',
+  ADOPTIONS: 'https://localhost/api/adoptions',
+  REFUGIOS: 'https://localhost/api/users'
 };
 
 export function getApiBase(serviceKey) {
-  if (serviceKey === 'PETS') {
-    return 'http://localhost:8082';
-  }
   // global override
   const globalBase = process.env.REACT_APP_API_BASE_URL;
   if (globalBase) return stripTrailingSlash(globalBase);
