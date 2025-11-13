@@ -322,7 +322,7 @@ function PaginaPrincipal() {
       {/* Layout principal responsivo */}
       <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', minHeight: isMobile ? '100vh' : '100vh', width: '100vw', position: 'relative', zIndex: 10 }}>
         {/* Feed público de mascotas */}
-  <div style={{ flex: 1, width: '100%', padding: isMobile ? '170px 8px 8px 8px' : '120px 48px 32px 48px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 18 }}>
+        <div style={{ flex: 1, padding: isMobile ? '170px 8px 8px 8px' : '120px 48px 32px 48px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 18 }}>
           {/* Barra de búsqueda y filtros */}
           <div style={{ width: '100%', maxWidth: isMobile ? 340 : 600, display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'stretch' : 'center', gap: 10, marginBottom: 12 }}>
             <input
@@ -383,7 +383,7 @@ function PaginaPrincipal() {
           </div>
         </div>
         {/* Panel "Mis Mascotas" en móvil: abajo, en desktop: lateral derecho */}
-        <div style={{ width: isMobile ? '100%' : 370, minWidth: isMobile ? 'unset' : 320, background: 'rgba(255,255,255,0.92)', boxShadow: isMobile ? '0 -2px 12px rgba(64,11,25,0.10)' : '-2px 0 12px rgba(64,11,25,0.10)', position: isMobile ? 'static' : 'absolute', right: isMobile ? 'unset' : 0, top: isMobile ? 'unset' : 0, height: isMobile ? 'auto' : '100vh', zIndex: 15, padding: isMobile ? '18px 8px 32px 8px' : '120px 32px 32px 32px', display: 'flex', flexDirection: 'column', gap: 12, marginTop: isMobile ? 8 : 0 }}>
+        <div style={{ width: isMobile ? '100%' : 370, minWidth: isMobile ? 'unset' : 320, background: 'rgba(255,255,255,0.92)', boxShadow: isMobile ? '0 -2px 12px rgba(64,11,25,0.10)' : '-2px 0 12px rgba(64,11,25,0.10)', zIndex: 15, padding: isMobile ? '18px 8px 32px 8px' : '120px 32px 32px 32px', display: 'flex', flexDirection: 'column', gap: 12, marginTop: isMobile ? 8 : 0 }}>
           {/* Sección de refugios para empresa */}
           {user?.perfil?.tipoPerfil === 'EMPRESA' && (
             <>
@@ -464,6 +464,7 @@ function PaginaPrincipal() {
             )}
           </div>
   </div>
+        )}
       </div>
       {/* Modal de registro de mascota */}
       <MascotaRegistroModal

@@ -15,6 +15,9 @@ const DEFAULTS = {
 };
 
 export function getApiBase(serviceKey) {
+  if (serviceKey === 'PETS') {
+    return 'http://localhost:8082';
+  }
   // global override
   const globalBase = process.env.REACT_APP_API_BASE_URL;
   if (globalBase) return stripTrailingSlash(globalBase);
