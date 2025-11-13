@@ -462,11 +462,21 @@ export default function MascotaRegistroModal({ open, onClose, onRegister, isEdit
       // Obtener propietarioId según estructura real del usuario
       let propietarioId = null;
       if (user) {
-        if (typeof user.id !== 'undefined') {
+        if (typeof user.id !== 'undefined' && user.id !== null) {
           propietarioId = user.id;
-        } else if (user.perfil && typeof user.perfil.id !== 'undefined') {
+        } else if (user.perfil && typeof user.perfil.id !== 'undefined' && user.perfil.id !== null) {
           propietarioId = user.perfil.id;
+        } else if (user.usuario && typeof user.usuario.id !== 'undefined' && user.usuario.id !== null) {
+          propietarioId = user.usuario.id;
         }
+      }
+      
+      // Validar que tenemos un propietarioId válido
+      if (!propietarioId) {
+        setErrorMsg('Error: No se pudo obtener el ID del usuario. Por favor, vuelve a iniciar sesión.');
+        setTimeout(() => setErrorMsg(''), 3000);
+        console.error('User object:', user);
+        return;
       }
       if (typeof propietarioId === 'string') {
         propietarioId = parseInt(propietarioId, 10);
@@ -522,7 +532,22 @@ export default function MascotaRegistroModal({ open, onClose, onRegister, isEdit
         merged.push({ url: u, type: m.type || '' });
       }
 
-      const mergedMedia = merged;
+      // Asegurar que media tenga el formato correcto (Map<String,String>)
+      const mergedMedia = merged.map(m => ({
+        url: String(m.url || ''),
+        type: String(m.type || '')
+      }));
+
+      // Filtrar arrays para eliminar valores vacíos, undefined, null u objetos vacíos
+      const cleanArray = (arr) => {
+        if (!Array.isArray(arr)) return [];
+        return arr.filter(item => {
+          if (item === null || item === undefined || item === '') return false;
+          if (typeof item === 'object' && Object.keys(item).length === 0) return false;
+          if (typeof item === 'string' && item.trim() === '') return false;
+          return true;
+        });
+      };
 
       const mascotaData = {
         nombre,
@@ -530,19 +555,21 @@ export default function MascotaRegistroModal({ open, onClose, onRegister, isEdit
         raza,
         fechaNacimiento: fechaNacimiento || (isEdit ? initialData?.fechaNacimiento : ''),
         sexo,
-        tamaño,
-        vacunas,
+        tamaño: tamaño || '',
+        vacunas: cleanArray(vacunas),
         esterilizado: esterilizado === 'Sí',
-        enfermedades,
-        documentos,
+        enfermedades: cleanArray(enfermedades),
+        documentos: cleanArray(documentos),
         descripcion,
-        foto: imagenUrl, // Enviar como 'foto' para que el backend lo reciba correctamente
+        foto: imagenUrl,
         media: mergedMedia,
         ubicacion,
-        chip,
+        chip: chip || '',
         propietarioId,
         refugioId: user?.perfil?.tipoPerfil === 'EMPRESA' && refugioId ? parseInt(refugioId) : undefined
       };
+      
+      console.log('Datos que se enviarán al backend:', JSON.stringify(mascotaData, null, 2));
       if (isEdit && initialData && initialData.id) {
         const API_BASE = getApiBase('PETS');
         const resp = await fetch(`${API_BASE}/api/mascotas/${initialData.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(mascotaData) });
