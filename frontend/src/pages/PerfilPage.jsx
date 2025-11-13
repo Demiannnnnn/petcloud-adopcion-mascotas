@@ -55,7 +55,7 @@ export default function PerfilPage() {
         const propietarioId = user.id || (user.perfil && user.perfil.id);
         try {
             const PETS_BASE = getApiBase('PETS');
-            const response = await fetch(`${PETS_BASE}/api/mascotas/propietario/${propietarioId}`);
+            const response = await fetch(`${PETS_BASE}/mascotas/propietario/${propietarioId}`);
           if (response.ok) {
             const data = await response.json();
             setMascotas(Array.isArray(data) ? data : []);

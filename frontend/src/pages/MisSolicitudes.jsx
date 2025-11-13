@@ -44,7 +44,7 @@ export default function MisSolicitudes() {
         const petMap = {};
         await Promise.all(petIds.map(async pid => {
           try {
-            const res = await fetch(`${PETS_API_BASE}/api/mascotas/${pid}`);
+            const res = await fetch(`${PETS_API_BASE}/mascotas/${pid}`);
             if (res.ok) {
               petMap[pid] = await res.json();
             }

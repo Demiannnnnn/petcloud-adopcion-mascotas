@@ -1,48 +1,58 @@
-import { getApiBase } from './apiBase';
+const API_BASE = process.env.REACT_APP_API_DONATIONS;
 
-const API_BASE = getApiBase('DONATIONS');
-
-async function tryCandidates(candidates) {
-	for (const path of candidates) {
-		try {
-			const url = API_BASE + path;
-			const res = await fetch(url);
-			if (res.ok) return await res.json();
-		} catch (e) {
-			// try next
+// Crear nueva donación
+export async function crearDonacion(donacionData) {
+	try {
+		const res = await fetch(`${API_BASE}`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(donacionData)
+		});
+		if (!res.ok) {
+			const error = await res.json();
+			throw new Error(error.error || 'Error al crear donación');
 		}
+		return await res.json();
+	} catch (error) {
+		console.error('Error en crearDonacion:', error);
+		throw error;
 	}
-	return [];
 }
 
 // Listar donaciones hechas por un perfil (donante)
 export async function listDonacionesByDonante(donanteId) {
 	if (!donanteId) return [];
-	const candidates = [
-		`/api/donaciones/donante/${donanteId}`,
-		`/api/donaciones/por-donante/${donanteId}`,
-		`/api/donaciones?donanteId=${donanteId}`,
-		`/api/donations/donor/${donanteId}`,
-		`/api/donations?donanteId=${donanteId}`
-	];
-	return await tryCandidates(candidates);
+	try {
+		const res = await fetch(`${API_BASE}/donante/${donanteId}`);
+		if (res.ok) return await res.json();
+		return [];
+	} catch (e) {
+		console.error('Error listando donaciones por donante:', e);
+		return [];
+	}
 }
 
 // Listar donaciones recibidas por un receptor (por ejemplo empresa/refugio)
 export async function listDonacionesRecibidas(receptorId) {
 	if (!receptorId) return [];
-	const candidates = [
-		`/api/donaciones/receptor/${receptorId}`,
-		`/api/donaciones/recibidas/${receptorId}`,
-		`/api/donaciones?receptorId=${receptorId}`,
-		`/api/donations/receiver/${receptorId}`,
-		`/api/donations?receptorId=${receptorId}`
-	];
-	return await tryCandidates(candidates);
+	try {
+		const res = await fetch(`${API_BASE}/receptor/${receptorId}`);
+		if (res.ok) return await res.json();
+		return [];
+	} catch (e) {
+		console.error('Error listando donaciones recibidas:', e);
+		return [];
+	}
 }
 
-// Fallback: listar todas las donaciones (si el backend expone /api/donaciones)
+// Fallback: listar todas las donaciones
 export async function listAllDonaciones() {
-	const candidates = ['/api/donaciones', '/api/donations', '/api/donaciones/all'];
-	return await tryCandidates(candidates);
+	try {
+		const res = await fetch(`${API_BASE}`);
+		if (res.ok) return await res.json();
+		return [];
+	} catch (e) {
+		console.error('Error listando todas las donaciones:', e);
+		return [];
+	}
 }

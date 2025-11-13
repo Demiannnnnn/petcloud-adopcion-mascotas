@@ -17,6 +17,7 @@ import com.example.users_service.repository.PerfilRepository;
 
 @RestController
 @RequestMapping("/api")
+@org.springframework.web.bind.annotation.CrossOrigin(origins = {"https://localhost", "https://localhost:443", "http://localhost:3000", "http://localhost:3001"})
 public class EmpresaController {
 
 	@Autowired

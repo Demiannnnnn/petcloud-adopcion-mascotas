@@ -68,6 +68,8 @@ services:
       - "8083"
     volumes:
       - ./backend/adoptions-service/data:/app/data
+    environment:
+      - PETS_API_BASE=http://pets-service:8082
     networks:
       - app-network
     restart: unless-stopped

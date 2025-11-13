@@ -36,7 +36,7 @@ export default function AdopcionesPage() {
           let myAdopted = [];
           if (ownerId) {
             try {
-              const res = await fetch(`${API_BASE}/api/mascotas/propietario/${ownerId}`);
+              const res = await fetch(`${API_BASE}/mascotas/propietario/${ownerId}`);
               if (res.ok) {
                 const data = await res.json();
                 myAdopted = Array.isArray(data) ? data.filter(m => m.disponibleAdopcion === false) : [];
@@ -57,7 +57,7 @@ export default function AdopcionesPage() {
                 const petMap = {};
                 await Promise.all(petIds.map(async pid => {
                   try {
-                    const r = await fetch(`${API_BASE}/api/mascotas/${pid}`);
+                    const r = await fetch(`${API_BASE}/mascotas/${pid}`);
                     if (r.ok) petMap[pid] = await r.json();
                   } catch (e) { }
                 }));

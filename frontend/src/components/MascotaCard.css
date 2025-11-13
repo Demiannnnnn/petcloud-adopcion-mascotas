@@ -1,0 +1,91 @@
+/* ========================================
+   MASCOTA CARD RESPONSIVE STYLES
+   ======================================== */
+
+/* Mobile (320px - 480px) */
+@media (max-width: 480px) {
+  .mascota-card-container {
+    min-width: 100% !important;
+    max-width: 100% !important;
+    padding: 12px !important;
+    border-radius: 16px !important;
+  }
+
+  .mascota-card-image {
+    width: 80px !important;
+    height: 80px !important;
+  }
+
+  .mascota-card-name {
+    font-size: 16px !important;
+  }
+
+  .mascota-card-species {
+    font-size: 14px !important;
+  }
+
+  .mascota-card-info {
+    font-size: 12px !important;
+  }
+
+  .mascota-card-button {
+    width: 100% !important;
+    margin-top: 10px !important;
+    padding: 10px 14px !important;
+    font-size: 14px !important;
+  }
+
+  .mascota-edit-button {
+    width: 32px !important;
+    height: 32px !important;
+    top: 6px !important;
+    right: 6px !important;
+  }
+}
+
+/* Tablet Portrait (481px - 768px) */
+@media (min-width: 481px) and (max-width: 768px) {
+  .mascota-card-container {
+    min-width: 160px !important;
+    max-width: 200px !important;
+  }
+
+  .mascota-card-image {
+    width: 75px !important;
+    height: 75px !important;
+  }
+}
+
+/* Grid layout adjustments for mascotas */
+.mascotas-grid {
+  display: grid;
+  gap: 16px;
+  width: 100%;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+}
+
+@media (max-width: 480px) {
+  .mascotas-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px;
+  }
+}
+
+@media (min-width: 481px) and (max-width: 768px) {
+  .mascotas-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 14px;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .mascotas-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+}
+
+@media (min-width: 1025px) {
+  .mascotas-grid {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)) !important;
+  }
+}

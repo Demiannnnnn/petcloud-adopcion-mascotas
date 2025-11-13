@@ -411,7 +411,7 @@ export default function MascotaRegistroModal({ open, onClose, onRegister, isEdit
         const formData = new FormData();
         formData.append('file', foto);
         const PETS_BASE = getApiBase('PETS');
-        const uploadResp = await fetch(`${PETS_BASE}/api/mascotas/upload`, {
+        const uploadResp = await fetch(`${PETS_BASE}/mascotas/upload`, {
           method: 'POST',
           body: formData
         });
@@ -449,7 +449,7 @@ export default function MascotaRegistroModal({ open, onClose, onRegister, isEdit
           }
           const fm = new FormData();
           fm.append('file', uploadFile);
-          const resp = await fetch(`${PETS_BASE}/api/mascotas/upload`, { method: 'POST', body: fm });
+          const resp = await fetch(`${PETS_BASE}/mascotas/upload`, { method: 'POST', body: fm });
           if (resp.ok) {
             const url = await resp.text();
             mediaUrls.push({ url, type: (uploadFile && uploadFile.type) ? uploadFile.type : f.type });
@@ -572,7 +572,7 @@ export default function MascotaRegistroModal({ open, onClose, onRegister, isEdit
       console.log('Datos que se enviarán al backend:', JSON.stringify(mascotaData, null, 2));
       if (isEdit && initialData && initialData.id) {
         const API_BASE = getApiBase('PETS');
-        const resp = await fetch(`${API_BASE}/api/mascotas/${initialData.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(mascotaData) });
+        const resp = await fetch(`${API_BASE}/mascotas/${initialData.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(mascotaData) });
         if (!resp.ok) throw new Error('Error al actualizar mascota');
         // try to read response json to get persisted mascota (controllers return RespuestaRegistro)
         try {

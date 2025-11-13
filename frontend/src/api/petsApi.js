@@ -5,7 +5,7 @@ export const API_BASE = getApiBase('PETS');
 
 // Obtener mascotas por refugio
 export async function getMascotasByRefugio(refugioId) {
-	const res = await fetch(`${API_BASE}/api/mascotas/refugio/${refugioId}`);
+	const res = await fetch(`${API_BASE}/mascotas/refugio/${refugioId}`);
 	if (!res.ok) {
 		// If the backend returns 404 or empty, return empty array to avoid breaking callers.
 		console.warn('getMascotasByRefugio: non-ok response', res.status);
@@ -18,7 +18,7 @@ export async function getMascotasByRefugio(refugioId) {
 export async function registrarMascota(mascotaData) {
 	try {
 		console.log('Enviando mascotaData:', mascotaData);
-		const response = await fetch(`${API_BASE}/api/mascotas/registrar`, {
+		const response = await fetch(`${API_BASE}/mascotas/registrar`, {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json"
@@ -52,7 +52,7 @@ export async function registrarMascota(mascotaData) {
 
 export async function listarMascotas() {
 	try {
-		const response = await fetch(`${API_BASE}/api/mascotas`, {
+		const response = await fetch(`${API_BASE}/mascotas`, {
 			method: "GET",
 			headers: {
 				"Content-Type": "application/json"

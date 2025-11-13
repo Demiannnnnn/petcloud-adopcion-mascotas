@@ -3,6 +3,7 @@ import { getApiBase } from '../api/apiBase';
 import { buildMediaUrl } from '../utils/mediaUtils';
 import { normalizeTamanio, isPesoLike, formatPeso } from '../utils/mascotaUtils';
 import MediaGalleryModal from './MediaGalleryModal';
+import './MascotaCard.css';
 
 export default function MascotaCard({ mascota, overrideMascota, onEdit, onDelete, refugioName, refugioContacto, publicadoPor, isPublic, onRequestAdoption, hideAvailabilityBadge, onGalleryOpenChange }) {
   const API_BASE = getApiBase('PETS');
@@ -124,12 +125,13 @@ export default function MascotaCard({ mascota, overrideMascota, onEdit, onDelete
   }
 
   return (
-    <div onClick={handleCardClick} style={cardStyle}>
+    <div onClick={handleCardClick} style={cardStyle} className="mascota-card-container">
       {/* Edit button - shown only when onEdit is provided (PaginaPrincipal pasa onEdit sólo para las mascotas del usuario) */}
       {onEdit && (
         <button
           onClick={(e) => { e.stopPropagation(); onEdit && onEdit(); }}
           title="Editar mascota"
+          className="mascota-edit-button"
           style={{
             position: 'absolute',
             top: 8,
@@ -154,11 +156,11 @@ export default function MascotaCard({ mascota, overrideMascota, onEdit, onDelete
         </button>
       )}
       {imagenSrc && (
-        <img src={imagenSrc} alt={displayMascota.nombre} style={{ width: 70, height: 70, objectFit: 'cover', borderRadius: '50%', marginBottom: 8, border: '3px solid #F29C6B' }} />
+        <img src={imagenSrc} alt={displayMascota.nombre} className="mascota-card-image" style={{ width: 70, height: 70, objectFit: 'cover', borderRadius: '50%', marginBottom: 8, border: '3px solid #F29C6B' }} />
       )}
 
-  <div style={{ fontWeight: 'bold', color: '#a0522d', fontSize: 18, marginBottom: 2 }}>{displayMascota.nombre}</div>
-  <div style={{ fontSize: 15, color: '#400B19', opacity: 0.8 }}>{displayMascota.especie}</div>
+  <div className="mascota-card-name" style={{ fontWeight: 'bold', color: '#a0522d', fontSize: 18, marginBottom: 2 }}>{displayMascota.nombre}</div>
+  <div className="mascota-card-species" style={{ fontSize: 15, color: '#400B19', opacity: 0.8 }}>{displayMascota.especie}</div>
       {refugioName && <div style={{ fontSize: 12, color: '#6b4b3a', opacity: 0.9, marginTop: 6 }}>Refugio: {refugioName}</div>}
       {publicadoPor && <div style={{ fontSize: 12, color: '#6b4b3a', opacity: 0.9, marginTop: 6 }}>Publicado por: {publicadoPor}</div>}
 
@@ -205,7 +207,7 @@ export default function MascotaCard({ mascota, overrideMascota, onEdit, onDelete
 
       {/* íconos de editar y eliminar eliminados */}
       {isPublic && mascota.disponibleAdopcion && !hideAvailabilityBadge && (
-        <button onClick={(e) => { e.stopPropagation(); onRequestAdoption && onRequestAdoption(mascota); }} style={{ marginTop: 12, background: '#F29C6B', color: '#fff', border: 'none', padding: '6px 10px', borderRadius: 12, cursor: 'pointer' }}>Solicitar adopción</button>
+        <button onClick={(e) => { e.stopPropagation(); onRequestAdoption && onRequestAdoption(mascota); }} className="mascota-card-button" style={{ marginTop: 12, background: '#F29C6B', color: '#fff', border: 'none', padding: '6px 10px', borderRadius: 12, cursor: 'pointer' }}>Solicitar adopción</button>
       )}
 
       {/* Map media from various possible shapes and ensure absolute URLs when needed */}
