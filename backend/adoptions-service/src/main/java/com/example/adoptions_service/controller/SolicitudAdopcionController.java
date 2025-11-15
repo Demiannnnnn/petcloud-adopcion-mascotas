@@ -223,6 +223,11 @@ public class SolicitudAdopcionController {
 								if (hasProp) {
 									// reuse this chat
 									persisted = chatRepo.findById(candidateChatId).orElse(null);
+									if (persisted != null) {
+										// Update the solicitudAdopcionId to link this chat to the new solicitud
+										persisted.setSolicitudAdopcionId(saved.getId());
+										persisted = chatRepo.save(persisted);
+									}
 									log.info("Reusing existing chat {} between {} and {} for solicitud {}", candidateChatId, adoptanteId, propietarioId, saved.getId());
 									break;
 								}

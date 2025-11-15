@@ -12,7 +12,7 @@ import com.example.users_service.repository.PersonaRepository;
 
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = {"http://localhost:3001", "http://localhost:3000"})
+@CrossOrigin(origins = {"https://localhost", "https://localhost:443", "http://localhost:3000", "http://localhost:3001"})
 public class PersonaController {
 
 	@Autowired

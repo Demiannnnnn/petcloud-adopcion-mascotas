@@ -2,6 +2,7 @@ import React, { useEffect, useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { listDonacionesByDonante, listDonacionesRecibidas } from '../api/donationsApi';
 import { getUserById } from '../api/usersApi';
+import DonacionFormModal from '../components/DonacionFormModal';
 
 function formatDate(iso) {
 	try {
@@ -27,6 +28,23 @@ export default function DonacionesPage() {
 	const [hechas, setHechas] = useState([]);
 	const [recibidas, setRecibidas] = useState([]);
 	const [loading, setLoading] = useState(true);
+	const [showModal, setShowModal] = useState(false);
+	const [paymentStatus, setPaymentStatus] = useState(null);
+
+	// Manejar retorno de Mercado Pago
+	useEffect(() => {
+		const params = new URLSearchParams(window.location.search);
+		const status = params.get('status');
+		
+		if (status) {
+			setPaymentStatus(status);
+			// Limpiar URL después de 5 segundos
+			setTimeout(() => {
+				window.history.replaceState({}, document.title, window.location.pathname);
+				setPaymentStatus(null);
+			}, 5000);
+		}
+	}, []);
 
 	useEffect(() => {
 		async function load() {
@@ -71,22 +89,91 @@ export default function DonacionesPage() {
 
 	return (
 		<div style={{ padding: 20 }}>
-			<h2 style={{ color: '#a0522d' }}>Donaciones</h2>
+			<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+				<h2 style={{ color: '#a0522d', margin: 0 }}>Donaciones</h2>
+				<button 
+					onClick={() => setShowModal(true)}
+					style={{
+						padding: '10px 20px',
+						backgroundColor: '#4CAF50',
+						color: 'white',
+						border: 'none',
+						borderRadius: '8px',
+						fontSize: '16px',
+						fontWeight: 'bold',
+						cursor: 'pointer',
+						boxShadow: '0 2px 8px rgba(76, 175, 80, 0.3)',
+					}}
+				>
+					+ Nueva Donación
+				</button>
+			</div>
+
+			{/* Mensajes de estado de pago */}
+			{paymentStatus === 'success' && (
+				<div style={{
+					backgroundColor: '#d4edda',
+					color: '#155724',
+					padding: '12px',
+					borderRadius: '8px',
+					marginBottom: '16px',
+					border: '1px solid #c3e6cb'
+				}}>
+					¡Pago exitoso! Tu donación ha sido confirmada. Gracias por tu aporte.
+				</div>
+			)}
+			{paymentStatus === 'failure' && (
+				<div style={{
+					backgroundColor: '#f8d7da',
+					color: '#721c24',
+					padding: '12px',
+					borderRadius: '8px',
+					marginBottom: '16px',
+					border: '1px solid #f5c6cb'
+				}}>
+					El pago no pudo ser procesado. Por favor, intenta nuevamente.
+				</div>
+			)}
+			{paymentStatus === 'pending' && (
+				<div style={{
+					backgroundColor: '#fff3cd',
+					color: '#856404',
+					padding: '12px',
+					borderRadius: '8px',
+					marginBottom: '16px',
+					border: '1px solid #ffeaa7'
+				}}>
+					Tu pago está pendiente de confirmación. Te notificaremos cuando se complete.
+				</div>
+			)}
+
 			{loading ? <div>Cargando donaciones...</div> : (
 				<>
 					<section style={{ marginBottom: 18 }}>
 						<h3>Donaciones hechas</h3>
 						{hechas.length === 0 ? <div>No has realizado donaciones.</div> : (
 							hechas.map(d => (
-								<div key={d.id || `${d.donanteId}-${d.receptorId}-${d.fecha_donacion || d.fecha}` } style={{ background: '#fff', padding: 12, borderRadius: 12, boxShadow: '0 6px 18px rgba(64,11,25,0.06)', marginBottom: 12 }}>
-									<div style={{ display: 'flex', justifyContent: 'space-between' }}>
-										<div style={{ fontWeight: 'bold', color: '#400B19' }}>{d.tipo_donacion || d.tipo || (d.descripcion ? d.descripcion.substring(0, 40) : 'Donación')}</div>
-										<div style={{ color: '#666' }}>{formatDate(d.fecha_donacion || d.fecha)}</div>
+								<div key={d.id || `${d.donanteId}-${d.receptorId}-${d.fechaDonacion || d.fecha_donacion || d.fecha}` } style={{ background: '#fff', padding: 12, borderRadius: 12, boxShadow: '0 6px 18px rgba(64,11,25,0.06)', marginBottom: 12 }}>
+									<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+										<div>
+											<div style={{ fontWeight: 'bold', color: '#400B19', fontSize: '16px' }}>
+												{d.tipoDonacion || d.tipo_donacion || d.tipo || 'Donación'}
+											</div>
+											<div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
+												Estado: <span style={{ 
+													color: d.estado === 'CONFIRMADA' ? '#4CAF50' : d.estado === 'CANCELADA' ? '#f44336' : '#ff9800',
+													fontWeight: 'bold'
+												}}>
+													{d.estado || 'PENDIENTE'}
+												</span>
+											</div>
+										</div>
+										<div style={{ color: '#666', fontSize: '12px' }}>{formatDate(d.fechaDonacion || d.fecha_donacion || d.fecha)}</div>
 									</div>
-									<div style={{ marginTop: 6 }}><b>Monto:</b> {formatAmount(d.monto)}</div>
-									{d.cantidad ? <div><b>Cantidad:</b> {d.cantidad} {d.unidad || ''}</div> : null}
-									{d.receptorName || d.receptorId ? <div><b>Receptor:</b> {d.receptorName || `#${d.receptorId}`}</div> : null}
-									{d.descripcion ? <div style={{ marginTop: 6 }}>{d.descripcion}</div> : null}
+									{d.monto && <div style={{ marginTop: 8 }}><b>Monto:</b> {formatAmount(d.monto)}</div>}
+									{d.cantidad && <div><b>Cantidad:</b> {d.cantidad} {d.unidad || ''}</div>}
+									{(d.receptorName || d.receptorId) && <div><b>Receptor:</b> {d.receptorName || `#${d.receptorId}`}</div>}
+									{d.descripcion && <div style={{ marginTop: 6, fontSize: '14px', color: '#555' }}>{d.descripcion}</div>}
 								</div>
 							))
 						)}
@@ -97,15 +184,28 @@ export default function DonacionesPage() {
 							<h3>Donaciones recibidas</h3>
 							{recibidas.length === 0 ? <div>No has recibido donaciones.</div> : (
 								recibidas.map(d => (
-									<div key={d.id || `${d.donanteId}-${d.receptorId}-${d.fecha_donacion || d.fecha}` } style={{ background: '#fff', padding: 12, borderRadius: 12, boxShadow: '0 6px 18px rgba(64,11,25,0.06)', marginBottom: 12 }}>
-										<div style={{ display: 'flex', justifyContent: 'space-between' }}>
-											<div style={{ fontWeight: 'bold', color: '#400B19' }}>{d.tipo_donacion || d.tipo || (d.descripcion ? d.descripcion.substring(0, 40) : 'Donación')}</div>
-											<div style={{ color: '#666' }}>{formatDate(d.fecha_donacion || d.fecha)}</div>
+									<div key={d.id || `${d.donanteId}-${d.receptorId}-${d.fechaDonacion || d.fecha_donacion || d.fecha}` } style={{ background: '#fff', padding: 12, borderRadius: 12, boxShadow: '0 6px 18px rgba(64,11,25,0.06)', marginBottom: 12 }}>
+										<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+											<div>
+												<div style={{ fontWeight: 'bold', color: '#400B19', fontSize: '16px' }}>
+													{d.tipoDonacion || d.tipo_donacion || d.tipo || 'Donación'}
+												</div>
+												<div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
+													Estado: <span style={{ 
+														color: d.estado === 'CONFIRMADA' ? '#4CAF50' : d.estado === 'CANCELADA' ? '#f44336' : '#ff9800',
+														fontWeight: 'bold'
+													}}>
+														{d.estado || 'PENDIENTE'}
+													</span>
+												</div>
+											</div>
+											<div style={{ color: '#666', fontSize: '12px' }}>{formatDate(d.fechaDonacion || d.fecha_donacion || d.fecha)}</div>
 										</div>
-										<div style={{ marginTop: 6 }}><b>Monto:</b> {formatAmount(d.monto)}</div>
-										{d.cantidad ? <div><b>Cantidad:</b> {d.cantidad} {d.unidad || ''}</div> : null}
-										{d.donanteName || d.donanteId ? <div><b>Donante:</b> {d.donanteName || `#${d.donanteId}`}</div> : null}
-										{d.descripcion ? <div style={{ marginTop: 6 }}>{d.descripcion}</div> : null}
+										{d.monto && <div style={{ marginTop: 8 }}><b>Monto:</b> {formatAmount(d.monto)}</div>}
+										{d.cantidad && <div><b>Cantidad:</b> {d.cantidad} {d.unidad || ''}</div>}
+										{(d.donanteName || d.donanteId) && <div><b>Donante:</b> {d.donanteName || `#${d.donanteId}`}</div>}
+										{d.direccionEntrega && <div><b>Dirección de entrega:</b> {d.direccionEntrega}</div>}
+										{d.descripcion && <div style={{ marginTop: 6, fontSize: '14px', color: '#555' }}>{d.descripcion}</div>}
 									</div>
 								))
 							)}
@@ -113,6 +213,13 @@ export default function DonacionesPage() {
 					)}
 				</>
 			)}
+
+			{/* Modal de nueva donación */}
+			<DonacionFormModal 
+				isOpen={showModal}
+				onClose={() => setShowModal(false)}
+				donanteId={ownerId}
+			/>
 		</div>
 	);
 }

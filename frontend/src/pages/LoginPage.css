@@ -14,7 +14,7 @@ body {
 
 .login-card {
   position: relative;
-  margin-top: 4vh;
+  margin: 4vh auto;
   z-index: 1;
   background: #fff !important;
   border-radius: 2rem;
@@ -30,13 +30,12 @@ body {
   background: #F29C6B;
   border-radius: 50%;
   padding: 1.2rem;
-  margin-bottom: 1.2rem;
+  margin: 0 auto 1.2rem auto;
   box-shadow: 0 4px 16px rgba(64,11,25,0.08);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-left: auto;
-  margin-right: auto;
+  width: fit-content;
 }
 
 .login-logo img {
@@ -131,4 +130,95 @@ body {
   margin-bottom: 1rem;
   text-align: center;
   width: 100%;
+}
+
+/* ========================================
+   RESPONSIVE STYLES - LOGIN PAGE
+   ======================================== */
+
+/* Mobile (320px - 480px) */
+@media (max-width: 480px) {
+  .login-card {
+    width: 90% !important;
+    max-width: 320px !important;
+    padding: 1.5rem 1rem !important;
+    margin-top: 2vh !important;
+    border-radius: 1.5rem !important;
+  }
+
+  .login-logo {
+    padding: 0.8rem !important;
+    margin-bottom: 0.8rem !important;
+  }
+
+  .login-logo img {
+    width: 70px !important;
+    height: 70px !important;
+  }
+
+  .login-btn, .register-btn {
+    width: 100% !important;
+    padding: 0.8rem 0 !important;
+    font-size: 1rem !important;
+    border-radius: 1.5rem !important;
+  }
+
+  .login-fields input,
+  .login-fields textarea {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0.6rem !important;
+    font-size: 16px !important;
+    border-radius: 0.5rem !important;
+  }
+
+  .login-fields textarea {
+    min-height: 80px !important;
+    max-height: 150px !important;
+  }
+
+  .login-fields label {
+    font-size: 0.9rem !important;
+  }
+
+  .login-or {
+    font-size: 0.95rem !important;
+    margin: 0.3rem 0 !important;
+  }
+
+  .login-user-icon {
+    margin-bottom: 0.8rem !important;
+  }
+
+  .login-error {
+    font-size: 0.9rem !important;
+  }
+}
+
+/* Tablet Portrait (481px - 768px) */
+@media (min-width: 481px) and (max-width: 768px) {
+  .login-card {
+    width: 85% !important;
+    max-width: 400px !important;
+    padding: 2rem 1.5rem !important;
+  }
+
+  .login-logo img {
+    width: 85px !important;
+    height: 85px !important;
+  }
+
+  .login-fields input,
+  .login-fields textarea {
+    width: 100% !important;
+    max-width: 350px !important;
+  }
+}
+
+/* Tablet Landscape (769px - 1024px) */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .login-card {
+    width: 400px !important;
+    max-width: 450px !important;
+  }
 }

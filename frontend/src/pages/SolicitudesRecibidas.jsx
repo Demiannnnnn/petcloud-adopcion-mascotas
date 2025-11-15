@@ -98,7 +98,7 @@ export default function SolicitudesRecibidas() {
       try {
   // pedir mascotas del propietario (pets-service) y luego solicitudes para esas mascotas
   const PETS_BASE = getApiBase('PETS');
-  const resp = await fetch(`${PETS_BASE}/api/mascotas/propietario/${propietarioId}`);
+  const resp = await fetch(`${PETS_BASE}/mascotas/propietario/${propietarioId}`);
         const mascotas = resp.ok ? await resp.json() : [];
         const ids = mascotas.map(m => m.id).filter(Boolean);
         if (ids.length === 0) { setSolicitudes([]); return; }
@@ -129,7 +129,7 @@ export default function SolicitudesRecibidas() {
           let pet = petCache[mascotaId];
           if (!pet && mascotaId) {
             try {
-              const pRes = await fetch(`${PETS_BASE}/api/mascotas/${mascotaId}`);
+              const pRes = await fetch(`${PETS_BASE}/mascotas/${mascotaId}`);
               pet = pRes.ok ? await pRes.json() : null;
             } catch (e) {
               pet = null;
@@ -255,7 +255,7 @@ export default function SolicitudesRecibidas() {
         const body = await res.json();
         const mascotaId = body.mascotaId || (body && body.mascotaId) || null;
         if (mascotaId) {
-          const r = await fetch(`${PETS_BASE}/api/mascotas/${mascotaId}`);
+          const r = await fetch(`${PETS_BASE}/mascotas/${mascotaId}`);
           if (r.ok) {
             const mascota = await r.json();
             window.dispatchEvent(new CustomEvent('mascota.updated', { detail: mascota }));
@@ -425,7 +425,7 @@ export default function SolicitudesRecibidas() {
                           try {
                             // fetch fresh mascota to include any newly added media
                             const PETS_BASE = getApiBase('PETS');
-                            const r = await fetch(`${PETS_BASE}/api/mascotas/${s.mascotaId}`);
+                            const r = await fetch(`${PETS_BASE}/mascotas/${s.mascotaId}`);
                             let fresh = null;
                             if (r.ok) fresh = await r.json();
                             const source = fresh || ({});

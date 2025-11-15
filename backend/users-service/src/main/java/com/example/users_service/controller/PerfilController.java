@@ -14,10 +14,12 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.users_service.model.Empresa;
 import com.example.users_service.model.Persona;
 import com.example.users_service.service.SistemaAutenticacion;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = {"http://localhost:3001", "http://localhost:3000"})
+@CrossOrigin(origins = {"https://localhost", "https://localhost:443", "http://localhost:3000", "http://localhost:3001"})
 public class PerfilController {
 
 	private final SistemaAutenticacion sistemaAutenticacion;
