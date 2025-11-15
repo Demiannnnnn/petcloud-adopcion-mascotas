@@ -37,8 +37,8 @@ services:
       context: ./backend/users-service
       dockerfile: Dockerfile
     container_name: users-service
-    expose:
-      - "8081"
+    ports:
+      - "8081:8081"
     volumes:
       - ./backend/users-service/data:/app/data
     networks:
@@ -50,8 +50,8 @@ services:
       context: ./backend/pets-service
       dockerfile: Dockerfile
     container_name: pets-service
-    expose:
-      - "8082"
+    ports:
+      - "8082:8082"
     volumes:
       - ./backend/pets-service/data:/app/data
       - ./backend/pets-service/uploads:/app/uploads
@@ -64,8 +64,8 @@ services:
       context: ./backend/adoptions-service
       dockerfile: Dockerfile
     container_name: adoptions-service
-    expose:
-      - "8083"
+    ports:
+      - "8083:8083"
     volumes:
       - ./backend/adoptions-service/data:/app/data
     environment:
@@ -79,8 +79,8 @@ services:
       context: ./backend/donations-service
       dockerfile: Dockerfile
     container_name: donations-service
-    expose:
-      - "8084"
+    ports:
+      - "8084:8084"
     volumes:
       - ./backend/donations-service/data:/app/data
     networks:
