@@ -184,6 +184,7 @@ public class SolicitudAdopcionController {
 
 	@PostMapping
 	public ResponseEntity<?> create(@RequestBody AdopcionRequest req) {
+		log.info("Received adoption request: {}", req);
 		// basic validation
 		if (req == null || req.getMascotaId() == null || req.getAdoptanteId() == null) {
 			return ResponseEntity.badRequest().body(java.util.Map.of("error", "mascotaId and adoptanteId are required"));
@@ -196,14 +197,18 @@ public class SolicitudAdopcionController {
 			ResponseEntity<Map> response = restTemplate.getForEntity(url, Map.class);
 			Map<String, Object> userProfile = response.getBody();
 			String userType = (String) userProfile.get("tipoPerfil");
+			log.info("User type: {}", userType);
 
 			long approvedCount = repo.findByAdoptanteId(req.getAdoptanteId()).stream()
 				.filter(s -> s.getEstado() == EstadoSolicitud.APPROVED)
 				.count();
+			log.info("Approved adoption count: {}", approvedCount);
 
 			if ("PERSONA".equals(userType) && approvedCount >= personaAdoptionLimit) {
+				log.warn("Adoption limit reached for user {}", req.getAdoptanteId());
 				return ResponseEntity.status(403).body(Map.of("error", "Adoption limit reached for PERSONA"));
 			} else if ("EMPRESA".equals(userType) && approvedCount >= empresaAdoptionLimit) {
+				log.warn("Adoption limit reached for user {}", req.getAdoptanteId());
 				return ResponseEntity.status(403).body(Map.of("error", "Adoption limit reached for EMPRESA"));
 			}
 		} catch (Exception e) {
