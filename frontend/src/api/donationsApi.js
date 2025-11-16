@@ -1,4 +1,6 @@
-const API_BASE = process.env.REACT_APP_API_DONATIONS;
+import { getApiBase } from './apiBase';
+
+const API_BASE = getApiBase('DONATIONS');
 
 // Crear nueva donación
 export async function crearDonacion(donacionData) {

@@ -1,4 +1,6 @@
-const API_BASE = process.env.REACT_APP_API_ADOPTIONS;
+import { getApiBase } from './apiBase';
+
+const API_BASE = getApiBase('ADOPTIONS');
 
 export async function createAdoption(request) {
   const res = await fetch(`${API_BASE}`, {

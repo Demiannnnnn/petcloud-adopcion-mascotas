@@ -2,6 +2,18 @@ import { getApiBase } from './apiBase';
 
 export const USERS_API_BASE = getApiBase('USERS');
 
+// Obtener todas las empresas registradas
+export async function getEmpresas() {
+	try {
+		const res = await fetch(`${USERS_API_BASE}/empresas`);
+		if (!res.ok) return [];
+		return await res.json();
+	} catch (e) {
+		console.warn('getEmpresas failed', e);
+		return [];
+	}
+}
+
 // users-service exposes a Perfil endpoint at /perfil/{id} which returns PerfilDTO
 export async function getUserById(id) {
 	if (!id) return null;

@@ -1,4 +1,6 @@
-const API_BASE = process.env.REACT_APP_API_CHATS;
+import { getApiBase } from './apiBase';
+
+const API_BASE = getApiBase('CHATS');
 
 // Cache perfilIds that returned 404 for participant listing to avoid
 // repeated requests that flood the network while the backend route is missing

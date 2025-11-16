@@ -1,8 +1,12 @@
+
 package com.example.users_service.model;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import jakarta.persistence.Entity;
 
 @Entity
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "perfil"})
 public class Empresa extends Perfil {
 
     private String nombreEmpresa;

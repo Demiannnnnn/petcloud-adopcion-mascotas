@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { crearDonacion } from '../api/donationsApi';
-import { getUserById } from '../api/usersApi';
+import { getUserById, getEmpresas } from '../api/usersApi';
 
 export default function DonacionFormModal({ isOpen, onClose, donanteId }) {
   const [tipoDonacion, setTipoDonacion] = useState('MONETARIA');
@@ -15,32 +15,18 @@ export default function DonacionFormModal({ isOpen, onClose, donanteId }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Cargar lista de refugios (empresas) cuando se abre el modal
+  // Cargar lista de empresas (refugios) cuando se abre el modal
   useEffect(() => {
     if (isOpen) {
-      loadRefugios();
+      getEmpresas().then(empresas => {
+        setRefugios(empresas);
+        console.log('Empresas cargadas:', empresas);
+      }).catch(err => {
+        console.error('Error cargando empresas:', err);
+        setRefugios([]);
+      });
     }
   }, [isOpen]);
-
-  const loadRefugios = async () => {
-    try {
-      // Buscar todos los perfiles tipo EMPRESA desde users-service
-      const res = await fetch('https://localhost/api/users/all');
-      if (res.ok) {
-        const allUsers = await res.json();
-        // Filtrar solo empresas - los perfiles vienen directamente, no anidados
-        const empresas = allUsers.filter(u => u.tipoPerfil === 'EMPRESA');
-        setRefugios(empresas);
-        console.log('Empresas cargadas:', empresas); // Debug
-      } else {
-        console.error('Error al cargar usuarios:', res.status);
-        setRefugios([]);
-      }
-    } catch (err) {
-      console.error('Error cargando refugios:', err);
-      setRefugios([]);
-    }
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
