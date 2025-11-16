@@ -1,14 +1,12 @@
 import { formatRut } from '../utils/rut';
+import { getApiBase } from './apiBase';
 
-const API_BASE =
-	window.location.hostname === "localhost"
-		? process.env.REACT_APP_API_USERS
-		: process.env.REACT_APP_API_IP_USERS;
+const USERS_API_BASE = getApiBase('USERS');
 
 export async function registrarPersona(personaData) {
 	const payload = { ...personaData };
 	if (payload.rut) payload.rut = formatRut(payload.rut);
-	const response = await fetch(`${API_BASE}/api/registro-persona`, {
+	const response = await fetch(`${USERS_API_BASE}/registro-persona`, {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json"
@@ -31,7 +29,7 @@ export async function registrarEmpresa(empresaData) {
 			formData.append(key, copy[key]);
 		}
 	}
-	const response = await fetch(`${API_BASE}/api/registro-empresa`, {
+	const response = await fetch(`${USERS_API_BASE}/registro-empresa`, {
 		method: "POST",
 		body: formData
 	});
@@ -43,7 +41,7 @@ export async function registrarEmpresa(empresaData) {
 //login, registro
 export async function login(rut, contraseña) {
 	const payloadRut = formatRut(rut);
-		const response = await fetch(`${API_BASE}/api/login`, {
+		const response = await fetch(`${USERS_API_BASE}/login`, {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json"

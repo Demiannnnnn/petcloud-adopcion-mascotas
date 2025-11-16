@@ -1,51 +1,34 @@
-// Utility to resolve API base URLs at runtime
-// - Prefers REACT_APP_API_BASE_URL if present (global override)
-// - Otherwise selects between REACT_APP_API_<SERVICE> (localhost) and
-//   REACT_APP_API_IP_<SERVICE> (LAN) based on window.location.hostname
-// - Falls back to sensible localhost defaults for known services
+// Tabla única con los endpoints que usa el frontend.
+// Modificar aquí si cambia algún puerto o ruta base.
+export const API_ENDPOINTS = Object.freeze({
+  BASE_URL: 'http://localhost',
+  USERS: 'http://localhost:8081/api',
+  PETS: 'http://localhost:8082/api',
+  ADOPTIONS: 'http://localhost:8083/api/adoptions',
+  CHATS: 'http://localhost:8083/api/chats',
+  NOTIFICACIONES: 'http://localhost:8083/api/notificaciones',
+  DONATIONS: 'http://localhost:8084/api/donaciones',
+  REFUGIOS: 'http://localhost:8081/api/refugios',
+  PETS_SERVER_BASE: 'http://localhost:8082'
+});
+
 function stripTrailingSlash(url) {
-  return url ? url.replace(/\/$/, '') : url;
+  return typeof url === 'string' ? url.replace(/\/+$/, '') : url;
 }
 
-const DEFAULTS = {
-  PETS: 'https://localhost/api/pets',
-  USERS: 'https://localhost/api/users',
-  ADOPTIONS: 'https://localhost/api/adoptions',
-  REFUGIOS: 'https://localhost/api/users'
-};
-
 export function getApiBase(serviceKey) {
-  // global override
-  const globalBase = process.env.REACT_APP_API_BASE_URL;
-  if (globalBase) return stripTrailingSlash(globalBase);
-
   const key = String(serviceKey || '').toUpperCase();
+  const endpoint = API_ENDPOINTS[key];
 
-  // decide based on current host
-  let host = '';
-  try {
-    host = window && window.location && window.location.hostname ? window.location.hostname : '';
-  } catch (e) {
-    host = '';
+  if (!endpoint) {
+    throw new Error(`❌ No existe una URL configurada para el servicio "${serviceKey}". Actualiza API_ENDPOINTS en src/api/apiBase.js.`);
   }
 
-  const isLocal = host === 'localhost' || host === '127.0.0.1' || host === '::1';
+  return stripTrailingSlash(endpoint);
+}
 
-  const localEnv = process.env[`REACT_APP_API_${key}`];
-  const ipEnv = process.env[`REACT_APP_API_IP_${key}`];
-
-  let resolved = '';
-  if (isLocal) {
-    resolved = localEnv || ipEnv || DEFAULTS[key] || '';
-  } else {
-    resolved = ipEnv || localEnv || DEFAULTS[key] || '';
-  }
-
-  if (!resolved) {
-    console.warn(`getApiBase: no base found for service ${serviceKey}`);
-    return '';
-  }
-  return stripTrailingSlash(resolved);
+export function getPetsServerBase() {
+  return getApiBase('PETS_SERVER_BASE');
 }
 
 export default getApiBase;
