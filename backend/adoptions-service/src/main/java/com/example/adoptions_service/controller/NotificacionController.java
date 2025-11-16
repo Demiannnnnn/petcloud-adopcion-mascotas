@@ -11,12 +11,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.CrossOrigin;
 
 import com.example.adoptions_service.model.Notificacion;
 import com.example.adoptions_service.repository.NotificacionRepository;
 
 @RestController
 @RequestMapping("/api/notificaciones")
+@CrossOrigin(origins = {"https://localhost", "https://localhost:443", "http://localhost:3000", "http://localhost:3001"})
 public class NotificacionController {
 
 	private final NotificacionRepository repo;

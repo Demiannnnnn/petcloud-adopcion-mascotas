@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.client.RestTemplate;
 
 import com.example.adoptions_service.model.Chat;
@@ -20,6 +21,7 @@ import com.example.adoptions_service.repository.MensajeRepository;
 
 @RestController
 @RequestMapping("/api/chats")
+@CrossOrigin(origins = {"https://localhost", "https://localhost:443", "http://localhost:3000", "http://localhost:3001"})
 public class ChatController {
 
     private final ChatRepository chatRepo;

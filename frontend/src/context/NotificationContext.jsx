@@ -15,7 +15,7 @@ export function NotificationProvider({ children }) {
     try {
       setLoading(true);
       const base = process.env.REACT_APP_API_NOTIFICACIONES;
-      const res = await fetch(`${base}?destinatarioId=${perfilId}`);
+      const res = await fetch(`${base}/api/notificaciones?destinatarioId=${perfilId}`);
       if (!res.ok) return;
       const data = await res.json();
       setNotifications(Array.isArray(data) ? data : []);
@@ -40,7 +40,7 @@ export function NotificationProvider({ children }) {
   const markAsRead = async (id) => {
     try {
       const base = process.env.REACT_APP_API_NOTIFICACIONES;
-      const res = await fetch(`${base}/${id}/read`, { method: 'PATCH' });
+      const res = await fetch(`${base}/api/notificaciones/${id}/read`, { method: 'PATCH' });
       if (res.ok) {
         const updated = await res.json();
         setNotifications(prev => prev.map(p => p.id === updated.id ? updated : p));
@@ -56,13 +56,13 @@ export function NotificationProvider({ children }) {
     // optimistic update
     setNotifications(prev => prev.map(p => ({ ...p, leida: true })));
     try {
-      console.debug('[NotificationContext] markAllAsRead ->', `${base}/notificaciones/read-all?destinatarioId=${perfilId}`);
-      const res = await fetch(`${base}/notificaciones/read-all?destinatarioId=${perfilId}`, { method: 'PATCH' });
+      console.debug('[NotificationContext] markAllAsRead ->', `${base}/api/notificaciones/read-all?destinatarioId=${perfilId}`);
+      const res = await fetch(`${base}/api/notificaciones/read-all?destinatarioId=${perfilId}`, { method: 'PATCH' });
       if (!res.ok) {
         console.warn('[NotificationContext] markAllAsRead batch failed, falling back to per-item PATCH', res.status);
         // fallback: PATCH each unread individually
         const unread = (notifications || []).filter(n => !n.leida);
-        await Promise.all(unread.map(n => fetch(`${base}/notificaciones/${n.id}/read`, { method: 'PATCH' })));
+        await Promise.all(unread.map(n => fetch(`${base}/api/notificaciones/${n.id}/read`, { method: 'PATCH' })));
         // refresh to ensure server state is in sync
         await fetchNotifications();
         return false;
@@ -87,7 +87,7 @@ export function NotificationProvider({ children }) {
   const deleteNotification = async (id) => {
     try {
       const base = getApiBase('ADOPTIONS');
-      const res = await fetch(`${base}/notificaciones/${id}`, { method: 'DELETE' });
+      const res = await fetch(`${base}/api/notificaciones/${id}`, { method: 'DELETE' });
       if (res.ok) {
         setNotifications(prev => prev.filter(n => n.id !== id));
       }
@@ -103,7 +103,7 @@ export function NotificationProvider({ children }) {
       // optimistic: clear local list
       const prev = notifications;
       setNotifications([]);
-      const res = await fetch(`${base}/notificaciones/clear?destinatarioId=${perfilId}`, { method: 'DELETE' });
+      const res = await fetch(`${base}/api/notificaciones/clear?destinatarioId=${perfilId}`, { method: 'DELETE' });
       if (!res.ok) {
         // revert if failed
         setNotifications(prev);
