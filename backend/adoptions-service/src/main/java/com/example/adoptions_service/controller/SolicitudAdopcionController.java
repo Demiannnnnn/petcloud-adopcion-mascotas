@@ -18,6 +18,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.beans.factory.annotation.Value;
+import java.util.Map;
 
 import com.example.adoptions_service.model.Chat;
 import com.example.adoptions_service.model.ChatParticipante;
@@ -43,6 +45,12 @@ public class SolicitudAdopcionController {
 	private final MensajeRepository mensajeRepo;
 	private static final Logger log = LoggerFactory.getLogger(SolicitudAdopcionController.class);
 
+	@Value("${adoption.limit.persona}")
+	private int personaAdoptionLimit;
+
+	@Value("${adoption.limit.empresa}")
+	private int empresaAdoptionLimit;
+
 	@Autowired
 	private RestTemplate restTemplate;
 
@@ -54,6 +62,14 @@ public class SolicitudAdopcionController {
 		this.chatRepo = chatRepo;
 		this.chatParticipanteRepo = chatParticipanteRepo;
 		this.mensajeRepo = mensajeRepo;
+	}
+
+	@GetMapping("/count/{adoptanteId}")
+	public ResponseEntity<?> getAdoptionCount(@PathVariable Long adoptanteId) {
+		long approvedCount = repo.findByAdoptanteId(adoptanteId).stream()
+			.filter(s -> s.getEstado() == EstadoSolicitud.APPROVED)
+			.count();
+		return ResponseEntity.ok(Map.of("approvedCount", approvedCount));
 	}
 
 	/**
@@ -172,6 +188,29 @@ public class SolicitudAdopcionController {
 		if (req == null || req.getMascotaId() == null || req.getAdoptanteId() == null) {
 			return ResponseEntity.badRequest().body(java.util.Map.of("error", "mascotaId and adoptanteId are required"));
 		}
+
+		// Check adoption limit
+		try {
+			String usersBase = System.getenv().getOrDefault("USERS_API_BASE", "http://localhost:8081");
+			String url = usersBase + "/api/perfil/" + req.getAdoptanteId();
+			ResponseEntity<Map> response = restTemplate.getForEntity(url, Map.class);
+			Map<String, Object> userProfile = response.getBody();
+			String userType = (String) userProfile.get("tipoPerfil");
+
+			long approvedCount = repo.findByAdoptanteId(req.getAdoptanteId()).stream()
+				.filter(s -> s.getEstado() == EstadoSolicitud.APPROVED)
+				.count();
+
+			if ("PERSONA".equals(userType) && approvedCount >= personaAdoptionLimit) {
+				return ResponseEntity.status(403).body(Map.of("error", "Adoption limit reached for PERSONA"));
+			} else if ("EMPRESA".equals(userType) && approvedCount >= empresaAdoptionLimit) {
+				return ResponseEntity.status(403).body(Map.of("error", "Adoption limit reached for EMPRESA"));
+			}
+		} catch (Exception e) {
+			log.error("Failed to check adoption limit", e);
+			return ResponseEntity.status(500).body(Map.of("error", "Failed to check adoption limit"));
+		}
+
 		try {
 			SolicitudAdopcion s = new SolicitudAdopcion();
 			s.setMascotaId(req.getMascotaId());

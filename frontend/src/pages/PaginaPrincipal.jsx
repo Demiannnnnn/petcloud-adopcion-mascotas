@@ -5,7 +5,7 @@ import { getRefugiosByEmpresa, registrarRefugio } from '../api/refugiosApi';
 import { useNavigate } from 'react-router-dom';
 import MascotaRegistroModal from '../components/MascotaRegistroModal';
 import SolicitarAdopcionModal from '../components/SolicitarAdopcionModal';
-import { listReceivedRequestsForMascotas } from '../api/adoptionsApi';
+import { listReceivedRequestsForMascotas, getAdoptionCount } from '../api/adoptionsApi';
 import { getUserById } from '../api/usersApi';
 import MascotaCard from '../components/MascotaCard';
 import { getApiBase } from '../api/apiBase';
@@ -23,6 +23,8 @@ function PaginaPrincipal() {
   const [nuevoRefugio, setNuevoRefugio] = useState({ nombre: '', direccion: '', contactoSuffix: '' });
   const [refugioError, setRefugioError] = useState('');
   const isRefugioValid = !!(nuevoRefugio.nombre && nuevoRefugio.direccion && /^\d{8}$/.test(nuevoRefugio.contactoSuffix));
+  const [adoptionCount, setAdoptionCount] = useState(0);
+  const [adoptionLimit, setAdoptionLimit] = useState(0);
 
   const handleRegistrarRefugio = async (e) => {
     e.preventDefault();
@@ -65,6 +67,24 @@ function PaginaPrincipal() {
   const [search, setSearch] = useState('');
   const [speciesFilter, setSpeciesFilter] = useState('ALL');
   const [isMascotaDetailOpen, setIsMascotaDetailOpen] = useState(false);
+
+  React.useEffect(() => {
+    async function fetchAdoptionData() {
+      if (user && (user.id || (user.perfil && user.perfil.id))) {
+        const adoptanteId = user.id || (user.perfil && user.perfil.id);
+        const { approvedCount } = await getAdoptionCount(adoptanteId);
+        setAdoptionCount(approvedCount);
+
+        // Determine adoption limit based on user type
+        if (user.perfil && user.perfil.tipoPerfil === 'EMPRESA') {
+          setAdoptionLimit(10); // Example limit for companies
+        } else {
+          setAdoptionLimit(2); // Example limit for individuals
+        }
+      }
+    }
+    fetchAdoptionData();
+  }, [user]);
 
   // Cargar mascotas del usuario al iniciar sesión o recargar
   React.useEffect(() => {
@@ -374,7 +394,14 @@ function PaginaPrincipal() {
                     onDelete={null}
                     isPublic={true}
                     publicadoPor={publicadoPor}
-                    onRequestAdoption={(mascota) => { setAdoptingMascota(mascota); setAdoptionModalOpen(true); }}
+                    onRequestAdoption={(mascota) => {
+                      if (adoptionCount >= adoptionLimit) {
+                        toast.error('Has alcanzado tu límite de adopciones.');
+                      } else {
+                        setAdoptingMascota(mascota);
+                        setAdoptionModalOpen(true);
+                      }
+                    }}
                     onGalleryOpenChange={setIsMascotaDetailOpen}
                   />
                 );
@@ -464,7 +491,7 @@ function PaginaPrincipal() {
             )}
           </div>
   </div>
-        )}
+        )
       </div>
       {/* Modal de registro de mascota */}
       <MascotaRegistroModal

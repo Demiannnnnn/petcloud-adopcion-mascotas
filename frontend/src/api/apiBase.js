@@ -11,6 +11,7 @@ const DEFAULTS = {
   PETS: 'https://localhost/api/pets',
   USERS: 'https://localhost/api/users',
   ADOPTIONS: 'https://localhost/api/adoptions',
+  CHATS: 'https://localhost/api/chats',
   REFUGIOS: 'https://localhost/api/users'
 };
 

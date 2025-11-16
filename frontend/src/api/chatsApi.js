@@ -5,12 +5,12 @@ const API_BASE = process.env.REACT_APP_API_CHATS;
 const _notFoundParticipantCache = new Set();
 
 export async function getChatBySolicitud(solicitudId) {
-  const res = await fetch(`${API_BASE}/solicitud/${solicitudId}`);
+  const res = await fetch(`${API_BASE}/api/chats/solicitud/${solicitudId}`);
   return res.ok ? res.json() : null;
 }
 
 export async function sendMessage(chatId, payload) {
-  const res = await fetch(`${API_BASE}/${chatId}/messages`, {
+  const res = await fetch(`${API_BASE}/api/chats/${chatId}/messages`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
@@ -19,7 +19,7 @@ export async function sendMessage(chatId, payload) {
 }
 
 export async function getMessages(chatId) {
-  const res = await fetch(`${API_BASE}/${chatId}/messages`);
+  const res = await fetch(`${API_BASE}/api/chats/${chatId}/messages`);
   if (!res.ok) return [];
   try {
     return await res.json();
@@ -29,13 +29,13 @@ export async function getMessages(chatId) {
 }
 
 export async function getChatById(chatId) {
-  const res = await fetch(`${API_BASE}/${chatId}`);
+  const res = await fetch(`${API_BASE}/api/chats/${chatId}`);
   return res.ok ? res.json() : null;
 }
 
 export async function createChatBetween(perfilA, perfilB) {
   try {
-    const res = await fetch(`${API_BASE}/create`, {
+    const res = await fetch(`${API_BASE}/api/chats/create`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ perfilA, perfilB })
@@ -51,7 +51,7 @@ export async function getChatsByParticipant(perfilId) {
   if (!perfilId) return [];
   if (_notFoundParticipantCache.has(String(perfilId))) return [];
 
-  const res = await fetch(`${API_BASE}/participant/${perfilId}`);
+  const res = await fetch(`${API_BASE}/api/chats/participant/${perfilId}`);
   if (!res.ok) {
     if (res.status === 404) {
       // remember this perfilId returned 404 to avoid spamming the backend
