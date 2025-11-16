@@ -31,6 +31,7 @@ services:
       - app-network
     restart: unless-stopped
 
+
   # Backend Services (Spring Boot + H2 embedded)
   users-service:
     build:
