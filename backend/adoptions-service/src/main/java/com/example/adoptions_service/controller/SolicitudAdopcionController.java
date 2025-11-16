@@ -155,20 +155,19 @@ public class SolicitudAdopcionController {
 				log.warn("ensure-chat failed for solicitud {}: {}", s.getId(), ex.getMessage());
 			}
 
-			// attempt to create contactos in users-service if both known
+			String usersBase = System.getenv().getOrDefault("USERS_API_BASE", "http://users-service:8081");
 			try {
-				if (adoptanteId != null && propietarioId != null) {
-					String usersBase = System.getenv().getOrDefault("USERS_API_BASE", "http://localhost:8081");
-					java.util.Map<String,Object> b1 = new java.util.HashMap<>();
-					b1.put("ownerPerfilId", propietarioId);
-					b1.put("contactoPerfilId", adoptanteId);
-					try { restTemplate.postForEntity(usersBase + "/api/contactos", b1, java.util.Map.class); } catch (Exception x) { log.debug("could not add contacto: {}", x.getMessage()); }
-					java.util.Map<String,Object> b2 = new java.util.HashMap<>();
-					b2.put("ownerPerfilId", adoptanteId);
-					b2.put("contactoPerfilId", propietarioId);
-					try { restTemplate.postForEntity(usersBase + "/api/contactos", b2, java.util.Map.class); } catch (Exception x) { log.debug("could not add contacto reverse: {}", x.getMessage()); }
-				}
-			} catch (Exception e) { log.debug("contacts create failed: {}", e.getMessage()); }
+				java.util.Map<String,Object> b1 = new java.util.HashMap<>();
+				b1.put("ownerPerfilId", propietarioId);
+				b1.put("contactoPerfilId", adoptanteId);
+				try { restTemplate.postForEntity(usersBase + "/api/contactos", b1, java.util.Map.class); } catch (Exception x) { log.debug("could not add contacto: {}", x.getMessage()); }
+				java.util.Map<String,Object> b2 = new java.util.HashMap<>();
+				b2.put("ownerPerfilId", adoptanteId);
+				b2.put("contactoPerfilId", propietarioId);
+				try { restTemplate.postForEntity(usersBase + "/api/contactos", b2, java.util.Map.class); } catch (Exception x) { log.debug("could not add contacto reverse: {}", x.getMessage()); }
+			} catch (Exception e) {
+				log.debug("contacts create failed: {}", e.getMessage());
+			}
 
 			// return created chat info
 			Chat created = chatRepo.findBySolicitudAdopcionId(s.getId());
@@ -192,7 +191,7 @@ public class SolicitudAdopcionController {
 
 		// Check adoption limit
 		try {
-			String usersBase = System.getenv().getOrDefault("USERS_API_BASE", "http://localhost:8081");
+			String usersBase = System.getenv().getOrDefault("USERS_API_BASE", "http://users-service:8081");
 			String url = usersBase + "/api/perfil/" + req.getAdoptanteId();
 			ResponseEntity<Map> response = restTemplate.getForEntity(url, Map.class);
 			Map<String, Object> userProfile = response.getBody();
