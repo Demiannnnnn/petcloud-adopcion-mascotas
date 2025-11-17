@@ -1,9 +1,7 @@
 import { formatRut } from '../utils/rut';
+import { getApiBase } from './apiBase';
 
-const API_BASE =
-	window.location.hostname === "localhost"
-		? process.env.REACT_APP_API_USERS
-		: process.env.REACT_APP_API_IP_USERS;
+const API_BASE = getApiBase('USERS');
 
 export async function registrarPersona(personaData) {
 	const payload = { ...personaData };
