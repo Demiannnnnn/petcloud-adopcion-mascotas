@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './LoginPage.css';
 import { formatRut, cleanRut } from '../utils/rut';
-import { registrarPersona, registrarEmpresa } from '../api/authApi';
+import { registerPersona, registrarEmpresa } from '../api/authApi';
 function RegistroPage() {
   // Fecha máxima local para el input de fecha
   const todayLocal = new Date();
@@ -93,7 +93,7 @@ function RegistroPage() {
         }
       }
       try {
-  const result = await registrarPersona({
+  const result = await registerPersona({
           rut,
           nombreCompleto,
           contraseña,
