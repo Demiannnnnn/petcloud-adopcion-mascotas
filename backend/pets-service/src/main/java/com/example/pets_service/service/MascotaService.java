@@ -20,6 +20,10 @@ import com.example.pets_service.repository.MascotaRepository;
 
 @Service
 public class MascotaService {
+	// Configuración de URLs fijas de los servicios
+	private static final String USERS_API_BASE = "http://localhost:8081";
+	private static final String API_BASE = "http://localhost:8082";
+
 	@org.springframework.context.annotation.Configuration
 	public static class RestConfig {
 		@Bean
@@ -51,8 +55,7 @@ public class MascotaService {
 	public List<PublicMascotaDTO> listarMascotas() {
 		List<Mascota> all = mascotaRepository.findAll();
 		java.util.List<PublicMascotaDTO> out = new java.util.ArrayList<>();
-		java.util.Map<String,String> env = System.getenv();
-		String usersBase = env.getOrDefault("USERS_API_BASE", "http://localhost:8081");
+		String usersBase = USERS_API_BASE;
 		for (Mascota m : all) {
 			PublicMascotaDTO dto = new PublicMascotaDTO();
 			dto.id = m.getId();
@@ -86,12 +89,12 @@ public class MascotaService {
 				try {
 					com.fasterxml.jackson.databind.ObjectMapper om = new com.fasterxml.jackson.databind.ObjectMapper();
 					java.util.List<java.util.Map<String,String>> parsed = om.readValue(m.getMediaJson(), java.util.List.class);
-					// Prefix API base if needed
-					String apiBase = java.util.Optional.ofNullable(System.getenv().get("API_BASE")).orElse("http://localhost:8082");
+					// Normalizar URLs a rutas relativas (el frontend las convertirá a absolutas)
 					for (java.util.Map<String,String> item : parsed) {
 						String u = item.getOrDefault("url", "");
 						if (u != null && !u.isEmpty() && !u.startsWith("http")) {
-							item.put("url", apiBase + (u.startsWith("/") ? u : ("/uploads/" + u)));
+							// Asegurar que empiece con /uploads/
+							item.put("url", u.startsWith("/") ? u : ("/uploads/" + u));
 						}
 					}
 					dto.media = parsed;
@@ -102,9 +105,9 @@ public class MascotaService {
 			// If no mediaJson and imagenUrl exists, expose imagenUrl as a single media entry
 			if ((dto.media == null || dto.media.isEmpty()) && dto.imagenUrl != null && !dto.imagenUrl.isEmpty()) {
 				java.util.Map<String,String> single = new java.util.HashMap<>();
-				String apiBase = java.util.Optional.ofNullable(System.getenv().get("API_BASE")).orElse("http://localhost:8082");
 				String u = dto.imagenUrl;
-				if (!u.startsWith("http")) u = apiBase + (u.startsWith("/") ? u : ("/uploads/" + u));
+				// Normalizar a ruta relativa (el frontend la convertirá a absoluta)
+				if (!u.startsWith("http")) u = u.startsWith("/") ? u : ("/uploads/" + u);
 				single.put("url", u);
 				single.put("type", "image/*");
 				dto.media = new java.util.ArrayList<>();
@@ -297,10 +300,9 @@ public class MascotaService {
 		if (!maybe.isPresent()) throw new IllegalArgumentException("Mascota no encontrada");
 		Mascota mascota = maybe.get();
 		if (rawUrl == null || rawUrl.trim().isEmpty()) return mascota;
-		String apiBase = java.util.Optional.ofNullable(System.getenv().get("API_BASE")).orElse("http://localhost:8082");
 		// canonicalize incoming URL similar to normalizeAndDedupeMedia
 		String url = rawUrl.trim();
-		if (!url.startsWith("http")) url = (url.startsWith("/") ? apiBase + url : apiBase + "/" + url.replaceAll("^/+", ""));
+		if (!url.startsWith("http")) url = (url.startsWith("/") ? url : ("/" + url.replaceAll("^/+", "")));
 		int q = url.indexOf('?'); if (q >= 0) url = url.substring(0, q);
 		int h = url.indexOf('#'); if (h >= 0) url = url.substring(0, h);
 		while (url.length() > 1 && url.endsWith("/")) url = url.substring(0, url.length() - 1);
@@ -321,7 +323,8 @@ public class MascotaService {
 			if (it == null) continue;
 			String u = it.getOrDefault("url", "");
 			if (u == null || u.trim().isEmpty()) continue;
-			String full = u.startsWith("http") ? u : (u.startsWith("/") ? apiBase + u : apiBase + "/" + u.replaceAll("^/+", ""));
+			// Normalizar a ruta relativa para comparación
+			String full = u.startsWith("http") ? u : (u.startsWith("/") ? u : ("/" + u.replaceAll("^/+", "")));
 			int q2 = full.indexOf('?'); if (q2 >= 0) full = full.substring(0, q2);
 			int h2 = full.indexOf('#'); if (h2 >= 0) full = full.substring(0, h2);
 			while (full.length() > 1 && full.endsWith("/")) full = full.substring(0, full.length() - 1);
@@ -332,8 +335,8 @@ public class MascotaService {
 				// attempt to delete file on disk if it's a local upload
 				try {
 					String localPath = null;
-					if (full.startsWith(apiBase)) {
-						String rel = full.substring(apiBase.length());
+					if (full.startsWith("/uploads/")) {
+						String rel = full.substring(1); // remove leading /
 						if (rel.startsWith("/")) rel = rel.substring(1);
 						localPath = System.getProperty("user.dir") + System.getProperty("file.separator") + rel.replace('/', java.io.File.separatorChar);
 					} else if (full.contains("/uploads/")) {
@@ -385,14 +388,14 @@ public class MascotaService {
 	private java.util.List<java.util.Map<String,String>> normalizeAndDedupeMedia(java.util.List<java.util.Map<String,String>> raw) {
 		java.util.List<java.util.Map<String,String>> out = new java.util.ArrayList<>();
 		if (raw == null) return out;
-		String apiBase = java.util.Optional.ofNullable(System.getenv().get("API_BASE")).orElse("http://localhost:8082");
 		java.util.Set<String> seen = new java.util.HashSet<>();
 		for (java.util.Map<String,String> it : raw) {
 			if (it == null) continue;
 			String url = it.getOrDefault("url", "").trim();
 			if (url.isEmpty()) continue;
+			// Normalizar a ruta relativa si no es URL externa
 			if (!url.startsWith("http")) {
-				url = apiBase + (url.startsWith("/") ? url : ("/uploads/" + url));
+				url = url.startsWith("/") ? url : ("/uploads/" + url);
 			}
 			// canonicalize: remove query/hash, trailing slash and lowercase for dedupe
 			int q = url.indexOf('?'); if (q >= 0) url = url.substring(0, q);

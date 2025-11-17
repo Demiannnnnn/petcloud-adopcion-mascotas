@@ -41,6 +41,10 @@ public class SolicitudAdopcionController {
 	private final MensajeRepository mensajeRepo;
 	private static final Logger log = LoggerFactory.getLogger(SolicitudAdopcionController.class);
 
+	// Configuración de URLs fijas de los servicios
+	private static final String PETS_API_BASE = "http://localhost:8082";
+	private static final String USERS_API_BASE = "http://localhost:8081";
+
 	@Autowired
 	private RestTemplate restTemplate;
 
@@ -77,7 +81,7 @@ public class SolicitudAdopcionController {
 			// determine propietario via pets-service if possible
 			Long propietarioId = null;
 			try {
-				String petsBase = System.getenv().getOrDefault("PETS_API_BASE", "http://localhost:8082");
+				String petsBase = PETS_API_BASE;
 				java.util.Map map = restTemplate.getForObject(petsBase + "/api/mascotas/" + s.getMascotaId(), java.util.Map.class);
 				if (map != null) {
 					Object pid = map.get("propietarioId");
@@ -140,7 +144,7 @@ public class SolicitudAdopcionController {
 			// attempt to create contactos in users-service if both known
 			try {
 				if (adoptanteId != null && propietarioId != null) {
-					String usersBase = System.getenv().getOrDefault("USERS_API_BASE", "http://localhost:8081");
+					String usersBase = USERS_API_BASE;
 					java.util.Map<String,Object> b1 = new java.util.HashMap<>();
 					b1.put("ownerPerfilId", propietarioId);
 					b1.put("contactoPerfilId", adoptanteId);
@@ -192,7 +196,7 @@ public class SolicitudAdopcionController {
 					// determine propietario (owner) via pets-service
 					Long propietarioId = null;
 					try {
-						String petsBase = System.getenv().getOrDefault("PETS_API_BASE", "http://localhost:8082");
+						String petsBase = PETS_API_BASE;
 						java.util.Map map = restTemplate.getForObject(petsBase + "/api/mascotas/" + saved.getMascotaId(), java.util.Map.class);
 						if (map != null) {
 							Object pid = map.get("propietarioId");
@@ -281,7 +285,7 @@ public class SolicitudAdopcionController {
 						// attempt to create contacts between adoptante and propietario in users-service
 						try {
 							if (adoptanteId != null && propietarioId != null) {
-								String usersBase = System.getenv().getOrDefault("USERS_API_BASE", "http://localhost:8081");
+								String usersBase = USERS_API_BASE;
 								java.util.Map<String, Object> body1 = new java.util.HashMap<>();
 								body1.put("ownerPerfilId", propietarioId);
 								body1.put("contactoPerfilId", adoptanteId);
@@ -311,7 +315,7 @@ public class SolicitudAdopcionController {
 								Long supplied = null;
 								try { supplied = Long.valueOf(req.getContacto().trim()); } catch (Exception x) { supplied = null; }
 								if (supplied != null && adoptanteId != null) {
-									String usersBase = System.getenv().getOrDefault("USERS_API_BASE", "http://localhost:8081");
+									String usersBase = USERS_API_BASE;
 									// add contacto: adoptante -> supplied
 									java.util.Map<String,Object> bodyA = new java.util.HashMap<>();
 									bodyA.put("ownerPerfilId", adoptanteId);
@@ -383,7 +387,7 @@ public class SolicitudAdopcionController {
 					}
 				} catch (Exception xx) { /* ignore */ }
 
-				String usersBase = System.getenv().getOrDefault("USERS_API_BASE", "http://localhost:8081");
+				String usersBase = USERS_API_BASE;
 				if (adoptanteIdLocal != null && propietarioIdLocal != null) {
 					java.util.Map<String, Object> b1 = new java.util.HashMap<>();
 					b1.put("ownerPerfilId", propietarioIdLocal);
@@ -505,7 +509,7 @@ public class SolicitudAdopcionController {
 
 		// Call pets-service /reserve endpoint to attempt atomic reservation
 		try {
-			String petsBase = System.getenv().getOrDefault("PETS_API_BASE", "http://localhost:8082");
+			String petsBase = PETS_API_BASE;
 			String url = petsBase + "/api/mascotas/" + s.getMascotaId() + "/reserve";
 			if (s.getAdoptanteId() != null) {
 				url += "?adoptanteId=" + s.getAdoptanteId();
@@ -537,7 +541,7 @@ public class SolicitudAdopcionController {
 		// create a notification for the adoptante informing approval (include mascota name when available)
 		try {
 			if (saved.getAdoptanteId() != null) {
-				String petsBase = System.getenv().getOrDefault("PETS_API_BASE", "http://localhost:8082");
+				String petsBase = PETS_API_BASE;
 				String petName = String.valueOf(saved.getMascotaId());
 				try {
 					java.util.Map map = restTemplate.getForObject(petsBase + "/api/mascotas/" + saved.getMascotaId(), java.util.Map.class);
@@ -588,7 +592,7 @@ public class SolicitudAdopcionController {
 		// create notification for rejection
 		try {
 			if (saved.getAdoptanteId() != null) {
-				String petsBase = System.getenv().getOrDefault("PETS_API_BASE", "http://localhost:8082");
+				String petsBase = PETS_API_BASE;
 				String petName = String.valueOf(saved.getMascotaId());
 				try {
 					java.util.Map map = restTemplate.getForObject(petsBase + "/api/mascotas/" + saved.getMascotaId(), java.util.Map.class);
@@ -673,7 +677,7 @@ public class SolicitudAdopcionController {
 	public ResponseEntity<?> reconcileApproved() {
 		java.util.List<SolicitudAdopcion> approved = repo.findByEstado(EstadoSolicitud.APPROVED);
 		int attempted = 0, repaired = 0, conflicts = 0, errors = 0;
-		String petsBase = System.getenv().getOrDefault("PETS_API_BASE", "http://localhost:8082");
+		String petsBase = PETS_API_BASE;
 		for (SolicitudAdopcion s : approved) {
 			attempted++;
 			try {

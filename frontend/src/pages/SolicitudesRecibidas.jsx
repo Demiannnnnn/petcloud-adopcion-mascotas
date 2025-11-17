@@ -46,8 +46,8 @@ export default function SolicitudesRecibidas() {
   // helper to animate between images (crossfade + slight slide)
   const animateTo = (newIndex) => {
     if (animating || !viewerImages || newIndex === viewerIndex) return;
-    const next = buildMediaUrl(getApiBase('PETS'), viewerImages[newIndex]);
-    const current = buildMediaUrl(getApiBase('PETS'), viewerImages[viewerIndex]);
+    const next = buildMediaUrl(getApiBase('PETS_SERVER_BASE'), viewerImages[newIndex]);
+    const current = buildMediaUrl(getApiBase('PETS_SERVER_BASE'), viewerImages[viewerIndex]);
     setAnimDirection(newIndex > viewerIndex ? 1 : -1);
     setAnimFromSrc(current);
     setAnimToSrc(next);
@@ -344,7 +344,7 @@ export default function SolicitudesRecibidas() {
               <div onTouchStart={onTouchStart} onTouchEnd={onTouchEnd} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', flexDirection: 'column', minHeight: 360 }}>
                 <div style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', padding: 8 }}>
                   {!animating && (
-                    <img src={buildMediaUrl(getApiBase('PETS'), viewerImages[viewerIndex])} alt="foto mascota" style={{ maxHeight: '72vh', maxWidth: '100%', objectFit: 'contain', borderRadius: 8, transition: 'transform 300ms ease' }} />
+                    <img src={buildMediaUrl(getApiBase('PETS_SERVER_BASE'), viewerImages[viewerIndex])} alt="foto mascota" style={{ maxHeight: '72vh', maxWidth: '100%', objectFit: 'contain', borderRadius: 8, transition: 'transform 300ms ease' }} />
                   )}
                   {animating && (
                     <>
@@ -385,7 +385,7 @@ export default function SolicitudesRecibidas() {
                   <div style={{ display: 'flex', gap: 8, marginTop: 12, overflowX: 'auto', paddingBottom: 6 }}>
                     {viewerImages.map((mi, idx) => (
                       <button key={idx} onClick={() => animateTo(idx)} style={{ border: idx === viewerIndex ? '2px solid #F29C6B' : '1px solid #ddd', padding: 0, borderRadius: 6, background: '#fff', cursor: 'pointer' }}>
-                        <img src={buildMediaUrl(getApiBase('PETS'), mi)} alt={`foto ${idx+1}`} style={{ width: 72, height: 72, objectFit: 'cover', display: 'block', borderRadius: 6 }} />
+                        <img src={buildMediaUrl(getApiBase('PETS_SERVER_BASE'), mi)} alt={`foto ${idx+1}`} style={{ width: 72, height: 72, objectFit: 'cover', display: 'block', borderRadius: 6 }} />
                       </button>
                     ))}
                   </div>
@@ -418,7 +418,7 @@ export default function SolicitudesRecibidas() {
                 <div style={{ flex: '0 0 auto', display: 'flex', alignItems: 'center', gap: 10 }}>
                   {s.petImages && s.petImages.length > 0 ? (
                     <img
-                      src={buildMediaUrl(getApiBase('PETS'), s.petImages[0])}
+                      src={buildMediaUrl(getApiBase('PETS_SERVER_BASE'), s.petImages[0])}
                       alt={s.petName || 'mascota'}
                       title="Ver galería"
                       onClick={async () => {

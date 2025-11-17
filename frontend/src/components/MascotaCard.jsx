@@ -6,7 +6,7 @@ import MediaGalleryModal from './MediaGalleryModal';
 import './MascotaCard.css';
 
 export default function MascotaCard({ mascota, overrideMascota, onEdit, onDelete, refugioName, refugioContacto, publicadoPor, isPublic, onRequestAdoption, hideAvailabilityBadge, onGalleryOpenChange }) {
-  const API_BASE = getApiBase('PETS');
+  const API_BASE = getApiBase('PETS_SERVER_BASE');
   // allow callers to override display-only fields (useful when a solicitud indicates adoption)
   const displayMascota = { ...(mascota || {}), ...(overrideMascota || {}) };
   const imagenSrc = displayMascota.imagenUrl

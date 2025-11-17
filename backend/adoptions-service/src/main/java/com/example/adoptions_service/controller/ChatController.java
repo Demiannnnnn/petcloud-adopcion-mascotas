@@ -22,6 +22,9 @@ import com.example.adoptions_service.repository.MensajeRepository;
 @RequestMapping("/api/chats")
 public class ChatController {
 
+    // Configuración de URL fija del servicio de usuarios
+    private static final String USERS_API_BASE = "http://localhost:8081";
+
     private final ChatRepository chatRepo;
     private final ChatParticipanteRepository participanteRepo;
     private final MensajeRepository mensajeRepo;
@@ -46,7 +49,7 @@ public class ChatController {
         java.util.List<Map<String,Object>> participantesOut = new java.util.ArrayList<>();
         var mensajes = mensajeRepo.findByChatIdOrderByFechaAsc(c.getId());
         try {
-            String usersBase = System.getenv().getOrDefault("USERS_API_BASE", "http://localhost:8081");
+            String usersBase = USERS_API_BASE;
             java.util.Map<Long, java.util.Map<String,Object>> cache = new java.util.HashMap<>();
             for (var p : parts) {
                 Map<String,Object> pm = new HashMap<>();
@@ -142,7 +145,7 @@ public class ChatController {
                 // build participantes map list
                 java.util.List<Map<String,Object>> participantesOut = new java.util.ArrayList<>();
                 java.util.Map<Long, java.util.Map<String,Object>> cache = new java.util.HashMap<>();
-                String usersBase = System.getenv().getOrDefault("USERS_API_BASE", "http://localhost:8081");
+                String usersBase = USERS_API_BASE;
                 for (var pp : pparts) {
                     Map<String,Object> pm = new HashMap<>();
                     pm.put("id", pp.getId());
@@ -230,7 +233,7 @@ public class ChatController {
         var parts = participanteRepo.findByChatId(c.getId());
         var mensajes = mensajeRepo.findByChatIdOrderByFechaAsc(c.getId());
         try {
-            String usersBase = System.getenv().getOrDefault("USERS_API_BASE", "http://localhost:8081");
+            String usersBase = USERS_API_BASE;
             java.util.Map<Long, java.util.Map<String,Object>> cache = new java.util.HashMap<>();
             java.util.List<Map<String,Object>> participantesOut = new java.util.ArrayList<>();
             for (var p : parts) {
@@ -339,7 +342,7 @@ public class ChatController {
                         var parts = participanteRepo.findByChatId(c.getId());
                         var mensajes = mensajeRepo.findByChatIdOrderByFechaAsc(c.getId());
                         try {
-                            String usersBase = System.getenv().getOrDefault("USERS_API_BASE", "http://localhost:8081");
+                            String usersBase = USERS_API_BASE;
                             java.util.Map<Long, java.util.Map<String,Object>> cache = new java.util.HashMap<>();
                             java.util.List<Map<String,Object>> participantesOut = new java.util.ArrayList<>();
                             for (var p : parts) {
@@ -438,7 +441,7 @@ public class ChatController {
                 var parts = participanteRepo.findByChatId(saved.getId());
                 var mensajes = mensajeRepo.findByChatIdOrderByFechaAsc(saved.getId());
                 try {
-                    String usersBase = System.getenv().getOrDefault("USERS_API_BASE", "http://localhost:8081");
+                    String usersBase = USERS_API_BASE;
                     java.util.Map<Long, java.util.Map<String,Object>> cache = new java.util.HashMap<>();
                     java.util.List<Map<String,Object>> participantesOut = new java.util.ArrayList<>();
                     for (var p : parts) {

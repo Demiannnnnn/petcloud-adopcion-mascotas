@@ -14,7 +14,7 @@ export function NotificationProvider({ children }) {
     if (!perfilId) return;
     try {
       setLoading(true);
-      const base = process.env.REACT_APP_API_NOTIFICACIONES;
+      const base = getApiBase('NOTIFICACIONES');
       const res = await fetch(`${base}?destinatarioId=${perfilId}`);
       if (!res.ok) return;
       const data = await res.json();
@@ -39,7 +39,7 @@ export function NotificationProvider({ children }) {
 
   const markAsRead = async (id) => {
     try {
-      const base = process.env.REACT_APP_API_NOTIFICACIONES;
+      const base = getApiBase('NOTIFICACIONES');
       const res = await fetch(`${base}/${id}/read`, { method: 'PATCH' });
       if (res.ok) {
         const updated = await res.json();
