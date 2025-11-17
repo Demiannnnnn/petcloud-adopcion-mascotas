@@ -3,21 +3,22 @@ import { getApiBase } from './apiBase';
 
 const API_BASE = getApiBase('USERS');
 
-export async function registrarPersona(personaData) {
-	const payload = { ...personaData };
-	if (payload.rut) payload.rut = formatRut(payload.rut);
-	const response = await fetch(`${API_BASE}/api/registro-persona`, {
-		method: "POST",
-		headers: {
-			"Content-Type": "application/json"
-		},
-		body: JSON.stringify(payload)
-	});
-	if (!response.ok) {
-		throw new Error("Error de conexión");
+export const registerPersona = async (formData) => {
+	try {
+		const response = await fetch(`${API_BASE}/api/registro-persona`, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify(formData),
+		});
+
+		// ... resto de la lógica ...
+	} catch (error) {
+		console.error('Error registering persona:', error);
+		throw error;
 	}
-	return response.json();
-}
+};
 
 // Registro de empresa
 export async function registrarEmpresa(empresaData) {
