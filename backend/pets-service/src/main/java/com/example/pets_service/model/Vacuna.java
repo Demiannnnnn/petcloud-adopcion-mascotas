@@ -1,6 +1,6 @@
 package com.example.pets_service.model;
 
-import java.util.Date;
+import java.time.LocalDate;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -21,8 +21,8 @@ public class Vacuna {
     private Mascota mascota;
 
     private String nombre;
-    private Date fechaAplicacion;
-    private Date proximaDosis;
+    private LocalDate fechaAplicacion;
+    private LocalDate proximaDosis;
     private String lote;
     private String veterinario;
 
@@ -36,11 +36,11 @@ public class Vacuna {
     public String getNombre() { return nombre; }
     public void setNombre(String nombre) { this.nombre = nombre; }
 
-    public Date getFechaAplicacion() { return fechaAplicacion; }
-    public void setFechaAplicacion(Date fechaAplicacion) { this.fechaAplicacion = fechaAplicacion; }
+    public LocalDate getFechaAplicacion() { return fechaAplicacion; }
+    public void setFechaAplicacion(LocalDate fechaAplicacion) { this.fechaAplicacion = fechaAplicacion; }
 
-    public Date getProximaDosis() { return proximaDosis; }
-    public void setProximaDosis(Date proximaDosis) { this.proximaDosis = proximaDosis; }
+    public LocalDate getProximaDosis() { return proximaDosis; }
+    public void setProximaDosis(LocalDate proximaDosis) { this.proximaDosis = proximaDosis; }
 
     public String getLote() { return lote; }
     public void setLote(String lote) { this.lote = lote; }

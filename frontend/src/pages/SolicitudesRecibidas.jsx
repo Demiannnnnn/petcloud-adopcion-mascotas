@@ -6,6 +6,148 @@ import { getUserById } from '../api/usersApi';
 import { buildMediaUrl } from '../utils/mediaUtils';
 import { toast } from 'react-toastify';
 
+function SolicitudItem({ s, onApprove, onReject, onViewImages, formatDate }) {
+  const [expanded, setExpanded] = useState(false);
+
+  const raw = String(s.estadoRaw || s.estado || '').toUpperCase();
+  let color = '#a0522d';
+  let badgeBg = '#fff5ee';
+  if (s.isApproved || raw === 'APPROVED' || raw === 'APROBADO' || raw === 'ACCEPTED') {
+    color = '#2e7d32';
+    badgeBg = '#e8f5e9';
+  }
+  if (raw === 'REJECTED' || raw === 'RECHAZADO' || raw === 'REJECT') {
+    color = '#c62828';
+    badgeBg = '#ffebee';
+  }
+  if (s.isPending) {
+    color = '#f57c00';
+    badgeBg = '#fff3e0';
+  }
+
+  const statusLabel = String(s.estadoRaw || s.estado || (s.isApproved ? 'APROBADO' : 'N/D'));
+
+  return (
+    <div style={{ background: '#fff', borderBottom: '1px solid #f0f0f0', transition: 'background 0.2s' }}>
+      {/* Header Row - Always Visible */}
+      <div
+        onClick={() => setExpanded(!expanded)}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          padding: '12px 16px',
+          cursor: 'pointer',
+          gap: 12
+        }}
+      >
+        {/* Pet Avatar */}
+        <div style={{ position: 'relative', width: 40, height: 40 }}>
+          {s.petImages && s.petImages.length > 0 ? (
+            <img
+              src={buildMediaUrl(getApiBase('PETS_SERVER_BASE'), s.petImages[0])}
+              alt={s.petName}
+              style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover' }}
+            />
+          ) : (
+            <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, color: '#666' }}>
+              {(s.petName && s.petName[0]) || '?'}
+            </div>
+          )}
+        </div>
+
+        {/* Names */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, flexWrap: 'wrap' }}>
+            <span style={{ fontWeight: 600, color: '#333', fontSize: 15 }}>{s.petName}</span>
+            <span style={{ color: '#999', fontSize: 13 }}>solicitado por</span>
+            <span style={{ fontWeight: 600, color: '#a0522d', fontSize: 15 }}>{s.adoptanteName}</span>
+          </div>
+        </div>
+
+        {/* Status Badge */}
+        <div style={{
+          padding: '4px 10px',
+          borderRadius: 12,
+          background: badgeBg,
+          color: color,
+          fontSize: 12,
+          fontWeight: 600,
+          whiteSpace: 'nowrap'
+        }}>
+          {statusLabel}
+        </div>
+
+        {/* Chevron */}
+        <div style={{ color: '#ccc', transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>
+          ▼
+        </div>
+      </div>
+
+      {/* Expanded Content */}
+      {expanded && (
+        <div style={{ padding: '0 16px 16px 68px', animation: 'fadeIn 0.2s' }}>
+          <div style={{ fontSize: 14, color: '#555', marginBottom: 8, lineHeight: 1.5 }}>
+            "{s.comentariosAdoptante || s.mensaje}"
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, fontSize: 13, color: '#888', marginBottom: 12 }}>
+            <span>📅 {formatDate(s.fechaSolicitud || s.fechaSolicitudUtc || s.fecha || s.createdAt)}</span>
+            {s.petImages && s.petImages.length > 0 && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onViewImages(s); }}
+                style={{ background: 'none', border: 'none', color: '#F29C6B', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}
+              >
+                Ver fotos de la mascota
+              </button>
+            )}
+          </div>
+
+          {s.motivoRechazo && (
+            <div style={{ fontSize: 13, color: '#c62828', marginBottom: 12, background: '#ffebee', padding: 8, borderRadius: 6 }}>
+              <b>Motivo rechazo:</b> {s.motivoRechazo}
+            </div>
+          )}
+
+          {s.isPending && (
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                onClick={(e) => { e.stopPropagation(); onApprove(s.id); }}
+                style={{
+                  background: '#2e7d32',
+                  color: '#fff',
+                  border: 'none',
+                  padding: '6px 14px',
+                  borderRadius: 6,
+                  cursor: 'pointer',
+                  fontSize: 13,
+                  fontWeight: 500
+                }}
+              >
+                Aceptar
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); onReject(s.id); }}
+                style={{
+                  background: '#fff',
+                  color: '#c62828',
+                  border: '1px solid #c62828',
+                  padding: '6px 14px',
+                  borderRadius: 6,
+                  cursor: 'pointer',
+                  fontSize: 13,
+                  fontWeight: 500
+                }}
+              >
+                Rechazar
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function SolicitudesRecibidas() {
   const { user } = useContext(AuthContext) || {};
   const [solicitudes, setSolicitudes] = useState([]);
@@ -20,7 +162,7 @@ export default function SolicitudesRecibidas() {
   const [animDirection, setAnimDirection] = useState(1); // 1 = forward, -1 = back
   const [animPhase, setAnimPhase] = useState('idle');
   const touchStartRef = React.useRef(null);
-  const [filter, setFilter] = useState('ALL'); // ALL | PENDING | APPROVED | REJECTED
+  const [filter, setFilter] = useState('PENDING'); // CHANGED DEFAULT TO PENDING
   const [search, setSearch] = useState('');
 
   // close viewer on ESC key
@@ -96,9 +238,9 @@ export default function SolicitudesRecibidas() {
       const propietarioId = user.id || (user.perfil && user.perfil.id);
       if (!propietarioId) return;
       try {
-  // pedir mascotas del propietario (pets-service) y luego solicitudes para esas mascotas
-  const PETS_BASE = getApiBase('PETS');
-  const resp = await fetch(`${PETS_BASE}/mascotas/propietario/${propietarioId}`);
+        // pedir mascotas del propietario (pets-service) y luego solicitudes para esas mascotas
+        const PETS_BASE = getApiBase('PETS');
+        const resp = await fetch(`${PETS_BASE}/mascotas/propietario/${propietarioId}`);
         const mascotas = resp.ok ? await resp.json() : [];
         const ids = mascotas.map(m => m.id).filter(Boolean);
         if (ids.length === 0) { setSolicitudes([]); return; }
@@ -117,13 +259,13 @@ export default function SolicitudesRecibidas() {
           // ignore sort errors and continue
         }
 
-  // Enrich requests with mascota name and adoptante name to avoid showing raw IDs
-  const petCache = {};
-  const userCache = {};
+        // Enrich requests with mascota name and adoptante name to avoid showing raw IDs
+        const petCache = {};
+        const userCache = {};
 
         const approvedSet = new Set(['APPROVED', 'ACCEPTED', 'APROBADO', 'ACCEPTED']);
 
-  const enriched = await Promise.all((allRequests || []).map(async (r) => {
+        const enriched = await Promise.all((allRequests || []).map(async (r) => {
           const mascotaId = r.mascotaId;
           const adoptanteId = r.adoptanteId;
           let pet = petCache[mascotaId];
@@ -195,7 +337,7 @@ export default function SolicitudesRecibidas() {
             isApproved,
             isPending,
             estadoRaw
-           };
+          };
         }));
 
         setSolicitudes(enriched || []);
@@ -284,45 +426,109 @@ export default function SolicitudesRecibidas() {
     }
   };
 
+  const handleViewImages = async (s) => {
+    try {
+      // fetch fresh mascota to include any newly added media
+      const PETS_BASE = getApiBase('PETS');
+      const r = await fetch(`${PETS_BASE}/mascotas/${s.mascotaId}`);
+      let fresh = null;
+      if (r.ok) fresh = await r.json();
+      const source = fresh || ({});
+      const raw = source.media || source.imagenes || source.fotos || source.files || s.petImages || [];
+      let imgs = [];
+      if (Array.isArray(raw) && raw.length) {
+        imgs = raw.map(m => {
+          if (!m) return null;
+          if (typeof m === 'string') return m;
+          return m.url || m.path || m.src || m.nombre || m.name || null;
+        }).filter(Boolean);
+      }
+      if (imgs.length === 0 && (source.imagenUrl || source.imagen || source.foto)) imgs = [source.imagenUrl || source.imagen || source.foto];
+      if (imgs.length === 0) imgs = s.petImages.slice();
+      setViewerImages(imgs);
+      setViewerIndex(0);
+      setViewerOpen(true);
+    } catch (e) {
+      // fallback to previously-known images
+      setViewerImages(s.petImages.slice());
+      setViewerIndex(0);
+      setViewerOpen(true);
+    }
+  };
+
   return (
-    <div style={{ padding: 20 }}>
-      <h2>Solicitudes recibidas</h2>
-      {/* filtros */}
-  <div style={{ marginBottom: 12, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-        {['ALL','PENDING','APPROVED','REJECTED'].map(key => {
+    <div style={{ padding: '20px 20px 40px', maxWidth: 900, margin: '0 auto' }}>
+      <h2 style={{ color: '#a0522d', marginBottom: 20 }}>Solicitudes recibidas</h2>
+
+      {/* Filters */}
+      <div style={{ marginBottom: 20, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+        {['PENDING', 'APPROVED', 'REJECTED', 'ALL'].map(key => {
           const isSelected = filter === key;
-          // define a small color cue per key
-          let accent = '#ddd';
+          let accent = '#666';
           if (key === 'PENDING') accent = '#f57c00';
           if (key === 'APPROVED') accent = '#2e7d32';
           if (key === 'REJECTED') accent = '#c62828';
-          const label = key === 'ALL' ? `Todos (${counts.ALL})` : key === 'PENDING' ? `Pendientes (${counts.PENDING})` : key === 'APPROVED' ? `Aprobadas (${counts.APPROVED})` : `Rechazadas (${counts.REJECTED})`;
+
+          const labelMap = {
+            ALL: `Todas (${counts.ALL})`,
+            PENDING: `Pendientes (${counts.PENDING})`,
+            APPROVED: `Aprobadas (${counts.APPROVED})`,
+            REJECTED: `Rechazadas (${counts.REJECTED})`
+          };
+
           return (
             <button
               key={key}
               onClick={() => setFilter(key)}
               style={{
-                padding: '6px 10px',
-                borderRadius: 6,
+                padding: '8px 14px',
+                borderRadius: 20,
                 border: isSelected ? `2px solid ${accent}` : '1px solid #ddd',
-                background: isSelected ? '#fff5ee' : '#fff',
+                background: isSelected ? '#fff' : '#f9f9f9',
                 cursor: 'pointer',
-                color: isSelected ? accent : '#222'
+                color: isSelected ? accent : '#666',
+                fontWeight: isSelected ? 600 : 400,
+                fontSize: 13,
+                transition: 'all 0.2s'
               }}
             >
-              {label}
+              {labelMap[key]}
             </button>
           );
         })}
+
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
           <input
-            placeholder="Buscar por mascota o adoptante..."
+            placeholder="Buscar..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid #ddd', minWidth: 220 }}
+            style={{ padding: '8px 12px', borderRadius: 20, border: '1px solid #ddd', minWidth: 200, outline: 'none' }}
           />
         </div>
       </div>
+
+      {/* List */}
+      <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 2px 12px rgba(0,0,0,0.05)', overflow: 'hidden' }}>
+        {loading && <div style={{ padding: 20, textAlign: 'center', color: '#666' }}>Cargando solicitudes...</div>}
+
+        {!loading && visibleSolicitudes.length === 0 && (
+          <div style={{ padding: 40, textAlign: 'center', color: '#888' }}>
+            {solicitudes.length === 0 ? 'No tienes solicitudes recibidas.' : 'No hay solicitudes en esta categoría.'}
+          </div>
+        )}
+
+        {!loading && visibleSolicitudes.map(s => (
+          <SolicitudItem
+            key={s.id}
+            s={s}
+            onApprove={handleApprove}
+            onReject={handleReject}
+            onViewImages={handleViewImages}
+            formatDate={formatDate}
+          />
+        ))}
+      </div>
+
       {/* Image viewer modal */}
       {viewerOpen && (
         <div
@@ -330,175 +536,77 @@ export default function SolicitudesRecibidas() {
           aria-modal="true"
           onKeyDown={(e) => { if (e.key === 'Escape') setViewerOpen(false); }}
           tabIndex={-1}
-          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 4000 }}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 4000 }}
           onClick={(e) => { if (e.target === e.currentTarget) setViewerOpen(false); }}
         >
-          <div style={{ width: '90%', maxWidth: 960, maxHeight: '90%', background: '#fff', borderRadius: 12, display: 'flex', overflow: 'hidden' }}>
-            <div style={{ flex: '1 1 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, position: 'relative', flexDirection: 'column' }}>
-              {/* left arrow */}
+          <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+
+            <button onClick={() => setViewerOpen(false)} style={{ position: 'absolute', top: 20, right: 20, background: 'transparent', border: 'none', color: '#fff', fontSize: 32, cursor: 'pointer', zIndex: 4200 }}>✕</button>
+
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', position: 'relative' }}>
               {viewerImages.length > 1 && (
-                <button aria-label="Anterior" onClick={() => animateTo((viewerIndex - 1 + viewerImages.length) % viewerImages.length)} style={{ position: 'absolute', left: 32, top: '50%', transform: 'translateY(-50%)', zIndex: 4100, background: 'transparent', border: 'none', fontSize: 28, cursor: 'pointer' }}>◀</button>
+                <button onClick={() => animateTo((viewerIndex - 1 + viewerImages.length) % viewerImages.length)} style={{ position: 'absolute', left: 20, background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', fontSize: 24, cursor: 'pointer', padding: 12, borderRadius: '50%' }}>◀</button>
               )}
 
-              {/* main image area with animation and touch support */}
-              <div onTouchStart={onTouchStart} onTouchEnd={onTouchEnd} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', flexDirection: 'column', minHeight: 360 }}>
-                <div style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', padding: 8 }}>
-                  {!animating && (
-                    <img src={buildMediaUrl(getApiBase('PETS_SERVER_BASE'), viewerImages[viewerIndex])} alt="foto mascota" style={{ maxHeight: '72vh', maxWidth: '100%', objectFit: 'contain', borderRadius: 8, transition: 'transform 300ms ease' }} />
-                  )}
-                  {animating && (
-                    <>
-                      <img
-                        src={animFromSrc}
-                        alt="prev"
-                        style={{
-                          position: 'absolute',
-                          maxHeight: '72vh',
-                          maxWidth: '100%',
-                          objectFit: 'contain',
-                          borderRadius: 8,
-                          transition: 'opacity 360ms ease, transform 360ms ease',
-                          opacity: animPhase === 'run' ? 0 : 1,
-                          transform: animPhase === 'run' ? `translateX(${animDirection === 1 ? '-20%' : '20%'})` : 'translateX(0)'
-                        }}
-                      />
-                      <img
-                        src={animToSrc}
-                        alt="next"
-                        style={{
-                          position: 'absolute',
-                          maxHeight: '72vh',
-                          maxWidth: '100%',
-                          objectFit: 'contain',
-                          borderRadius: 8,
-                          transition: 'opacity 360ms ease, transform 360ms ease',
-                          opacity: animPhase === 'run' ? 1 : 0,
-                          transform: animPhase === 'run' ? 'translateX(0)' : `translateX(${animDirection === 1 ? '20%' : '-20%'})`
-                        }}
-                      />
-                    </>
-                  )}
-                </div>
-
-                {/* thumbnails strip (normal flow, below image) */}
-                {viewerImages.length > 1 && (
-                  <div style={{ display: 'flex', gap: 8, marginTop: 12, overflowX: 'auto', paddingBottom: 6 }}>
-                    {viewerImages.map((mi, idx) => (
-                      <button key={idx} onClick={() => animateTo(idx)} style={{ border: idx === viewerIndex ? '2px solid #F29C6B' : '1px solid #ddd', padding: 0, borderRadius: 6, background: '#fff', cursor: 'pointer' }}>
-                        <img src={buildMediaUrl(getApiBase('PETS_SERVER_BASE'), mi)} alt={`foto ${idx+1}`} style={{ width: 72, height: 72, objectFit: 'cover', display: 'block', borderRadius: 6 }} />
-                      </button>
-                    ))}
-                  </div>
+              <div onTouchStart={onTouchStart} onTouchEnd={onTouchEnd} style={{ maxWidth: '90%', maxHeight: '80vh', position: 'relative' }}>
+                {!animating && (
+                  <img src={buildMediaUrl(getApiBase('PETS_SERVER_BASE'), viewerImages[viewerIndex])} alt="foto" style={{ maxWidth: '100%', maxHeight: '80vh', objectFit: 'contain', borderRadius: 4 }} />
                 )}
-
+                {animating && (
+                  <>
+                    <img
+                      src={animFromSrc}
+                      alt="prev"
+                      style={{
+                        position: 'absolute',
+                        top: 0, left: 0,
+                        maxWidth: '100%', maxHeight: '80vh',
+                        objectFit: 'contain',
+                        transition: 'opacity 360ms ease, transform 360ms ease',
+                        opacity: animPhase === 'run' ? 0 : 1,
+                        transform: animPhase === 'run' ? `translateX(${animDirection === 1 ? '-20%' : '20%'})` : 'translateX(0)'
+                      }}
+                    />
+                    <img
+                      src={animToSrc}
+                      alt="next"
+                      style={{
+                        maxWidth: '100%', maxHeight: '80vh',
+                        objectFit: 'contain',
+                        transition: 'opacity 360ms ease, transform 360ms ease',
+                        opacity: animPhase === 'run' ? 1 : 0,
+                        transform: animPhase === 'run' ? 'translateX(0)' : `translateX(${animDirection === 1 ? '20%' : '-20%'})`
+                      }}
+                    />
+                  </>
+                )}
               </div>
 
               {viewerImages.length > 1 && (
-                <button aria-label="Siguiente" onClick={() => animateTo((viewerIndex + 1) % viewerImages.length)} style={{ position: 'absolute', right: 32, top: '50%', transform: 'translateY(-50%)', zIndex: 4100, background: 'transparent', border: 'none', fontSize: 28, cursor: 'pointer' }}>▶</button>
+                <button onClick={() => animateTo((viewerIndex + 1) % viewerImages.length)} style={{ position: 'absolute', right: 20, background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', fontSize: 24, cursor: 'pointer', padding: 12, borderRadius: '50%' }}>▶</button>
               )}
             </div>
-            <div style={{ width: 320, padding: 18, borderLeft: '1px solid #eee', overflowY: 'auto' }}>
-              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <button onClick={() => setViewerOpen(false)} aria-label="Cerrar" style={{ background: 'transparent', border: 'none', fontSize: 22, cursor: 'pointer' }}>✕</button>
+
+            {viewerImages.length > 1 && (
+              <div style={{ display: 'flex', gap: 10, padding: 20, overflowX: 'auto', maxWidth: '100%' }}>
+                {viewerImages.map((mi, idx) => (
+                  <img
+                    key={idx}
+                    src={buildMediaUrl(getApiBase('PETS_SERVER_BASE'), mi)}
+                    onClick={() => animateTo(idx)}
+                    alt="thumb"
+                    style={{
+                      width: 60, height: 60, objectFit: 'cover', borderRadius: 4,
+                      border: idx === viewerIndex ? '2px solid #F29C6B' : '2px solid transparent',
+                      cursor: 'pointer', opacity: idx === viewerIndex ? 1 : 0.7
+                    }}
+                  />
+                ))}
               </div>
-              <div style={{ marginTop: 6, color: '#a0522d', fontWeight: 700 }}>{/* placeholder for pet title if desired */}</div>
-              <div style={{ marginTop: 12, fontSize: 13, color: '#333' }}>
-                {viewerImages.length} foto{viewerImages.length !== 1 ? 's' : ''}
-              </div>
-            </div>
+            )}
           </div>
         </div>
       )}
-      {loading && <div>Cargando...</div>}
-      {!loading && solicitudes.length === 0 && <div>No hay solicitudes para tus mascotas</div>}
-      {!loading && solicitudes.length > 0 && visibleSolicitudes.length === 0 && <div>No hay solicitudes para el filtro seleccionado</div>}
-      {!loading && visibleSolicitudes.length > 0 && visibleSolicitudes.map(s => (
-        <div key={s.id} style={{ background: '#fff', border: '1px solid #eee', padding: 12, borderRadius: 8, marginBottom: 8 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div style={{ flex: '0 0 auto', display: 'flex', alignItems: 'center', gap: 10 }}>
-                  {s.petImages && s.petImages.length > 0 ? (
-                    <img
-                      src={buildMediaUrl(getApiBase('PETS_SERVER_BASE'), s.petImages[0])}
-                      alt={s.petName || 'mascota'}
-                      title="Ver galería"
-                      onClick={async () => {
-                          try {
-                            // fetch fresh mascota to include any newly added media
-                            const PETS_BASE = getApiBase('PETS');
-                            const r = await fetch(`${PETS_BASE}/mascotas/${s.mascotaId}`);
-                            let fresh = null;
-                            if (r.ok) fresh = await r.json();
-                            const source = fresh || ({});
-                            const raw = source.media || source.imagenes || source.fotos || source.files || s.petImages || [];
-                            let imgs = [];
-                            if (Array.isArray(raw) && raw.length) {
-                              imgs = raw.map(m => {
-                                if (!m) return null;
-                                if (typeof m === 'string') return m;
-                                return m.url || m.path || m.src || m.nombre || m.name || null;
-                              }).filter(Boolean);
-                            }
-                            if (imgs.length === 0 && (source.imagenUrl || source.imagen || source.foto)) imgs = [source.imagenUrl || source.imagen || source.foto];
-                            if (imgs.length === 0) imgs = s.petImages.slice();
-                            setViewerImages(imgs);
-                            setViewerIndex(0);
-                            setViewerOpen(true);
-                          } catch (e) {
-                            // fallback to previously-known images
-                            setViewerImages(s.petImages.slice());
-                            setViewerIndex(0);
-                            setViewerOpen(true);
-                          }
-                        }
-                      }
-                      style={{ width: 56, height: 56, objectFit: 'cover', borderRadius: 8, border: '2px solid #fff', boxShadow: '0 1px 6px rgba(0,0,0,0.06)', cursor: 'pointer' }}
-                    />
-                  ) : (
-                    <div style={{ width: 56, height: 56, borderRadius: 8, background: '#fff5ee', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#a0522d', fontWeight: 700, fontSize: 14, border: '1px solid #f0d6c8' }}>{(s.petName && s.petName[0]) || '?'}</div>
-                  )}
-                  <div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: '#a0522d' }}>Mascota</div>
-                    <div style={{ fontSize: 15 }}>{s.petName || (s.mascotaId ? `#${s.mascotaId}` : 'N/D')}</div>
-                  </div>
-                </div>
-
-                <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ width: 42, height: 42, borderRadius: '50%', backgroundColor: '#F29C6B', border: '2px solid #fff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: '700', fontSize: 16 }}>
-                    {s.adoptanteName && typeof s.adoptanteName === 'string' ? s.adoptanteName[0].toUpperCase() : 'U'}
-                  </div>
-                  <div style={{ textAlign: 'left' }}>
-                    <div style={{ fontSize: 14, fontWeight: 700 }}>Adoptante</div>
-                    <div style={{ fontSize: 14 }}>{s.adoptanteName || (s.adoptanteId ? `#${s.adoptanteId}` : 'N/D')}</div>
-                  </div>
-                </div>
-              </div>
-
-              <div style={{ marginTop: 8 }}><b>Mensaje:</b> {s.comentariosAdoptante || s.mensaje}</div>
-              <div style={{ marginTop: 6 }}><b>Fecha:</b> <span style={{ marginLeft: 8 }}>{formatDate(s.fechaSolicitud || s.fechaSolicitudUtc || s.fecha || s.createdAt)}</span></div>
-              <div style={{ marginTop: 6 }}>
-                <b>Estado:</b>
-                {(() => {
-                  const raw = String(s.estadoRaw || s.estado || '').toUpperCase();
-                  let color = '#a0522d';
-                  if (s.isApproved || raw === 'APPROVED' || raw === 'APROBADO' || raw === 'ACCEPTED') color = '#2e7d32';
-                  if (raw === 'REJECTED' || raw === 'RECHAZADO' || raw === 'REJECT') color = '#c62828';
-                  if (s.isPending) color = '#f57c00';
-                  return (
-                    <span style={{ marginLeft: 8, fontWeight: 700, color }}>{String(s.estadoRaw || s.estado || (s.isApproved ? 'APROBADO' : 'N/D'))}</span>
-                  );
-                })()}
-              </div>
-              {s.motivoRechazo ? <div style={{ color: '#c62828', marginTop: 6 }}><b>Motivo de rechazo:</b> {s.motivoRechazo}</div> : null}
-              <div style={{ marginTop: 8 }}>
-                {s.isPending ? (
-                  <>
-                    <button onClick={() => handleApprove(s.id)} style={{ marginRight: 8 }}>Aceptar</button>
-                    <button onClick={() => handleReject(s.id)}>Rechazar</button>
-                  </>
-                ) : null}
-              </div>
-            </div>
-      ))}
     </div>
   );
 }

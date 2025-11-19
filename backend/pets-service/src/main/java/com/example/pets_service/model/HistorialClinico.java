@@ -1,6 +1,6 @@
 package com.example.pets_service.model;
 
-import java.util.Date;
+import java.time.LocalDate;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -16,7 +16,7 @@ public class HistorialClinico {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Date fecha;
+    private LocalDate fecha;
     private String descripcion;
     private String veterinario;
 
@@ -26,6 +26,18 @@ public class HistorialClinico {
     @ManyToOne
     @JoinColumn(name = "mascota_id")
     private Mascota mascota;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public LocalDate getFecha() { return fecha; }
+    public void setFecha(LocalDate fecha) { this.fecha = fecha; }
+
+    public String getDescripcion() { return descripcion; }
+    public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
+
+    public String getVeterinario() { return veterinario; }
+    public void setVeterinario(String veterinario) { this.veterinario = veterinario; }
 
     public Mascota getMascota() { return mascota; }
     public void setMascota(Mascota mascota) { this.mascota = mascota; }

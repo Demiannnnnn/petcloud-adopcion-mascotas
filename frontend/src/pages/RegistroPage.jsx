@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './LoginPage.css';
-import { formatRut, cleanRut } from '../utils/rut';
+import { formatRut, cleanRut, validateRut } from '../utils/rut';
 import { registrarPersona, registrarEmpresa } from '../api/authApi';
 function RegistroPage() {
   // Fecha máxima local para el input de fecha
@@ -14,6 +14,7 @@ function RegistroPage() {
   const [rut, setRut] = useState('');
   const [nombreCompleto, setNombreCompleto] = useState('');
   const [contraseña, setContraseña] = useState('');
+  const [confirmarContraseña, setConfirmarContraseña] = useState('');
   const [correo, setCorreo] = useState('');
   const [ubicacion, setUbicacion] = useState('');
   // número Whatsapp ahora separado en sufijo (sin prefijo +569)
@@ -31,12 +32,6 @@ function RegistroPage() {
   const [success, setSuccess] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  function validarRut(rut) {
-    // Accept formatted or plain RUT; clean then validate length and dv
-    const s = cleanRut(rut);
-    return /^\d{7,8}[\dkK]$/.test(s);
-  }
-
   function validarEmail(email) {
     return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);
   }
@@ -49,19 +44,19 @@ function RegistroPage() {
   }
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  if (isSubmitting) return;
-  setError('');
-  setSuccess('');
-  setIsSubmitting(true);
+    e.preventDefault();
+    if (isSubmitting) return;
+    setError('');
+    setSuccess('');
+    setIsSubmitting(true);
     if (tipoPerfil === 'PERSONA') {
       if (!rut || !nombreCompleto || !contraseña || !correo || !ubicacion || !numeroWhatsappSuffix || !fechaNacimiento || !condicionesHogar) {
         setError('Completa todos los campos.');
         setIsSubmitting(false);
         return;
       }
-      if (!validarRut(rut)) {
-        setError('RUT inválido. Usa el formato 12.345.678-9');
+      if (!validateRut(rut)) {
+        setError('RUT inválido. Por favor verifica que el RUT sea real y esté bien escrito.');
         setIsSubmitting(false);
         return;
       }
@@ -81,6 +76,11 @@ function RegistroPage() {
         setIsSubmitting(false);
         return;
       }
+      if (contraseña !== confirmarContraseña) {
+        setError('Las contraseñas no coinciden.');
+        setIsSubmitting(false);
+        return;
+      }
       let fechaNacimientoFormateada = null;
       if (fechaNacimiento) {
         const partes = fechaNacimiento.split('-');
@@ -93,7 +93,7 @@ function RegistroPage() {
         }
       }
       try {
-  const result = await registrarPersona({
+        const result = await registrarPersona({
           rut,
           nombreCompleto,
           contraseña,
@@ -115,8 +115,8 @@ function RegistroPage() {
           setIsSubmitting(false);
         }
       } catch (err) {
-  setError(err.message || 'Error de conexión');
-  setIsSubmitting(false);
+        setError(err.message || 'Error de conexión');
+        setIsSubmitting(false);
       }
     } else {
       // EMPRESA
@@ -124,8 +124,8 @@ function RegistroPage() {
         setError('Completa todos los campos, incluyendo el certificado legal.');
         return;
       }
-      if (!validarRut(rutEmpresa)) {
-        setError('RUT de empresa inválido. Usa el formato 12.345.678-9');
+      if (!validateRut(rutEmpresa)) {
+        setError('RUT de empresa inválido. Por favor verifica que el RUT sea real.');
         return;
       }
       if (!validarEmail(correoEmpresa)) {
@@ -134,6 +134,12 @@ function RegistroPage() {
       }
       if (contraseña.length < 6) {
         setError('La contraseña debe tener al menos 6 caracteres.');
+        setIsSubmitting(false);
+        return;
+      }
+      if (contraseña !== confirmarContraseña) {
+        setError('Las contraseñas no coinciden.');
+        setIsSubmitting(false);
         return;
       }
       const telefonoContactoFull = '+569' + telefonoContactoSuffix;
@@ -142,7 +148,7 @@ function RegistroPage() {
         return;
       }
       try {
-  const result = await registrarEmpresa({
+        const result = await registrarEmpresa({
           nombreEmpresa,
           rutEmpresa,
           correo: correoEmpresa,
@@ -164,8 +170,8 @@ function RegistroPage() {
         }
         return;
       } catch (err) {
-  setError(err.message || 'Error de conexión');
-  setIsSubmitting(false);
+        setError(err.message || 'Error de conexión');
+        setIsSubmitting(false);
         return;
       }
     }
@@ -200,6 +206,7 @@ function RegistroPage() {
               setRutEmpresa('');
               setCorreoEmpresa('');
               setContraseña('');
+              setConfirmarContraseña('');
               setDireccion('');
               setTelefonoContactoSuffix('');
               setUbicacionEmpresa('');
@@ -234,15 +241,16 @@ function RegistroPage() {
               cursor: 'pointer',
               outline: 'none'
             }}>Persona <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style={{ marginLeft: 8, verticalAlign: 'middle' }} xmlns="http://www.w3.org/2000/svg">
-              <circle cx="11" cy="9" r="4" fill="#fff" stroke="#F29C6B" strokeWidth="2" />
-              <ellipse cx="11" cy="17" rx="6" ry="4" fill="#fff" stroke="#F29C6B" strokeWidth="2" />
-            </svg></button>
+                <circle cx="11" cy="9" r="4" fill="#fff" stroke="#F29C6B" strokeWidth="2" />
+                <ellipse cx="11" cy="17" rx="6" ry="4" fill="#fff" stroke="#F29C6B" strokeWidth="2" />
+              </svg></button>
             <button type="button" onClick={() => {
               setTipoPerfil('EMPRESA');
               // Limpiar todos los campos de persona
               setRut('');
               setNombreCompleto('');
               setContraseña('');
+              setConfirmarContraseña('');
               setCorreo('');
               setUbicacion('');
               setNumeroWhatsappSuffix('');
@@ -278,13 +286,13 @@ function RegistroPage() {
               cursor: 'pointer',
               outline: 'none'
             }}>
-                Empresa <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style={{ marginLeft: 8, verticalAlign: 'middle' }} xmlns="http://www.w3.org/2000/svg">
-                  <rect x="4" y="8" width="16" height="12" rx="3" fill="#fff" stroke="#F29C6B" strokeWidth="2" />
-                  <rect x="8" y="12" width="2" height="4" rx="1" fill="#F29C6B" />
-                  <rect x="14" y="12" width="2" height="4" rx="1" fill="#F29C6B" />
-                  <rect x="11" y="15" width="2" height="5" rx="1" fill="#F29C6B" />
-                  <rect x="10" y="8" width="4" height="3" rx="1" fill="#F29C6B" />
-                </svg>
+              Empresa <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style={{ marginLeft: 8, verticalAlign: 'middle' }} xmlns="http://www.w3.org/2000/svg">
+                <rect x="4" y="8" width="16" height="12" rx="3" fill="#fff" stroke="#F29C6B" strokeWidth="2" />
+                <rect x="8" y="12" width="2" height="4" rx="1" fill="#F29C6B" />
+                <rect x="14" y="12" width="2" height="4" rx="1" fill="#F29C6B" />
+                <rect x="11" y="15" width="2" height="5" rx="1" fill="#F29C6B" />
+                <rect x="10" y="8" width="4" height="3" rx="1" fill="#F29C6B" />
+              </svg>
             </button>
           </div>
           <form className="login-form form-blanco registro-form-blanco" onSubmit={handleSubmit} style={{ width: '100%' }}>
@@ -298,11 +306,19 @@ function RegistroPage() {
                   <label style={{ width: isMobile ? '100%' : 'auto', textAlign: isMobile ? 'left' : 'inherit' }}>Email</label>
                   <input type="email" value={correo} onChange={e => setCorreo(e.target.value)} placeholder="Correo electrónico" style={{ fontSize: isMobile ? 17 : 20, padding: isMobile ? '12px' : '16px', borderRadius: 12, width: isMobile ? '100%' : 'auto' }} />
                   <label style={{ width: isMobile ? '100%' : 'auto', textAlign: isMobile ? 'left' : 'inherit' }}>Contraseña</label>
-                  <input 
-                    type="password" 
-                    value={contraseña} 
-                    onChange={e => setContraseña(e.target.value)} 
-                    placeholder="Contraseña" 
+                  <input
+                    type="password"
+                    value={contraseña}
+                    onChange={e => setContraseña(e.target.value)}
+                    placeholder="Contraseña"
+                    style={{ fontSize: isMobile ? 17 : 20, padding: isMobile ? '12px' : '16px', borderRadius: 12, width: isMobile ? '100%' : 'auto' }}
+                  />
+                  <label style={{ width: isMobile ? '100%' : 'auto', textAlign: isMobile ? 'left' : 'inherit' }}>Confirmar contraseña</label>
+                  <input
+                    type="password"
+                    value={confirmarContraseña}
+                    onChange={e => setConfirmarContraseña(e.target.value)}
+                    placeholder="Confirmar contraseña"
                     style={{ fontSize: isMobile ? 17 : 20, padding: isMobile ? '12px' : '16px', borderRadius: 12, width: isMobile ? '100%' : 'auto' }}
                   />
                   <label style={{ width: isMobile ? '100%' : 'auto', textAlign: isMobile ? 'left' : 'inherit' }}>Ubicación</label>
@@ -310,7 +326,7 @@ function RegistroPage() {
                   <label style={{ width: isMobile ? '100%' : 'auto', textAlign: isMobile ? 'left' : 'inherit' }}>Número de WhatsApp</label>
                   <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                     <input type="text" value="+569" disabled style={{ fontSize: isMobile ? 17 : 20, padding: isMobile ? '12px' : '16px', borderRadius: 12, border: '2px solid #eee', background: '#f5f5f5', width: 90, textAlign: 'center' }} />
-                    <input type="text" value={numeroWhatsappSuffix} onChange={e => { const digits = (e.target.value || '').replace(/\D/g, ''); const suffix = digits.slice(0,8); setNumeroWhatsappSuffix(suffix); }} placeholder="12345678" style={{ fontSize: isMobile ? 17 : 20, padding: isMobile ? '12px' : '16px', borderRadius: 12, width: isMobile ? '100%' : 'auto' }} />
+                    <input type="text" value={numeroWhatsappSuffix} onChange={e => { const digits = (e.target.value || '').replace(/\D/g, ''); const suffix = digits.slice(0, 8); setNumeroWhatsappSuffix(suffix); }} placeholder="12345678" style={{ fontSize: isMobile ? 17 : 20, padding: isMobile ? '12px' : '16px', borderRadius: 12, width: isMobile ? '100%' : 'auto' }} />
                   </div>
                   <label style={{ width: isMobile ? '100%' : 'auto', textAlign: isMobile ? 'left' : 'inherit' }}>Fecha de nacimiento</label>
                   <input
@@ -332,20 +348,28 @@ function RegistroPage() {
                   <label style={{ width: isMobile ? '100%' : 'auto', textAlign: isMobile ? 'left' : 'inherit' }}>Email de contacto</label>
                   <input type="email" value={correoEmpresa} onChange={e => setCorreoEmpresa(e.target.value)} placeholder="Correo electrónico" style={{ fontSize: isMobile ? 17 : 20, padding: isMobile ? '12px' : '16px', borderRadius: 12, width: isMobile ? '100%' : 'auto' }} />
                   <label style={{ width: isMobile ? '100%' : 'auto', textAlign: isMobile ? 'left' : 'inherit' }}>Contraseña</label>
-                  <input 
-                    type="password" 
-                    value={contraseña} 
-                    onChange={e => setContraseña(e.target.value)} 
-                    placeholder="Contraseña" 
+                  <input
+                    type="password"
+                    value={contraseña}
+                    onChange={e => setContraseña(e.target.value)}
+                    placeholder="Contraseña"
+                    style={{ fontSize: isMobile ? 17 : 20, padding: isMobile ? '12px' : '16px', borderRadius: 12, width: isMobile ? '100%' : 'auto' }}
+                  />
+                  <label style={{ width: isMobile ? '100%' : 'auto', textAlign: isMobile ? 'left' : 'inherit' }}>Confirmar contraseña</label>
+                  <input
+                    type="password"
+                    value={confirmarContraseña}
+                    onChange={e => setConfirmarContraseña(e.target.value)}
+                    placeholder="Confirmar contraseña"
                     style={{ fontSize: isMobile ? 17 : 20, padding: isMobile ? '12px' : '16px', borderRadius: 12, width: isMobile ? '100%' : 'auto' }}
                   />
                   <label style={{ width: isMobile ? '100%' : 'auto', textAlign: isMobile ? 'left' : 'inherit' }}>Dirección</label>
                   <input type="text" value={direccion} onChange={e => setDireccion(e.target.value)} placeholder="Dirección completa" style={{ fontSize: isMobile ? 17 : 20, padding: isMobile ? '12px' : '16px', borderRadius: 12, width: isMobile ? '100%' : 'auto' }} />
                   <label style={{ width: isMobile ? '100%' : 'auto', textAlign: isMobile ? 'left' : 'inherit' }}>Teléfono de contacto</label>
-                      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                        <input type="text" value="+569" disabled style={{ fontSize: isMobile ? 17 : 20, padding: isMobile ? '12px' : '16px', borderRadius: 12, border: '2px solid #eee', background: '#f5f5f5', width: 90, textAlign: 'center' }} />
-                        <input type="text" value={telefonoContactoSuffix} onChange={e => { const digits = (e.target.value || '').replace(/\D/g, ''); const suffix = digits.slice(0,8); setTelefonoContactoSuffix(suffix); }} placeholder="12345678" style={{ fontSize: isMobile ? 17 : 20, padding: isMobile ? '12px' : '16px', borderRadius: 12, width: isMobile ? '100%' : 'auto' }} />
-                      </div>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <input type="text" value="+569" disabled style={{ fontSize: isMobile ? 17 : 20, padding: isMobile ? '12px' : '16px', borderRadius: 12, border: '2px solid #eee', background: '#f5f5f5', width: 90, textAlign: 'center' }} />
+                    <input type="text" value={telefonoContactoSuffix} onChange={e => { const digits = (e.target.value || '').replace(/\D/g, ''); const suffix = digits.slice(0, 8); setTelefonoContactoSuffix(suffix); }} placeholder="12345678" style={{ fontSize: isMobile ? 17 : 20, padding: isMobile ? '12px' : '16px', borderRadius: 12, width: isMobile ? '100%' : 'auto' }} />
+                  </div>
                   <label style={{ width: isMobile ? '100%' : 'auto', textAlign: isMobile ? 'left' : 'inherit' }}>Ubicación</label>
                   <input type="text" value={ubicacionEmpresa} onChange={e => setUbicacionEmpresa(e.target.value)} placeholder="Ciudad, Región" style={{ fontSize: isMobile ? 17 : 20, padding: isMobile ? '12px' : '16px', borderRadius: 12, width: isMobile ? '100%' : 'auto' }} />
                   <label style={{ width: isMobile ? '100%' : 'auto', textAlign: isMobile ? 'left' : 'inherit' }}>Certificado legal (PDF/JPG)</label>

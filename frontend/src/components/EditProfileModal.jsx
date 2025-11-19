@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { updatePerfil } from '../api/usersApi';
 
 export default function EditProfileModal({ open, onClose, perfil, onSaved }) {
-  const [form, setForm] = useState({ nombreCompleto: '', nombreEmpresa: '', telefonoContacto: '', direccion: '', correo: '' });
+  const [form, setForm] = useState({ nombreCompleto: '', nombreEmpresa: '', telefonoContacto: '', direccion: '', correo: '', fechaNacimiento: '' });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [errors, setErrors] = useState({});
@@ -13,7 +13,9 @@ export default function EditProfileModal({ open, onClose, perfil, onSaved }) {
       nombreEmpresa: perfil?.nombreEmpresa || perfil?.nombre || '',
       telefonoContacto: perfil?.telefonoContacto || perfil?.numeroWhatsapp || '',
       direccion: perfil?.direccion || perfil?.ubicacion || '',
-      correo: perfil?.correo || ''
+      direccion: perfil?.direccion || perfil?.ubicacion || '',
+      correo: perfil?.correo || '',
+      fechaNacimiento: perfil?.fechaNacimiento || ''
     });
     setErrors({});
   }, [perfil]);
@@ -63,7 +65,10 @@ export default function EditProfileModal({ open, onClose, perfil, onSaved }) {
     // Build payload conditionally depending on perfil type
     const isEmpresa = perfil?.tipoPerfil === 'EMPRESA';
     const payload = {};
-    if (!isEmpresa) payload.nombreCompleto = form.nombreCompleto;
+    if (!isEmpresa) {
+      payload.nombreCompleto = form.nombreCompleto;
+      if (form.fechaNacimiento) payload.fechaNacimiento = form.fechaNacimiento;
+    }
     if (isEmpresa) payload.nombreEmpresa = form.nombreEmpresa;
     // Shared fields
     if (form.telefonoContacto) payload.telefonoContacto = form.telefonoContacto;
@@ -107,6 +112,12 @@ export default function EditProfileModal({ open, onClose, perfil, onSaved }) {
               <div style={fieldLabel}>Nombre completo</div>
               <input aria-label="Nombre completo" style={input} value={form.nombreCompleto} onChange={handleChange('nombreCompleto')} placeholder="Nombre completo" />
               {errors.nombreCompleto && <div style={{ color: 'red', marginTop: 6, fontSize: 13 }}>{errors.nombreCompleto}</div>}
+            </div>
+          )}
+          {perfil?.tipoPerfil !== 'EMPRESA' && (
+            <div>
+              <div style={fieldLabel}>Fecha de nacimiento</div>
+              <input type="date" style={input} value={form.fechaNacimiento} onChange={handleChange('fechaNacimiento')} />
             </div>
           )}
           {/* Show only Nombre empresa for empresas */}

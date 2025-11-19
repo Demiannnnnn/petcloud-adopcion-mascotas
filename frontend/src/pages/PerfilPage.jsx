@@ -27,12 +27,8 @@ export default function PerfilPage() {
   useEffect(() => {
     async function fetchRefugiosYmascotas() {
       if (user?.perfil?.tipoPerfil === 'EMPRESA' && user?.perfil?.id) {
-                                    // Prevent marking as DISPONIBLE if the pet is already adopted
-                                    if (desired === true && (mascota.adoptanteId || mascota.adoptanteName || String(mascota.estado || '').toUpperCase() === 'ADOPTADA')) {
-                                      console.warn('Intento de marcar disponible mascota adoptada', mascota.id);
-                                      return;
-                                    }
-                                    try {
+
+        try {
           const refugiosBackend = await getRefugiosByEmpresa(user.perfil.id);
           const safeRefugios = Array.isArray(refugiosBackend) ? refugiosBackend : [];
           setRefugios(safeRefugios);
@@ -59,8 +55,8 @@ export default function PerfilPage() {
         // Persona: mascotas propias
         const propietarioId = user.id || (user.perfil && user.perfil.id);
         try {
-            const PETS_BASE = getApiBase('PETS');
-            const response = await fetch(`${PETS_BASE}/mascotas/propietario/${propietarioId}`);
+          const PETS_BASE = getApiBase('PETS');
+          const response = await fetch(`${PETS_BASE}/mascotas/propietario/${propietarioId}`);
           if (response.ok) {
             const data = await response.json();
             setMascotas(Array.isArray(data) ? data : []);
@@ -90,182 +86,182 @@ export default function PerfilPage() {
 
   return (
     <>
-    <div style={{ maxWidth: 520, margin: '40px auto', background: '#fff', borderRadius: 24, boxShadow: '0 4px 24px rgba(64,11,25,0.10)', padding: 32 }}>
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-        <div style={{ width: 90, height: 90, borderRadius: '50%', background: '#F29C6B', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 44, color: '#fff', fontWeight: 'bold', marginBottom: 8 }}>
-          {tipo === 'EMPRESA' ? <span>🏢</span> : (user.nombre ? user.nombre[0].toUpperCase() : <span>👤</span>)}
+      <div style={{ maxWidth: 520, margin: '40px auto', background: '#fff', borderRadius: 24, boxShadow: '0 4px 24px rgba(64,11,25,0.10)', padding: 32 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+          <div style={{ width: 90, height: 90, borderRadius: '50%', background: '#F29C6B', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 44, color: '#fff', fontWeight: 'bold', marginBottom: 8 }}>
+            {tipo === 'EMPRESA' ? <span>🏢</span> : (user.nombre ? user.nombre[0].toUpperCase() : <span>👤</span>)}
+          </div>
+          <h2 style={{ color: '#a0522d', marginBottom: 4 }}>
+            {tipo === 'EMPRESA'
+              ? (user.perfil?.nombreEmpresa || user.perfil?.nombre || user.nombre || 'Usuario')
+              : (user.perfil?.nombreCompleto || user.nombre || 'Usuario')
+            }
+          </h2>
+          <div style={{ color: '#400B19', fontSize: 16, marginBottom: 8 }}>{correo ? correo : 'Sin email'}</div>
+          <div style={{ color: '#400B19', fontSize: 15, marginBottom: 8 }}>
+            <div>Tipo de perfil: {tipo === 'EMPRESA' ? 'Empresa' : 'Persona'}</div>
+            <div>RUT: {rut ? formatRut(rut) : 'No registrado'}</div>
+            {tipo === 'PERSONA' ? (
+              <>
+                <div>Teléfono: {user.perfil?.numeroWhatsapp ? user.perfil.numeroWhatsapp : 'No registrado'}</div>
+                <div>Dirección: {user.perfil?.ubicacion ? user.perfil.ubicacion : 'No registrada'}</div>
+                <div>Fecha de nacimiento: {user.perfil?.fechaNacimiento ? user.perfil.fechaNacimiento.split('-').reverse().join('-') : 'No registrada'}</div>
+              </>
+            ) : (
+              <>
+                <div>Teléfono: {user.perfil?.telefonoContacto ? user.perfil.telefonoContacto : 'No registrado'}</div>
+                <div>Dirección: {user.perfil?.direccion ? user.perfil.direccion : 'No registrada'}</div>
+              </>
+            )}
+          </div>
+          <div style={{ display: 'flex', gap: 12, marginTop: 10 }}>
+            <button onClick={() => setEditOpen(true)} style={{ background: '#F29C6B', color: '#fff', border: 'none', borderRadius: 14, padding: '8px 18px', fontWeight: 'bold', fontSize: 15, cursor: 'pointer', boxShadow: '0 2px 8px rgba(64,11,25,0.10)' }}>Editar datos</button>
+            <button onClick={() => setChangePwdOpen(true)} style={{ background: '#400B19', color: '#fff', border: 'none', borderRadius: 14, padding: '8px 18px', fontWeight: 'bold', fontSize: 15, cursor: 'pointer', boxShadow: '0 2px 8px rgba(64,11,25,0.10)' }}>Cambiar contraseña</button>
+            <Link to="/mis-solicitudes" style={{ background: '#F29C6B', color: '#fff', borderRadius: 14, padding: '8px 18px', fontWeight: 'bold', textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>Mis solicitudes</Link>
+            <Link to="/solicitudes-recibidas" style={{ background: '#F29C6B', color: '#fff', borderRadius: 14, padding: '8px 18px', fontWeight: 'bold', textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>Solicitudes recibidas</Link>
+          </div>
+          <button
+            onClick={logout}
+            style={{
+              marginTop: 18,
+              background: '#c62828',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 16,
+              padding: '10px 28px',
+              fontWeight: 'bold',
+              fontSize: 16,
+              cursor: 'pointer',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+            }}
+          >
+            Cerrar sesión
+          </button>
         </div>
-        <h2 style={{ color: '#a0522d', marginBottom: 4 }}>
-          {tipo === 'EMPRESA'
-            ? (user.perfil?.nombreEmpresa || user.perfil?.nombre || user.nombre || 'Usuario')
-            : (user.perfil?.nombreCompleto || user.nombre || 'Usuario')
-          }
-        </h2>
-        <div style={{ color: '#400B19', fontSize: 16, marginBottom: 8 }}>{correo ? correo : 'Sin email'}</div>
-        <div style={{ color: '#400B19', fontSize: 15, marginBottom: 8 }}>
-          <div>Tipo de perfil: {tipo === 'EMPRESA' ? 'Empresa' : 'Persona'}</div>
-          <div>RUT: {rut ? formatRut(rut) : 'No registrado'}</div>
-          {tipo === 'PERSONA' ? (
-            <>
-              <div>Teléfono: {user.perfil?.numeroWhatsapp ? user.perfil.numeroWhatsapp : 'No registrado'}</div>
-              <div>Dirección: {user.perfil?.ubicacion ? user.perfil.ubicacion : 'No registrada'}</div>
-              <div>Fecha de nacimiento: {user.perfil?.fechaNacimiento ? user.perfil.fechaNacimiento : 'No registrada'}</div>
-            </>
-          ) : (
-            <>
-              <div>Teléfono: {user.perfil?.telefonoContacto ? user.perfil.telefonoContacto : 'No registrado'}</div>
-              <div>Dirección: {user.perfil?.direccion ? user.perfil.direccion : 'No registrada'}</div>
-            </>
-          )}
-        </div>
-        <div style={{ display: 'flex', gap: 12, marginTop: 10 }}>
-          <button onClick={() => setEditOpen(true)} style={{ background: '#F29C6B', color: '#fff', border: 'none', borderRadius: 14, padding: '8px 18px', fontWeight: 'bold', fontSize: 15, cursor: 'pointer', boxShadow: '0 2px 8px rgba(64,11,25,0.10)' }}>Editar datos</button>
-          <button onClick={() => setChangePwdOpen(true)} style={{ background: '#400B19', color: '#fff', border: 'none', borderRadius: 14, padding: '8px 18px', fontWeight: 'bold', fontSize: 15, cursor: 'pointer', boxShadow: '0 2px 8px rgba(64,11,25,0.10)' }}>Cambiar contraseña</button>
-          <Link to="/mis-solicitudes" style={{ background: '#F29C6B', color: '#fff', borderRadius: 14, padding: '8px 18px', fontWeight: 'bold', textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>Mis solicitudes</Link>
-          <Link to="/solicitudes-recibidas" style={{ background: '#F29C6B', color: '#fff', borderRadius: 14, padding: '8px 18px', fontWeight: 'bold', textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>Solicitudes recibidas</Link>
-        </div>
-        <button
-          onClick={logout}
-          style={{
-            marginTop: 18,
-            background: '#c62828',
-            color: '#fff',
-            border: 'none',
-            borderRadius: 16,
-            padding: '10px 28px',
-            fontWeight: 'bold',
-            fontSize: 16,
-            cursor: 'pointer',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
-          }}
-        >
-          Cerrar sesión
-        </button>
-      </div>
-      {/* Sección mejorada para empresa */}
-      {user?.perfil?.tipoPerfil === 'EMPRESA' ? (
-        <div style={{ marginTop: 32 }}>
-          <h3 style={{ color: '#a0522d', marginBottom: 12, textAlign: 'center' }}>Refugios administrados</h3>
-          {refugios.length === 0 ? (
-            <div style={{ color: '#a0522d', fontSize: 15, opacity: 0.7, textAlign: 'center' }}>No tienes refugios registrados.</div>
-          ) : (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, justifyContent: 'center' }}>
-              {refugios.map(r => (
-                <div key={r.id} style={{ background: '#fff', borderRadius: 18, boxShadow: '0 2px 8px rgba(64,11,25,0.10)', padding: 12, minWidth: 140, maxWidth: 200, display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 8 }}>
-                  <div style={{ fontWeight: 'bold', color: '#a0522d', fontSize: 16, marginBottom: 2 }}>{r.nombre}</div>
-                  <div style={{ fontSize: 14, color: '#400B19', opacity: 0.8 }}>{r.direccion}</div>
-                  <div style={{ fontSize: 13, color: '#400B19', opacity: 0.7 }}>{r.contacto}</div>
-                  <button style={{ background: '#400B19', color: '#fff', border: 'none', borderRadius: 12, padding: '6px 14px', fontWeight: 'bold', fontSize: 14, cursor: 'pointer', marginTop: 8 }} onClick={() => setSelectedRefugio(prev => (String(prev) === String(r.id) ? '' : r.id))}>Ver mascotas</button>
-                </div>
-              ))}
-            </div>
-          )}
-          {/* Mascotas por refugio seleccionado (con animación de apertura/cierre) */}
-          {
-            (() => {
-              const expanded = Boolean(selectedRefugio);
-              const key = selectedRefugio;
-              const mascotasList = selectedRefugio ? (mascotasPorRefugio[key] || mascotasPorRefugio[String(key)] || mascotasPorRefugio[Number(key)] || []) : [];
-              // Determine selected refugio object (name) for header
-              const selectedRefugioObj = refugios.find(r => String(r.id) === String(selectedRefugio));
-              const headerTitle = selectedRefugioObj ? `Mascotas en ${selectedRefugioObj.nombre}` : 'Mascotas en refugio seleccionado';
+        {/* Sección mejorada para empresa */}
+        {user?.perfil?.tipoPerfil === 'EMPRESA' ? (
+          <div style={{ marginTop: 32 }}>
+            <h3 style={{ color: '#a0522d', marginBottom: 12, textAlign: 'center' }}>Refugios administrados</h3>
+            {refugios.length === 0 ? (
+              <div style={{ color: '#a0522d', fontSize: 15, opacity: 0.7, textAlign: 'center' }}>No tienes refugios registrados.</div>
+            ) : (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, justifyContent: 'center' }}>
+                {refugios.map(r => (
+                  <div key={r.id} style={{ background: '#fff', borderRadius: 18, boxShadow: '0 2px 8px rgba(64,11,25,0.10)', padding: 12, minWidth: 140, maxWidth: 200, display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 8 }}>
+                    <div style={{ fontWeight: 'bold', color: '#a0522d', fontSize: 16, marginBottom: 2 }}>{r.nombre}</div>
+                    <div style={{ fontSize: 14, color: '#400B19', opacity: 0.8 }}>{r.direccion}</div>
+                    <div style={{ fontSize: 13, color: '#400B19', opacity: 0.7 }}>{r.contacto}</div>
+                    <button style={{ background: '#400B19', color: '#fff', border: 'none', borderRadius: 12, padding: '6px 14px', fontWeight: 'bold', fontSize: 14, cursor: 'pointer', marginTop: 8 }} onClick={() => setSelectedRefugio(prev => (String(prev) === String(r.id) ? '' : r.id))}>Ver mascotas</button>
+                  </div>
+                ))}
+              </div>
+            )}
+            {/* Mascotas por refugio seleccionado (con animación de apertura/cierre) */}
+            {
+              (() => {
+                const expanded = Boolean(selectedRefugio);
+                const key = selectedRefugio;
+                const mascotasList = selectedRefugio ? (mascotasPorRefugio[key] || mascotasPorRefugio[String(key)] || mascotasPorRefugio[Number(key)] || []) : [];
+                // Determine selected refugio object (name) for header
+                const selectedRefugioObj = refugios.find(r => String(r.id) === String(selectedRefugio));
+                const headerTitle = selectedRefugioObj ? `Mascotas en ${selectedRefugioObj.nombre}` : 'Mascotas en refugio seleccionado';
 
-              return (
-                <div style={{ marginTop: 24 }}>
-                  {expanded && <h4 style={{ color: '#a0522d', marginBottom: 8, textAlign: 'center' }}>{headerTitle}</h4>}
-                  <div
-                    aria-hidden={!expanded}
-                    style={{
-                      maxHeight: expanded ? 520 : 0,
-                      opacity: expanded ? 1 : 0,
-                      transform: expanded ? 'translateY(0)' : 'translateY(-6px)',
-                      overflow: 'hidden',
-                      transition: 'max-height 320ms ease, opacity 220ms ease, transform 260ms ease',
-                    }}
-                  >
-                    {/* Contenido dentro del panel animado */}
-                    <div style={{ paddingTop: expanded ? 12 : 0 }}>
-                      {(!mascotasList || mascotasList.length === 0) ? (
-                        <div style={{ color: '#a0522d', fontSize: 15, opacity: 0.7, textAlign: 'center', padding: '12px 0' }}>No hay mascotas registradas en este refugio.</div>
-                      ) : (
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, justifyContent: 'center' }}>
-                          {mascotasList.map((m, i) => (
-                                                <MascotaCard key={i} mascota={m} refugioName={refugios.find(r => String(r.id) === String(m.refugioId))?.nombre} onToggleDisponibilidad={async (mascota, desired) => {
-                                                  try {
-                                                    const headers = {};
-                                                    if (user) {
-                                                      if (user.id) headers['X-User-Id'] = String(user.id);
-                                                      // For empresa users, the perfil id should be the refugio id when acting on refugio pets
-                                                      if (user.perfil && user.perfil.tipoPerfil === 'EMPRESA' && mascota.refugioId) {
-                                                        headers['X-User-Perfil-Id'] = String(mascota.refugioId);
-                                                      } else if (user.perfil && user.perfil.id) {
-                                                        headers['X-User-Perfil-Id'] = String(user.perfil.id);
-                                                      }
-                                                      if (user.perfil && user.perfil.tipoPerfil) headers['X-User-Perfil-Tipo'] = user.perfil.tipoPerfil;
-                                                    }
-                                                    const resp = await setMascotaAvailability(mascota.id, desired, headers);
-                                                    let updated = null;
-                                                    if (resp) {
-                                                      if (resp.mascota) updated = resp.mascota;
-                                                      else if (resp.id) updated = resp;
-                                                    }
-                                                    if (updated) {
-                                                      // update local map
-                                                      setMascotasPorRefugio(prev => {
-                                                        const copy = { ...prev };
-                                                        for (const k of Object.keys(copy)) {
-                                                          copy[k] = (Array.isArray(copy[k]) ? copy[k].map(p => String(p.id) === String(updated.id) ? updated : p) : copy[k]);
-                                                        }
-                                                        return copy;
-                                                      });
-                                                    }
-                                                  } catch (e) {
-                                                    console.error('Error toggling disponibilidad', e);
-                                                    // Fallback UX similar to PaginaPrincipal: marcar localmente como NO_DISPONIBLE
-                                                    const patched = { ...mascota, disponibleAdopcion: false, adoptanteId: mascota.adoptanteId || null, estado: 'NO_DISPONIBLE' };
-                                                    setMascotasPorRefugio(prev => {
-                                                      const copy = { ...prev };
-                                                      for (const k of Object.keys(copy)) {
-                                                        copy[k] = (Array.isArray(copy[k]) ? copy[k].map(p => String(p.id) === String(patched.id) ? patched : p) : copy[k]);
-                                                      }
-                                                      return copy;
-                                                    });
-                                                  }
-                                                }} />
-                                  ))}
-                        </div>
-                      )}
+                return (
+                  <div style={{ marginTop: 24 }}>
+                    {expanded && <h4 style={{ color: '#a0522d', marginBottom: 8, textAlign: 'center' }}>{headerTitle}</h4>}
+                    <div
+                      aria-hidden={!expanded}
+                      style={{
+                        maxHeight: expanded ? 520 : 0,
+                        opacity: expanded ? 1 : 0,
+                        transform: expanded ? 'translateY(0)' : 'translateY(-6px)',
+                        overflow: 'hidden',
+                        transition: 'max-height 320ms ease, opacity 220ms ease, transform 260ms ease',
+                      }}
+                    >
+                      {/* Contenido dentro del panel animado */}
+                      <div style={{ paddingTop: expanded ? 12 : 0 }}>
+                        {(!mascotasList || mascotasList.length === 0) ? (
+                          <div style={{ color: '#a0522d', fontSize: 15, opacity: 0.7, textAlign: 'center', padding: '12px 0' }}>No hay mascotas registradas en este refugio.</div>
+                        ) : (
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, justifyContent: 'center' }}>
+                            {mascotasList.map((m, i) => (
+                              <MascotaCard key={i} mascota={m} refugioName={refugios.find(r => String(r.id) === String(m.refugioId))?.nombre} onToggleDisponibilidad={async (mascota, desired) => {
+                                try {
+                                  const headers = {};
+                                  if (user) {
+                                    if (user.id) headers['X-User-Id'] = String(user.id);
+                                    // For empresa users, the perfil id should be the refugio id when acting on refugio pets
+                                    if (user.perfil && user.perfil.tipoPerfil === 'EMPRESA' && mascota.refugioId) {
+                                      headers['X-User-Perfil-Id'] = String(mascota.refugioId);
+                                    } else if (user.perfil && user.perfil.id) {
+                                      headers['X-User-Perfil-Id'] = String(user.perfil.id);
+                                    }
+                                    if (user.perfil && user.perfil.tipoPerfil) headers['X-User-Perfil-Tipo'] = user.perfil.tipoPerfil;
+                                  }
+                                  const resp = await setMascotaAvailability(mascota.id, desired, headers);
+                                  let updated = null;
+                                  if (resp) {
+                                    if (resp.mascota) updated = resp.mascota;
+                                    else if (resp.id) updated = resp;
+                                  }
+                                  if (updated) {
+                                    // update local map
+                                    setMascotasPorRefugio(prev => {
+                                      const copy = { ...prev };
+                                      for (const k of Object.keys(copy)) {
+                                        copy[k] = (Array.isArray(copy[k]) ? copy[k].map(p => String(p.id) === String(updated.id) ? updated : p) : copy[k]);
+                                      }
+                                      return copy;
+                                    });
+                                  }
+                                } catch (e) {
+                                  console.error('Error toggling disponibilidad', e);
+                                  // Fallback UX similar to PaginaPrincipal: marcar localmente como NO_DISPONIBLE
+                                  const patched = { ...mascota, disponibleAdopcion: false, adoptanteId: mascota.adoptanteId || null, estado: 'NO_DISPONIBLE' };
+                                  setMascotasPorRefugio(prev => {
+                                    const copy = { ...prev };
+                                    for (const k of Object.keys(copy)) {
+                                      copy[k] = (Array.isArray(copy[k]) ? copy[k].map(p => String(p.id) === String(patched.id) ? patched : p) : copy[k]);
+                                    }
+                                    return copy;
+                                  });
+                                }
+                              }} />
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })()
-          }
-        </div>
-      ) : (
-        // Persona: mascotas propias
-        <div style={{ marginTop: 32 }}>
-          <h3 style={{ color: '#a0522d', marginBottom: 12, textAlign: 'center' }}>Mascotas publicadas para adopción</h3>
-          {mascotas.filter(m => m.disponibleAdopcion).length === 0 ? (
-            <div style={{ color: '#a0522d', fontSize: 15, opacity: 0.7, textAlign: 'center' }}>No has publicado mascotas para adopción.</div>
-          ) : (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, justifyContent: 'center' }}>
-              {mascotas.filter(m => m.disponibleAdopcion).map((m, i) => (
-                <div key={i} style={{ background: '#fff', borderRadius: 18, boxShadow: '0 2px 8px rgba(64,11,25,0.10)', padding: 12, minWidth: 120, maxWidth: 160, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                  {m.imagenUrl && (
-                    <img src={buildMediaUrl(getApiBase('PETS_SERVER_BASE'), m.imagenUrl)} alt={m.nombre} style={{ width: 50, height: 50, objectFit: 'cover', borderRadius: '50%', marginBottom: 6, border: '2px solid #F29C6B' }} />
-                  )}
-                  <div style={{ fontWeight: 'bold', color: '#a0522d', fontSize: 15, marginBottom: 2 }}>{m.nombre}</div>
-                  <div style={{ fontSize: 13, color: '#400B19', opacity: 0.8 }}>{m.especie}</div>
-                  <div style={{ fontSize: 12, color: '#400B19', opacity: 0.6 }}>{m.raza}</div>
-                  <div style={{ fontSize: 12, color: '#400B19', opacity: 0.5 }}>{m.edad ? `${m.edad} años` : ''}</div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-  </div>
+                );
+              })()
+            }
+          </div>
+        ) : (
+          // Persona: mascotas propias
+          <div style={{ marginTop: 32 }}>
+            <h3 style={{ color: '#a0522d', marginBottom: 12, textAlign: 'center' }}>Mascotas publicadas para adopción</h3>
+            {mascotas.filter(m => m.disponibleAdopcion).length === 0 ? (
+              <div style={{ color: '#a0522d', fontSize: 15, opacity: 0.7, textAlign: 'center' }}>No has publicado mascotas para adopción.</div>
+            ) : (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, justifyContent: 'center' }}>
+                {mascotas.filter(m => m.disponibleAdopcion).map((m, i) => (
+                  <div key={i} style={{ background: '#fff', borderRadius: 18, boxShadow: '0 2px 8px rgba(64,11,25,0.10)', padding: 12, minWidth: 120, maxWidth: 160, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    {m.imagenUrl && (
+                      <img src={buildMediaUrl(getApiBase('PETS_SERVER_BASE'), m.imagenUrl)} alt={m.nombre} style={{ width: 50, height: 50, objectFit: 'cover', borderRadius: '50%', marginBottom: 6, border: '2px solid #F29C6B' }} />
+                    )}
+                    <div style={{ fontWeight: 'bold', color: '#a0522d', fontSize: 15, marginBottom: 2 }}>{m.nombre}</div>
+                    <div style={{ fontSize: 13, color: '#400B19', opacity: 0.8 }}>{m.especie}</div>
+                    <div style={{ fontSize: 12, color: '#400B19', opacity: 0.6 }}>{m.raza}</div>
+                    <div style={{ fontSize: 12, color: '#400B19', opacity: 0.5 }}>{m.edad ? `${m.edad} años` : ''}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
       {/* Modals for editing and changing password */}
       <EditProfileModal
         open={editOpen}

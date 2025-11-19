@@ -108,9 +108,9 @@ export default function MascotaRegistroModal({ open, onClose, onRegister, isEdit
     }
     if (((existingMedia || []).length + mediaPreviews.length - 1) <= 0) setGalleryOpen(false);
   };
-  
 
-  
+
+
 
   // Prefill when editing
   React.useEffect(() => {
@@ -136,13 +136,8 @@ export default function MascotaRegistroModal({ open, onClose, onRegister, isEdit
             const s = d.trim();
             // ISO-like: 2025-10-01 or with time
             if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
-              const dd = new Date(s);
-              if (!isNaN(dd.getTime())) {
-                const yyyy = dd.getFullYear();
-                const mm = String(dd.getMonth() + 1).padStart(2, '0');
-                const day = String(dd.getDate()).padStart(2, '0');
-                return `${yyyy}-${mm}-${day}`;
-              }
+              // If it already has the format YYYY-MM-DD, just return the first 10 chars
+              return s.substring(0, 10);
             }
             // dd/mm/yyyy or d/m/yyyy
             if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(s)) {
@@ -186,7 +181,7 @@ export default function MascotaRegistroModal({ open, onClose, onRegister, isEdit
           return '';
         }
       };
-  
+
       // Try to parse stored birthdate; if missing but edad exists, compute an approximate birthdate
       const parsed = fmtDate(initialData.fechaNacimiento);
       if (parsed) {
@@ -388,9 +383,9 @@ export default function MascotaRegistroModal({ open, onClose, onRegister, isEdit
     const hasMainImage = (foto && foto.name) || preview;
     // fechaNacimiento is required when creating or when editing a mascota that doesn't already have a fecha
     const fechaRequerida = !isEdit || !initialData?.fechaNacimiento;
-  // Allow either `tamaño` or `peso` to be present, but do not require them.
-  // Make vacunas and esterilizado optional to avoid blocking edits; keep essential fields required.
-  if (!nombre || !especie || (fechaRequerida && !fechaNacimiento) || !sexo || !descripcion || !hasMainImage || !ubicacion) {
+    // Allow either `tamaño` or `peso` to be present, but do not require them.
+    // Make vacunas and esterilizado optional to avoid blocking edits; keep essential fields required.
+    if (!nombre || !especie || (fechaRequerida && !fechaNacimiento) || !sexo || !descripcion || !hasMainImage || !ubicacion) {
       setErrorMsg('Completa todos los campos obligatorios.');
       setTimeout(() => setErrorMsg(''), 2500);
       return;
@@ -470,7 +465,7 @@ export default function MascotaRegistroModal({ open, onClose, onRegister, isEdit
           propietarioId = user.usuario.id;
         }
       }
-      
+
       // Validar que tenemos un propietarioId válido
       if (!propietarioId) {
         setErrorMsg('Error: No se pudo obtener el ID del usuario. Por favor, vuelve a iniciar sesión.');
@@ -487,7 +482,7 @@ export default function MascotaRegistroModal({ open, onClose, onRegister, isEdit
         return;
       }
       // Merge existing media (when editing) with newly uploaded, but dedupe by final URL
-  const API_BASE = getApiBase('PETS');
+      const API_BASE = getApiBase('PETS');
       const canonicalize = (rawUrl) => {
         if (!rawUrl) return '';
         try {
@@ -568,7 +563,7 @@ export default function MascotaRegistroModal({ open, onClose, onRegister, isEdit
         propietarioId,
         refugioId: user?.perfil?.tipoPerfil === 'EMPRESA' && refugioId ? parseInt(refugioId) : undefined
       };
-      
+
       console.log('Datos que se enviarán al backend:', JSON.stringify(mascotaData, null, 2));
       if (isEdit && initialData && initialData.id) {
         const API_BASE = getApiBase('PETS');
@@ -658,19 +653,19 @@ export default function MascotaRegistroModal({ open, onClose, onRegister, isEdit
             </select>
           </div>
         )}
-    <h2 style={{ color: '#a0522d', textAlign: 'center', marginBottom: 8 }}>Registrar Mascota</h2>
-    <div style={{ fontSize: 12, color: '#c62828', textAlign: 'center', marginBottom: 6 }}>Los campos marcados con <span style={{ fontWeight: 'bold' }}>*</span> son obligatorios</div>
-  <input type="text" className="modal-input" placeholder="Nombre *" value={nombre} onChange={e => setNombre(e.target.value)} required style={inputStyle} />
-  {/* Solo para móvil: label explicativo y opción vacía sin texto largo */}
-  <div className="combobox-label-mobile" style={{ display: 'none' }}>
-    <label style={{ fontWeight: 'bold', color: '#a0522d', marginBottom: 2 }}>Selecciona la especie de la mascota</label>
-  </div>
-  <select className="modal-input" value={especie} onChange={e => setEspecie(e.target.value)} required style={inputStyle}>
-    <option value="" className="select-placeholder">Selecciona especie *</option>
-    {ESPECIES.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-  </select>
-  <input type="text" className="modal-input" placeholder="Raza (opcional)" value={raza} onChange={e => setRaza(e.target.value)} style={inputStyle} />
-  <label style={{ fontWeight: 'bold', color: '#a0522d', marginBottom: 2 }}>Fecha de nacimiento de la mascota *</label>
+        <h2 style={{ color: '#a0522d', textAlign: 'center', marginBottom: 8 }}>Registrar Mascota</h2>
+        <div style={{ fontSize: 12, color: '#c62828', textAlign: 'center', marginBottom: 6 }}>Los campos marcados con <span style={{ fontWeight: 'bold' }}>*</span> son obligatorios</div>
+        <input type="text" className="modal-input" placeholder="Nombre *" value={nombre} onChange={e => setNombre(e.target.value)} required style={inputStyle} />
+        {/* Solo para móvil: label explicativo y opción vacía sin texto largo */}
+        <div className="combobox-label-mobile" style={{ display: 'none' }}>
+          <label style={{ fontWeight: 'bold', color: '#a0522d', marginBottom: 2 }}>Selecciona la especie de la mascota</label>
+        </div>
+        <select className="modal-input" value={especie} onChange={e => setEspecie(e.target.value)} required style={inputStyle}>
+          <option value="" className="select-placeholder">Selecciona especie *</option>
+          {ESPECIES.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+        </select>
+        <input type="text" className="modal-input" placeholder="Raza (opcional)" value={raza} onChange={e => setRaza(e.target.value)} style={inputStyle} />
+        <label style={{ fontWeight: 'bold', color: '#a0522d', marginBottom: 2 }}>Fecha de nacimiento de la mascota *</label>
         <input
           type="date"
           className="modal-input"
@@ -683,24 +678,24 @@ export default function MascotaRegistroModal({ open, onClose, onRegister, isEdit
         />
         {/* Debug help: show raw and parsed fechaNacimiento when editing (visible only to developer) */}
         {/* debug info removed for production UX */}
-  <div className="combobox-label-mobile" style={{ display: 'none' }}>
-    <label style={{ fontWeight: 'bold', color: '#a0522d', marginBottom: 2 }}>Selecciona el sexo de la mascota</label>
-  </div>
-  <select className="modal-input" value={sexo} onChange={e => setSexo(e.target.value)} required style={inputStyle}>
-    <option value="" className="select-placeholder">Sexo *</option>
-    <option value="Macho">Macho</option>
-    <option value="Hembra">Hembra</option>
-  </select>
-  <div className="combobox-label-mobile" style={{ display: 'none' }}>
-    <label style={{ fontWeight: 'bold', color: '#a0522d', marginBottom: 2 }}>Selecciona el tamaño de la mascota</label>
-  </div>
-  <select className="modal-input" value={tamaño} onChange={e => setTamaño(e.target.value)} style={inputStyle}>
-    <option value="" className="select-placeholder">Tamaño</option>
-    {TAMAÑOS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-  </select>
-  {peso && (
-    <div style={{ fontSize: 13, color: '#555', marginTop: 6 }}><b>Peso registrado:</b> {String(peso).toLowerCase().includes('kg') ? peso : `${peso} kg`}</div>
-  )}
+        <div className="combobox-label-mobile" style={{ display: 'none' }}>
+          <label style={{ fontWeight: 'bold', color: '#a0522d', marginBottom: 2 }}>Selecciona el sexo de la mascota</label>
+        </div>
+        <select className="modal-input" value={sexo} onChange={e => setSexo(e.target.value)} required style={inputStyle}>
+          <option value="" className="select-placeholder">Sexo *</option>
+          <option value="Macho">Macho</option>
+          <option value="Hembra">Hembra</option>
+        </select>
+        <div className="combobox-label-mobile" style={{ display: 'none' }}>
+          <label style={{ fontWeight: 'bold', color: '#a0522d', marginBottom: 2 }}>Selecciona el tamaño de la mascota</label>
+        </div>
+        <select className="modal-input" value={tamaño} onChange={e => setTamaño(e.target.value)} style={inputStyle}>
+          <option value="" className="select-placeholder">Tamaño</option>
+          {TAMAÑOS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+        </select>
+        {peso && (
+          <div style={{ fontSize: 13, color: '#555', marginTop: 6 }}><b>Peso registrado:</b> {String(peso).toLowerCase().includes('kg') ? peso : `${peso} kg`}</div>
+        )}
         {/* Estado de salud */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <label style={{ fontWeight: 'bold', color: '#a0522d' }}>Vacunas</label>
@@ -742,16 +737,16 @@ export default function MascotaRegistroModal({ open, onClose, onRegister, isEdit
           <label style={{ fontWeight: 'bold', color: '#a0522d' }}>Documentos de salud</label>
           <input type="file" className="modal-input" multiple accept=".pdf,.jpg,.jpeg,.png" onChange={handleDocumentos} style={{ ...inputStyle, marginBottom: 0 }} />
         </div>
-  <textarea className="modal-input" placeholder="Descripción general para adopción *" value={descripcion} onChange={e => setDescripcion(e.target.value)} required style={{ ...inputStyle, minHeight: 60 }} />
-  {/* Ubicación: campo agregado para registrar desde perfil Persona */}
-  <input type="text" className="modal-input" placeholder="Ubicación *" value={ubicacion} onChange={e => setUbicacion(e.target.value)} required style={inputStyle} />
+        <textarea className="modal-input" placeholder="Descripción general para adopción *" value={descripcion} onChange={e => setDescripcion(e.target.value)} required style={{ ...inputStyle, minHeight: 60 }} />
+        {/* Ubicación: campo agregado para registrar desde perfil Persona */}
+        <input type="text" className="modal-input" placeholder="Ubicación *" value={ubicacion} onChange={e => setUbicacion(e.target.value)} required style={inputStyle} />
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 8 }}>
           <label style={{ color: '#a0522d', fontWeight: 'bold', marginBottom: 4 }}>Foto de la mascota (principal) *</label>
           <span style={{ fontSize: 14, color: '#555', marginBottom: 4 }}>Sube una imagen clara y reciente de la mascota</span>
           <input type="file" className="modal-input" accept="image/*" onChange={handleFoto} {...(!isEdit ? { required: true } : {})} style={{ marginBottom: 8 }} />
           {preview && <img src={preview} alt="Preview" style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 12, margin: '0 auto' }} />}
 
-            <div style={{ width: '100%', marginTop: 12 }}>
+          <div style={{ width: '100%', marginTop: 12 }}>
             <label style={{ color: '#a0522d', fontWeight: 'bold', marginBottom: 6 }}>Fotos o vídeos adicionales (opcional)</label>
             <input type="file" className="modal-input" accept="image/*,video/*" multiple onChange={handleMediaFiles} style={{ marginBottom: 8 }} />
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -809,19 +804,19 @@ export default function MascotaRegistroModal({ open, onClose, onRegister, isEdit
               })()}
             </div>
             <button type="submit" style={{ ...buttonStyle, background: '#a0522d', color: '#fff' }}>{isEdit ? 'Actualizar' : 'Registrar'}</button>
-        </div>
+          </div>
         </div>
         {successMsg && (
-          <div style={{marginTop:10, background:'#e6f7e6', color:'#2e7d32', padding:'8px 16px', borderRadius:8, textAlign:'center', fontWeight:'bold', boxShadow:'0 2px 8px rgba(0,0,0,0.08)'}}>
+          <div style={{ marginTop: 10, background: '#e6f7e6', color: '#2e7d32', padding: '8px 16px', borderRadius: 8, textAlign: 'center', fontWeight: 'bold', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
             {successMsg}
           </div>
         )}
         {errorMsg && (
-          <div style={{marginTop:10, background:'#ffe6e6', color:'#c62828', padding:'8px 16px', borderRadius:8, textAlign:'center', fontWeight:'bold', boxShadow:'0 2px 8px rgba(0,0,0,0.08)'}}>
+          <div style={{ marginTop: 10, background: '#ffe6e6', color: '#c62828', padding: '8px 16px', borderRadius: 8, textAlign: 'center', fontWeight: 'bold', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
             {errorMsg}
           </div>
         )}
-        
+
       </form>
     </div>
   );

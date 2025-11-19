@@ -1,7 +1,7 @@
 import './App.css';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import LoginPage from './pages/LoginPage';
 // HomePage removed (not used directly in routes)
 import RegistroPage from './pages/RegistroPage';
@@ -13,6 +13,13 @@ import DonacionesPage from './pages/DonacionesPage';
 import SolicitudesRecibidas from './pages/SolicitudesRecibidas';
 import ProtectedRoute from './components/ProtectedRoute';
 import ChatBubble from './components/ChatBubble';
+
+function ChatWithVisibility() {
+  const location = useLocation();
+  const hiddenPaths = ['/login', '/registro', '/'];
+  if (hiddenPaths.includes(location.pathname)) return null;
+  return <ChatBubble />;
+}
 
 function App() {
   return (
@@ -55,7 +62,7 @@ function App() {
         {/* Puedes agregar más rutas protegidas aquí */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
-      <ChatBubble />
+      <ChatWithVisibility />
       <ToastContainer position="top-right" autoClose={4000} hideProgressBar={false} newestOnTop closeOnClick pauseOnHover />
     </BrowserRouter>
   );

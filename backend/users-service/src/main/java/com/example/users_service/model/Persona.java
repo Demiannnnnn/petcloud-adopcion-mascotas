@@ -10,7 +10,7 @@ public class Persona extends Perfil {
     private String nombreCompleto;
     private String ubicacion;
     private String numeroWhatsapp;
-    private java.sql.Date fechaNacimiento;
+    private java.time.LocalDate fechaNacimiento;
 
     // Getters y setters
     public String getNombreCompleto() { return nombreCompleto; }
@@ -19,8 +19,8 @@ public class Persona extends Perfil {
     public void setUbicacion(String ubicacion) { this.ubicacion = ubicacion; }
     public String getNumeroWhatsapp() { return numeroWhatsapp; }
     public void setNumeroWhatsapp(String numeroWhatsapp) { this.numeroWhatsapp = numeroWhatsapp; }
-    public java.sql.Date getFechaNacimiento() { return fechaNacimiento; }
-    public void setFechaNacimiento(java.sql.Date fechaNacimiento) { this.fechaNacimiento = fechaNacimiento; }
+    public java.time.LocalDate getFechaNacimiento() { return fechaNacimiento; }
+    public void setFechaNacimiento(java.time.LocalDate fechaNacimiento) { this.fechaNacimiento = fechaNacimiento; }
 
     @Override
     public void actualizarDocumentos(Documento d) { }

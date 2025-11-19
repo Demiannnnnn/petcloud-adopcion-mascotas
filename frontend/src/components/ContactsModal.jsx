@@ -48,9 +48,9 @@ export default function ContactsModal({ open, onClose, ownerPerfilId }) {
     if (!nameOrId) return '#';
     const s = String(nameOrId).trim();
     const parts = s.split(/\s+/).filter(Boolean);
-    if (parts.length === 0) return s.slice(0,2).toUpperCase();
-    if (parts.length === 1) return parts[0].slice(0,2).toUpperCase();
-    return (parts[0][0] + parts[parts.length-1][0]).toUpperCase();
+    if (parts.length === 0) return s.slice(0, 2).toUpperCase();
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   }
 
   const openChatWith = async (contact) => {
@@ -63,7 +63,7 @@ export default function ContactsModal({ open, onClose, ownerPerfilId }) {
       if (Array.isArray(chats)) {
         for (const ch of chats) {
           const parts = ch && (ch.participantes || (ch.chat && ch.chat.participantes)) || [];
-          const ids = parts.map(p => (p && (p.perfilId || (p.perfil && p.perfil.id))) ).filter(Boolean).map(String);
+          const ids = parts.map(p => (p && (p.perfilId || (p.perfil && p.perfil.id)))).filter(Boolean).map(String);
           if (ids.includes(String(contact.contactoPerfilId))) { found = ch; break; }
         }
       }
@@ -119,14 +119,13 @@ export default function ContactsModal({ open, onClose, ownerPerfilId }) {
                 {filtered.map(c => (
                   <li key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 8px', borderBottom: '1px solid #f2eae7', cursor: 'pointer' }}>
                     <div onClick={() => openChatWith(c)} style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1 }}>
-                      <div style={{ width:40, height:40, borderRadius:20, background:'#F29C6B', color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:700, flexShrink:0 }}>{initialsFor(c.nombre || c.contactoPerfilId)}</div>
+                      <div style={{ width: 40, height: 40, borderRadius: 20, background: '#F29C6B', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, flexShrink: 0 }}>{initialsFor(c.nombre || c.contactoPerfilId)}</div>
                       <div>
-                        <div style={{ fontWeight:700, color:'#a0522d' }}>{c.nombre}</div>
-                        <div style={{ fontSize:12, color:'#666' }}>{`Perfil #${c.contactoPerfilId}`}</div>
+                        <div style={{ fontWeight: 700, color: '#a0522d' }}>{c.nombre}</div>
                       </div>
                     </div>
                     <div>
-                      <button onClick={() => openChatWith(c)} style={{ background:'#F29C6B', color:'#fff', border:'none', padding:'6px 10px', borderRadius:8, cursor:'pointer' }}>Abrir chat</button>
+                      <button onClick={() => openChatWith(c)} style={{ background: '#F29C6B', color: '#fff', border: 'none', padding: '6px 10px', borderRadius: 8, cursor: 'pointer' }}>Abrir chat</button>
                     </div>
                   </li>
                 ))}
