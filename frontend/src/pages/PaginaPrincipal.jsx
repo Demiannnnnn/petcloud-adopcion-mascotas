@@ -8,6 +8,7 @@ import SolicitarAdopcionModal from '../components/SolicitarAdopcionModal';
 import { listReceivedRequestsForMascotas } from '../api/adoptionsApi';
 import { getUserById } from '../api/usersApi';
 import MascotaCard from '../components/MascotaCard';
+import { setMascotaAvailability } from '../api/petsApi';
 import { getApiBase } from '../api/apiBase';
 import { AuthContext } from '../context/AuthContext';
 import './LoginPage.css';
@@ -459,6 +460,54 @@ function PaginaPrincipal() {
                     const r = refugios.find(x => x.id === m.refugioId || x.id === Number(m.refugioId));
                     return r ? r.nombre : undefined;
                   })()}
+                  onToggleDisponibilidad={async (mascota, desired) => {
+                    // Prevent marking as DISPONIBLE if the pet is already adopted
+                    if (desired === true && (mascota.adoptanteId || mascota.adoptanteName || String(mascota.estado || '').toUpperCase() === 'ADOPTADA')) {
+                      toast.error('No se puede marcar como disponible: la mascota ya está adoptada.');
+                      return;
+                    }
+
+                    try {
+                      const headers = {};
+                      if (user) {
+                        if (user.id) headers['X-User-Id'] = String(user.id);
+                        // If the user is an EMPRESA and the pet belongs to a refugio, send the refugio id
+                        if (user.perfil && user.perfil.tipoPerfil === 'EMPRESA' && mascota.refugioId) {
+                          headers['X-User-Perfil-Id'] = String(mascota.refugioId);
+                        } else if (user.perfil && user.perfil.id) {
+                          headers['X-User-Perfil-Id'] = String(user.perfil.id);
+                        }
+                        if (user.perfil && user.perfil.tipoPerfil) headers['X-User-Perfil-Tipo'] = user.perfil.tipoPerfil;
+                      }
+                      const resp = await setMascotaAvailability(mascota.id, desired, headers);
+                      // resp can be DTO or entity or wrapped object
+                      let updated = null;
+                      if (resp) {
+                        if (resp.mascota) updated = resp.mascota;
+                        else if (resp.id) updated = resp;
+                        else updated = null;
+                      }
+                      if (updated) {
+                        setMascotas(prev => prev.map(p => String(p.id) === String(updated.id) ? updated : p));
+                        setPublicMascotas(prev => prev.map(p => String(p.id) === String(updated.id) ? updated : p));
+                        window.dispatchEvent(new CustomEvent('mascota.updated', { detail: updated }));
+                      } else {
+                        // optimistic fallback: update local state
+                        const patched = { ...mascota, disponibleAdopcion: desired, adoptanteId: desired ? null : mascota.adoptanteId };
+                        setMascotas(prev => prev.map(p => String(p.id) === String(patched.id) ? patched : p));
+                        setPublicMascotas(prev => prev.map(p => String(p.id) === String(patched.id) ? patched : p));
+                        window.dispatchEvent(new CustomEvent('mascota.updated', { detail: patched }));
+                      }
+                    } catch (e) {
+                      console.error('Error toggling disponibilidad', e);
+                      // Fallback UX: marcar localmente como NO_DISPONIBLE para que el usuario vea el cambio aunque el backend no responda (CORS/network)
+                      const patched = { ...mascota, disponibleAdopcion: false, adoptanteId: mascota.adoptanteId || null, estado: 'NO_DISPONIBLE' };
+                      setMascotas(prev => prev.map(p => String(p.id) === String(patched.id) ? patched : p));
+                      setPublicMascotas(prev => prev.map(p => String(p.id) === String(patched.id) ? patched : p));
+                      window.dispatchEvent(new CustomEvent('mascota.updated', { detail: patched }));
+                      toast.error('No se pudo cambiar la disponibilidad en el servidor; estado local marcado como NO_DISPONIBLE.');
+                    }
+                  }}
                 />
               ))
             )}

@@ -68,3 +68,25 @@ export async function listarMascotas() {
 		throw error;
 	}
 }
+
+export async function setMascotaAvailability(mascotaId, available, headers = {}) {
+	try {
+		const res = await fetch(`${PETS_SERVER_BASE}/api/mascotas/${mascotaId}/availability${typeof available === 'boolean' ? `?disponible=${available}` : ''}`, {
+			method: 'PATCH',
+			headers: Object.assign({ 'Content-Type': 'application/json' }, headers),
+			body: JSON.stringify({ available })
+		});
+		if (!res.ok) {
+			let message = `Error cambiando disponibilidad (${res.status})`;
+			try { const j = await res.json(); if (j && j.message) message = j.message; } catch (e) {}
+			throw new Error(message);
+		}
+		const data = await res.json();
+		// Controller may return DTO or wrapped RespuestaRegistro; normalize
+		if (data && data.mascota) return data;
+		return data;
+	} catch (e) {
+		console.error('setMascotaAvailability error', e);
+		throw e;
+	}
+}

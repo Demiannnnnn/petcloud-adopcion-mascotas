@@ -495,4 +495,34 @@ public class MascotaService {
 		return mascotaRepository.findById(id).orElse(null);
 	}
 
+	@org.springframework.transaction.annotation.Transactional
+	public Mascota setDisponibilidad(Long id, Boolean disponible, Long actorPerfilId, String actorPerfilTipo, Long actorUserId) {
+		java.util.Optional<Mascota> maybe = mascotaRepository.findById(id);
+		if (!maybe.isPresent()) throw new IllegalArgumentException("Mascota no encontrada");
+		Mascota mascota = maybe.get();
+
+		boolean authorized = false;
+		// owner by user id
+		if (actorUserId != null) {
+			if (mascota.getPropietarioId() != null && mascota.getPropietarioId().equals(actorUserId)) authorized = true;
+		}
+		// owner by empresa/refugio id
+		if (!authorized && actorPerfilId != null && actorPerfilTipo != null) {
+			try {
+				if ("EMPRESA".equalsIgnoreCase(actorPerfilTipo) && mascota.getRefugioId() != null && mascota.getRefugioId().equals(actorPerfilId)) authorized = true;
+			} catch (Exception e) {
+				// ignore parse errors
+			}
+		}
+		if (!authorized) throw new SecurityException("No autorizado para modificar esta mascota");
+
+		// apply change
+			// Prevent reopening for adoption if already adopted (has adoptanteId)
+			if (Boolean.TRUE.equals(disponible) && mascota.getAdoptanteId() != null) {
+				throw new IllegalArgumentException("No se puede marcar disponible: mascota ya adoptada");
+			}
+			mascota.setDisponibleAdopcion(Boolean.TRUE.equals(disponible));
+		return mascotaRepository.save(mascota);
+	}
+
 }

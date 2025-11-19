@@ -5,7 +5,7 @@ import { normalizeTamanio, isPesoLike, formatPeso } from '../utils/mascotaUtils'
 import MediaGalleryModal from './MediaGalleryModal';
 import './MascotaCard.css';
 
-export default function MascotaCard({ mascota, overrideMascota, onEdit, onDelete, refugioName, refugioContacto, publicadoPor, isPublic, onRequestAdoption, hideAvailabilityBadge, onGalleryOpenChange }) {
+export default function MascotaCard({ mascota, overrideMascota, onEdit, onDelete, refugioName, refugioContacto, publicadoPor, isPublic, onRequestAdoption, hideAvailabilityBadge, onGalleryOpenChange, onToggleDisponibilidad }) {
   const API_BASE = getApiBase('PETS_SERVER_BASE');
   // allow callers to override display-only fields (useful when a solicitud indicates adoption)
   const displayMascota = { ...(mascota || {}), ...(overrideMascota || {}) };
@@ -168,7 +168,26 @@ export default function MascotaCard({ mascota, overrideMascota, onEdit, onDelete
       {!hideAvailabilityBadge && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
           <span style={{ width:10, height:10, borderRadius:12, background: displayMascota.disponibleAdopcion ? '#a5f5b6' : '#e0e0e0', display:'inline-block' }} />
-          <span style={{ background: displayMascota.disponibleAdopcion ? '#4caf50' : '#9e9e9e', color: '#fff', padding: '4px 8px', borderRadius: 12, fontSize: 12, fontWeight: 700 }}>{displayMascota.disponibleAdopcion ? 'Disponible' : (displayMascota.adoptanteName ? 'Adoptada' : 'No disponible')}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ background: displayMascota.disponibleAdopcion ? '#4caf50' : '#9e9e9e', color: '#fff', padding: '4px 8px', borderRadius: 12, fontSize: 12, fontWeight: 700 }}>{displayMascota.disponibleAdopcion ? 'Disponible' : (displayMascota.adoptanteName ? 'Adoptada' : 'No disponible')}</span>
+            {typeof onToggleDisponibilidad === 'function' && (
+              <button
+                onClick={(e) => { e.stopPropagation(); try { onToggleDisponibilidad(mascota, !Boolean(displayMascota.disponibleAdopcion)); } catch (err) { console.error(err); } }}
+                title={displayMascota.disponibleAdopcion ? 'Marcar como no disponible' : 'Marcar como disponible'}
+                style={{
+                  background: displayMascota.disponibleAdopcion ? '#fff' : '#fff',
+                  border: '1px solid #ddd',
+                  padding: '6px 8px',
+                  borderRadius: 10,
+                  cursor: 'pointer',
+                  fontSize: 12,
+                  color: '#444'
+                }}
+              >
+                {displayMascota.disponibleAdopcion ? 'No' : 'Sí'}
+              </button>
+            )}
+          </div>
         </div>
       )}
 

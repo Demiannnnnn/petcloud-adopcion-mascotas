@@ -3,7 +3,7 @@ import { AuthContext } from '../context/AuthContext';
 import { formatRut } from '../utils/rut';
 import { Link } from 'react-router-dom';
 import { getRefugiosByEmpresa } from '../api/refugiosApi';
-import { getMascotasByRefugio } from '../api/petsApi';
+import { getMascotasByRefugio, setMascotaAvailability } from '../api/petsApi';
 import { getApiBase } from '../api/apiBase';
 import { buildMediaUrl } from '../utils/mediaUtils';
 import MascotaCard from '../components/MascotaCard';
@@ -27,7 +27,12 @@ export default function PerfilPage() {
   useEffect(() => {
     async function fetchRefugiosYmascotas() {
       if (user?.perfil?.tipoPerfil === 'EMPRESA' && user?.perfil?.id) {
-        try {
+                                    // Prevent marking as DISPONIBLE if the pet is already adopted
+                                    if (desired === true && (mascota.adoptanteId || mascota.adoptanteName || String(mascota.estado || '').toUpperCase() === 'ADOPTADA')) {
+                                      console.warn('Intento de marcar disponible mascota adoptada', mascota.id);
+                                      return;
+                                    }
+                                    try {
           const refugiosBackend = await getRefugiosByEmpresa(user.perfil.id);
           const safeRefugios = Array.isArray(refugiosBackend) ? refugiosBackend : [];
           setRefugios(safeRefugios);
@@ -185,7 +190,48 @@ export default function PerfilPage() {
                       ) : (
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, justifyContent: 'center' }}>
                           {mascotasList.map((m, i) => (
-                                    <MascotaCard key={i} mascota={m} refugioName={refugios.find(r => String(r.id) === String(m.refugioId))?.nombre} />
+                                                <MascotaCard key={i} mascota={m} refugioName={refugios.find(r => String(r.id) === String(m.refugioId))?.nombre} onToggleDisponibilidad={async (mascota, desired) => {
+                                                  try {
+                                                    const headers = {};
+                                                    if (user) {
+                                                      if (user.id) headers['X-User-Id'] = String(user.id);
+                                                      // For empresa users, the perfil id should be the refugio id when acting on refugio pets
+                                                      if (user.perfil && user.perfil.tipoPerfil === 'EMPRESA' && mascota.refugioId) {
+                                                        headers['X-User-Perfil-Id'] = String(mascota.refugioId);
+                                                      } else if (user.perfil && user.perfil.id) {
+                                                        headers['X-User-Perfil-Id'] = String(user.perfil.id);
+                                                      }
+                                                      if (user.perfil && user.perfil.tipoPerfil) headers['X-User-Perfil-Tipo'] = user.perfil.tipoPerfil;
+                                                    }
+                                                    const resp = await setMascotaAvailability(mascota.id, desired, headers);
+                                                    let updated = null;
+                                                    if (resp) {
+                                                      if (resp.mascota) updated = resp.mascota;
+                                                      else if (resp.id) updated = resp;
+                                                    }
+                                                    if (updated) {
+                                                      // update local map
+                                                      setMascotasPorRefugio(prev => {
+                                                        const copy = { ...prev };
+                                                        for (const k of Object.keys(copy)) {
+                                                          copy[k] = (Array.isArray(copy[k]) ? copy[k].map(p => String(p.id) === String(updated.id) ? updated : p) : copy[k]);
+                                                        }
+                                                        return copy;
+                                                      });
+                                                    }
+                                                  } catch (e) {
+                                                    console.error('Error toggling disponibilidad', e);
+                                                    // Fallback UX similar to PaginaPrincipal: marcar localmente como NO_DISPONIBLE
+                                                    const patched = { ...mascota, disponibleAdopcion: false, adoptanteId: mascota.adoptanteId || null, estado: 'NO_DISPONIBLE' };
+                                                    setMascotasPorRefugio(prev => {
+                                                      const copy = { ...prev };
+                                                      for (const k of Object.keys(copy)) {
+                                                        copy[k] = (Array.isArray(copy[k]) ? copy[k].map(p => String(p.id) === String(patched.id) ? patched : p) : copy[k]);
+                                                      }
+                                                      return copy;
+                                                    });
+                                                  }
+                                                }} />
                                   ))}
                         </div>
                       )}

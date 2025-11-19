@@ -6,6 +6,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -22,7 +23,7 @@ import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/api/mascotas")
-@CrossOrigin(origins = {"http://localhost:3001", "http://localhost:3000"})
+@CrossOrigin(origins = {"http://localhost:3001", "http://localhost:3000"}, allowedHeaders = {"*"}, methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE, RequestMethod.PATCH, RequestMethod.OPTIONS}, allowCredentials = "true")
 public class MascotaController {
 	// Endpoint para subir imagen
 	@PostMapping("/upload")
@@ -159,6 +160,46 @@ public class MascotaController {
 			return ResponseEntity.status(404).body(new RespuestaRegistro(false, ia.getMessage(), null));
 		} catch (Exception e) {
 			return ResponseEntity.badRequest().body(new RespuestaRegistro(false, "Error al eliminar media: " + e.getMessage(), null));
+		}
+	}
+
+	@org.springframework.web.bind.annotation.PatchMapping("/{id}/availability")
+	public ResponseEntity<?> setAvailability(@org.springframework.web.bind.annotation.PathVariable Long id, HttpServletRequest request, @org.springframework.web.bind.annotation.RequestParam(required = false) Boolean disponible) {
+		try {
+			String headerUserId = request.getHeader("X-User-Id");
+			String headerPerfilId = request.getHeader("X-User-Perfil-Id");
+			String headerPerfilTipo = request.getHeader("X-User-Perfil-Tipo");
+			Long userId = null;
+			Long perfilId = null;
+			try { if (headerUserId != null && !headerUserId.isEmpty()) userId = Long.valueOf(headerUserId); } catch (NumberFormatException e) {}
+			try { if (headerPerfilId != null && !headerPerfilId.isEmpty()) perfilId = Long.valueOf(headerPerfilId); } catch (NumberFormatException e) {}
+			if (disponible == null) {
+				// toggle by default if not specified
+				Mascota current = mascotaService.listarPorId(id);
+				if (current == null) return ResponseEntity.status(404).body(new RespuestaRegistro(false, "Mascota no encontrada", null));
+				disponible = !Boolean.TRUE.equals(current.getDisponibleAdopcion());
+			}
+			Mascota updated = null;
+			try {
+				updated = mascotaService.setDisponibilidad(id, disponible, perfilId, headerPerfilTipo, userId);
+			} catch (SecurityException se) {
+				return ResponseEntity.status(403).body(new RespuestaRegistro(false, se.getMessage(), null));
+			}
+			// Try to convert to DTO for frontend consistency
+			List<PublicMascotaDTO> all = mascotaService.listarMascotas();
+			for (PublicMascotaDTO d : all) {
+				if (d != null && d.id != null && d.id.equals(id)) return ResponseEntity.ok(d);
+			}
+			return ResponseEntity.ok(updated);
+		} catch (IllegalArgumentException ia) {
+			// If message indicates not found, return 404, otherwise 400 (bad request)
+			String msg = ia.getMessage() != null ? ia.getMessage().toLowerCase() : "";
+			if (msg.contains("no encontrada") || msg.contains("no encontrado")) {
+				return ResponseEntity.status(404).body(new RespuestaRegistro(false, ia.getMessage(), null));
+			}
+			return ResponseEntity.status(400).body(new RespuestaRegistro(false, ia.getMessage(), null));
+		} catch (Exception e) {
+			return ResponseEntity.status(500).body(new RespuestaRegistro(false, "Error cambiando disponibilidad: " + e.getMessage(), null));
 		}
 	}
 
