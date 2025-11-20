@@ -470,7 +470,17 @@ function PaginaPrincipal() {
                     try {
                       const headers = {};
                       if (user) {
-                        if (user.id) headers['X-User-Id'] = String(user.id);
+                        // Use same logic as registration to get propietarioId
+                        let propietarioId = null;
+                        if (typeof user.id !== 'undefined' && user.id !== null) {
+                          propietarioId = user.id;
+                        } else if (user.perfil && typeof user.perfil.id !== 'undefined' && user.perfil.id !== null) {
+                          propietarioId = user.perfil.id;
+                        } else if (user.usuario && typeof user.usuario.id !== 'undefined' && user.usuario.id !== null) {
+                          propietarioId = user.usuario.id;
+                        }
+                        if (propietarioId) headers['X-User-Id'] = String(propietarioId);
+
                         // If the user is an EMPRESA and the pet belongs to a refugio, send the refugio id
                         if (user.perfil && user.perfil.tipoPerfil === 'EMPRESA' && mascota.refugioId) {
                           headers['X-User-Perfil-Id'] = String(mascota.refugioId);
