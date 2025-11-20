@@ -5,6 +5,12 @@ import { getApiBase } from './apiBase';
 // path segment (e.g. http://localhost:8081/api/refugios). getApiBase keeps that.
 const BASE_URL = getApiBase('REFUGIOS');
 
+export async function getAllRefugios() {
+  const res = await fetch(BASE_URL);
+  if (!res.ok) throw new Error("Error al obtener refugios");
+  return await res.json();
+}
+
 export async function getRefugiosByEmpresa(empresaId) {
   const res = await fetch(`${BASE_URL}/empresa/${empresaId}`);
   if (!res.ok) throw new Error("Error al obtener refugios");

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { crearDonacion } from '../api/donationsApi';
-import { getUserById, getEmpresas } from '../api/usersApi';
+import { getUserById } from '../api/usersApi';
+import { getAllRefugios } from '../api/refugiosApi';
 
 export default function DonacionFormModal({ isOpen, onClose, donanteId }) {
   const [tipoDonacion, setTipoDonacion] = useState('MONETARIA');
@@ -15,14 +16,14 @@ export default function DonacionFormModal({ isOpen, onClose, donanteId }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Cargar lista de empresas (refugios) cuando se abre el modal
+  // Cargar lista de refugios cuando se abre el modal
   useEffect(() => {
     if (isOpen) {
-      getEmpresas().then(empresas => {
-        setRefugios(empresas);
-        console.log('Empresas cargadas:', empresas);
+      getAllRefugios().then(refugios => {
+        setRefugios(refugios);
+        console.log('Refugios cargados:', refugios);
       }).catch(err => {
-        console.error('Error cargando empresas:', err);
+        console.error('Error cargando refugios:', err);
         setRefugios([]);
       });
     }
@@ -128,9 +129,9 @@ export default function DonacionFormModal({ isOpen, onClose, donanteId }) {
               required
             >
               <option value="">Seleccionar refugio...</option>
-              {refugios.map((empresa) => (
-                <option key={empresa.id} value={empresa.id}>
-                  {empresa.nombreEmpresa || `Empresa #${empresa.id}`}
+              {refugios.map((refugio) => (
+                <option key={refugio.id} value={refugio.id}>
+                  {refugio.nombre || `Refugio #${refugio.id}`}
                 </option>
               ))}
             </select>

@@ -21,6 +21,11 @@ public class RefugioController {
     @Autowired
     private RefugioService refugioService;
 
+    @GetMapping
+    public List<Refugio> getAllRefugios() {
+        return refugioService.getAllRefugios();
+    }
+
     @GetMapping("/empresa/{empresaId}")
     public List<Refugio> getRefugiosByEmpresa(@PathVariable Long empresaId) {
         return refugioService.getRefugiosByEmpresa(empresaId);

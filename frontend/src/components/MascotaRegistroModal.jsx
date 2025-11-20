@@ -67,6 +67,7 @@ export default function MascotaRegistroModal({ open, onClose, onRegister, isEdit
   }, [user, open]);
   const [nombre, setNombre] = useState('');
   const [especie, setEspecie] = useState('');
+  const [especieOtra, setEspecieOtra] = useState('');
   const [raza, setRaza] = useState('');
   const [fechaNacimiento, setFechaNacimiento] = useState('');
   const [sexo, setSexo] = useState('');
@@ -116,7 +117,19 @@ export default function MascotaRegistroModal({ open, onClose, onRegister, isEdit
   React.useEffect(() => {
     if (isEdit && initialData && open) {
       setNombre(initialData.nombre || '');
-      setEspecie(initialData.especie || '');
+      // Check if especie is in predefined list, otherwise use 'Otro'
+      const especieValue = initialData.especie || '';
+      const isEspecieInList = ESPECIES.some(e => e.value === especieValue);
+      if (isEspecieInList) {
+        setEspecie(especieValue);
+        setEspecieOtra('');
+      } else if (especieValue) {
+        setEspecie('Otro');
+        setEspecieOtra(especieValue);
+      } else {
+        setEspecie('');
+        setEspecieOtra('');
+      }
       setRaza(initialData.raza || '');
       // Ensure date is formatted as yyyy-MM-dd for the date input
       const fmtDate = (d) => {
@@ -242,7 +255,7 @@ export default function MascotaRegistroModal({ open, onClose, onRegister, isEdit
     }
     if (!open && !isEdit) {
       // reset when closing register modal
-      setNombre(''); setEspecie(''); setRaza(''); setFechaNacimiento(''); setSexo(''); setTamaño(''); setVacunas([]); setVacunaInput(''); setEsterilizado(''); setEnfermedades([]); setEnfermedadInput(''); setDocumentos([]); setDescripcion(''); setFoto(null); setPreview(null); setUbicacion(''); setChip(''); setMediaFiles([]); setMediaPreviews([]); setExistingMedia([]);
+      setNombre(''); setEspecie(''); setEspecieOtra(''); setRaza(''); setFechaNacimiento(''); setSexo(''); setTamaño(''); setVacunas([]); setVacunaInput(''); setEsterilizado(''); setEnfermedades([]); setEnfermedadInput(''); setDocumentos([]); setDescripcion(''); setFoto(null); setPreview(null); setUbicacion(''); setChip(''); setMediaFiles([]); setMediaPreviews([]); setExistingMedia([]);
     }
   }, [isEdit, initialData, open]);
 
@@ -546,7 +559,7 @@ export default function MascotaRegistroModal({ open, onClose, onRegister, isEdit
 
       const mascotaData = {
         nombre,
-        especie,
+        especie: especie === 'Otro' ? especieOtra : especie,
         raza,
         fechaNacimiento: fechaNacimiento || (isEdit ? initialData?.fechaNacimiento : ''),
         sexo,
@@ -599,7 +612,7 @@ export default function MascotaRegistroModal({ open, onClose, onRegister, isEdit
         setTimeout(() => {
           setSuccessMsg('');
           onRegister(mascotaData);
-          setNombre(''); setEspecie(''); setRaza(''); setFechaNacimiento(''); setSexo(''); setTamaño(''); setVacunas([]); setVacunaInput(''); setEsterilizado(''); setEnfermedades([]); setEnfermedadInput(''); setDocumentos([]); setDescripcion(''); setFoto(null); setPreview(null); setUbicacion(''); setChip('');
+          setNombre(''); setEspecie(''); setEspecieOtra(''); setRaza(''); setFechaNacimiento(''); setSexo(''); setTamaño(''); setVacunas([]); setVacunaInput(''); setEsterilizado(''); setEnfermedades([]); setEnfermedadInput(''); setDocumentos([]); setDescripcion(''); setFoto(null); setPreview(null); setUbicacion(''); setChip('');
           onClose();
         }, 1800);
       }
@@ -664,6 +677,9 @@ export default function MascotaRegistroModal({ open, onClose, onRegister, isEdit
           <option value="" className="select-placeholder">Selecciona especie *</option>
           {ESPECIES.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
         </select>
+        {especie === 'Otro' && (
+          <input type="text" className="modal-input" placeholder="Especifica la especie *" value={especieOtra} onChange={e => setEspecieOtra(e.target.value)} required style={inputStyle} />
+        )}
         <input type="text" className="modal-input" placeholder="Raza (opcional)" value={raza} onChange={e => setRaza(e.target.value)} style={inputStyle} />
         <label style={{ fontWeight: 'bold', color: '#a0522d', marginBottom: 2 }}>Fecha de nacimiento de la mascota *</label>
         <input

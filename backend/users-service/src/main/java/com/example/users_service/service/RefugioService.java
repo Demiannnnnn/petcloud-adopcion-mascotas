@@ -24,4 +24,8 @@ public class RefugioService {
     public java.util.Optional<Refugio> getRefugioById(Long id) {
         return refugioRepository.findById(id);
     }
+
+    public List<Refugio> getAllRefugios() {
+        return refugioRepository.findAll();
+    }
 }

@@ -461,8 +461,8 @@ function PaginaPrincipal() {
                     return r ? r.nombre : undefined;
                   })()}
                   onToggleDisponibilidad={async (mascota, desired) => {
-                    // Prevent marking as DISPONIBLE if the pet is already adopted
-                    if (desired === true && (mascota.adoptanteId || mascota.adoptanteName || String(mascota.estado || '').toUpperCase() === 'ADOPTADA')) {
+                    // Prevent marking as DISPONIBLE only if the pet is explicitly ADOPTADA
+                    if (desired === true && String(mascota.estado || '').toUpperCase() === 'ADOPTADA') {
                       toast.error('No se puede marcar como disponible: la mascota ya está adoptada.');
                       return;
                     }
