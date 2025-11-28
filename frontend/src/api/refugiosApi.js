@@ -26,3 +26,9 @@ export async function registrarRefugio(refugio) {
   if (!res.ok) throw new Error("Error al registrar refugio");
   return await res.json();
 }
+
+export async function getRefugioById(id) {
+  const res = await fetch(`${BASE_URL}/${id}`);
+  if (!res.ok) throw new Error("Error al obtener refugio");
+  return await res.json();
+}

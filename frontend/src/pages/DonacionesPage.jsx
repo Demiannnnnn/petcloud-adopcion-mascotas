@@ -2,6 +2,7 @@ import React, { useEffect, useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { listDonacionesByDonante, listDonacionesRecibidas } from '../api/donationsApi';
 import { getUserById } from '../api/usersApi';
+import { getRefugioById } from '../api/refugiosApi';
 import DonacionFormModal from '../components/DonacionFormModal';
 
 function formatDate(iso) {
@@ -35,7 +36,7 @@ export default function DonacionesPage() {
 	useEffect(() => {
 		const params = new URLSearchParams(window.location.search);
 		const status = params.get('status');
-		
+
 		if (status) {
 			setPaymentStatus(status);
 			// Limpiar URL después de 5 segundos
@@ -61,7 +62,10 @@ export default function DonacionesPage() {
 				// enrich counterpart names where possible
 				await Promise.all(made.map(async (d) => {
 					if (d.receptorId && !d.receptorName) {
-						try { const u = await getUserById(d.receptorId); if (u) d.receptorName = u.perfil?.nombreEmpresa || u.perfil?.nombreCompleto || u.nombre || u.nombreCompleto || u.username || (u.email ? u.email.split('@')[0] : undefined); } catch (e) {}
+						try {
+							const r = await getRefugioById(d.receptorId);
+							if (r) d.receptorName = r.nombre;
+						} catch (e) { }
 					}
 				}));
 				setHechas(made);
@@ -70,7 +74,7 @@ export default function DonacionesPage() {
 					const rec = Array.isArray(await listDonacionesRecibidas(ownerId)) ? await listDonacionesRecibidas(ownerId) : [];
 					await Promise.all(rec.map(async (d) => {
 						if (d.donanteId && !d.donanteName) {
-							try { const u = await getUserById(d.donanteId); if (u) d.donanteName = u.perfil?.nombreCompleto || u.nombre || u.nombreCompleto || u.username || (u.email ? u.email.split('@')[0] : undefined); } catch (e) {}
+							try { const u = await getUserById(d.donanteId); if (u) d.donanteName = u.perfil?.nombreCompleto || u.nombre || u.nombreCompleto || u.username || (u.email ? u.email.split('@')[0] : undefined); } catch (e) { }
 						}
 					}));
 					setRecibidas(rec);
@@ -91,7 +95,7 @@ export default function DonacionesPage() {
 		<div style={{ padding: 20 }}>
 			<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
 				<h2 style={{ color: '#a0522d', margin: 0 }}>Donaciones</h2>
-				<button 
+				<button
 					onClick={() => setShowModal(true)}
 					style={{
 						padding: '10px 20px',
@@ -153,14 +157,14 @@ export default function DonacionesPage() {
 						<h3>Donaciones hechas</h3>
 						{hechas.length === 0 ? <div>No has realizado donaciones.</div> : (
 							hechas.map(d => (
-								<div key={d.id || `${d.donanteId}-${d.receptorId}-${d.fechaDonacion || d.fecha_donacion || d.fecha}` } style={{ background: '#fff', padding: 12, borderRadius: 12, boxShadow: '0 6px 18px rgba(64,11,25,0.06)', marginBottom: 12 }}>
+								<div key={d.id || `${d.donanteId}-${d.receptorId}-${d.fechaDonacion || d.fecha_donacion || d.fecha}`} style={{ background: '#fff', padding: 12, borderRadius: 12, boxShadow: '0 6px 18px rgba(64,11,25,0.06)', marginBottom: 12 }}>
 									<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
 										<div>
 											<div style={{ fontWeight: 'bold', color: '#400B19', fontSize: '16px' }}>
 												{d.tipoDonacion || d.tipo_donacion || d.tipo || 'Donación'}
 											</div>
 											<div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
-												Estado: <span style={{ 
+												Estado: <span style={{
 													color: d.estado === 'CONFIRMADA' ? '#4CAF50' : d.estado === 'CANCELADA' ? '#f44336' : '#ff9800',
 													fontWeight: 'bold'
 												}}>
@@ -184,14 +188,14 @@ export default function DonacionesPage() {
 							<h3>Donaciones recibidas</h3>
 							{recibidas.length === 0 ? <div>No has recibido donaciones.</div> : (
 								recibidas.map(d => (
-									<div key={d.id || `${d.donanteId}-${d.receptorId}-${d.fechaDonacion || d.fecha_donacion || d.fecha}` } style={{ background: '#fff', padding: 12, borderRadius: 12, boxShadow: '0 6px 18px rgba(64,11,25,0.06)', marginBottom: 12 }}>
+									<div key={d.id || `${d.donanteId}-${d.receptorId}-${d.fechaDonacion || d.fecha_donacion || d.fecha}`} style={{ background: '#fff', padding: 12, borderRadius: 12, boxShadow: '0 6px 18px rgba(64,11,25,0.06)', marginBottom: 12 }}>
 										<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
 											<div>
 												<div style={{ fontWeight: 'bold', color: '#400B19', fontSize: '16px' }}>
 													{d.tipoDonacion || d.tipo_donacion || d.tipo || 'Donación'}
 												</div>
 												<div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
-													Estado: <span style={{ 
+													Estado: <span style={{
 														color: d.estado === 'CONFIRMADA' ? '#4CAF50' : d.estado === 'CANCELADA' ? '#f44336' : '#ff9800',
 														fontWeight: 'bold'
 													}}>
@@ -215,7 +219,7 @@ export default function DonacionesPage() {
 			)}
 
 			{/* Modal de nueva donación */}
-			<DonacionFormModal 
+			<DonacionFormModal
 				isOpen={showModal}
 				onClose={() => setShowModal(false)}
 				donanteId={ownerId}
