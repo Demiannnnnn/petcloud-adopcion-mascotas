@@ -30,10 +30,17 @@ public class MascotaController {
 	public ResponseEntity<String> uploadImage(@RequestParam("file") MultipartFile file) {
 		try {
 			String uploadDir = System.getProperty("user.dir") + "/uploads/";
-			java.io.File dest = new java.io.File(uploadDir + file.getOriginalFilename());
+			// Usar solo el nombre base para evitar escribir fuera de /uploads (p. ej. "../../x")
+			String original = file.getOriginalFilename();
+			String nombre = original == null ? "" : original.replace('\\', '/');
+			nombre = nombre.substring(nombre.lastIndexOf('/') + 1);
+			if (nombre.isBlank() || nombre.equals(".") || nombre.equals("..")) {
+				return ResponseEntity.badRequest().body("Nombre de archivo inválido");
+			}
+			java.io.File dest = new java.io.File(uploadDir + nombre);
 			file.transferTo(dest);
 			// Retornar la URL pública
-			String imageUrl = "/uploads/" + file.getOriginalFilename();
+			String imageUrl = "/uploads/" + nombre;
 			return ResponseEntity.ok(imageUrl);
 		} catch (IOException | IllegalStateException e) {
 			return ResponseEntity.status(500).body("Error al subir la imagen: " + e.getMessage());
