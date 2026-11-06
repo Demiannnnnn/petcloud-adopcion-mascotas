@@ -405,7 +405,9 @@ public class MascotaService {
 			if (seen.contains(canonical)) continue;
 			seen.add(canonical);
 			java.util.Map<String,String> copy = new java.util.HashMap<>();
-			copy.put("url", canonical);
+			// Conservar mayúsculas/minúsculas originales: los archivos en /uploads se sirven desde
+			// un sistema de archivos sensible a mayúsculas (p. ej. IMG_0956.jpg). Solo se deduplica en minúsculas.
+			copy.put("url", url);
 			copy.put("type", it.getOrDefault("type", ""));
 			out.add(copy);
 		}
