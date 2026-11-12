@@ -93,6 +93,35 @@ class MascotaServiceTest {
     }
 
     @Test
+    void registrarMascotaMapeaTamanoAPeso() {
+        when(repo.save(any(Mascota.class))).thenAnswer(i -> i.getArgument(0));
+
+        MascotaRegistroDTO dPequeno = dto();
+        dPequeno.setTamaño("Pequeño");
+        assertThat(service.registrarMascota(dPequeno).getPeso()).isEqualByComparingTo("5.0");
+
+        MascotaRegistroDTO dMediano = dto();
+        dMediano.setTamaño("Mediano");
+        assertThat(service.registrarMascota(dMediano).getPeso()).isEqualByComparingTo("15.0");
+
+        MascotaRegistroDTO dGrande = dto();
+        dGrande.setTamaño("Grande");
+        assertThat(service.registrarMascota(dGrande).getPeso()).isEqualByComparingTo("30.0");
+
+        MascotaRegistroDTO dNumerico = dto();
+        dNumerico.setTamaño("12.5");
+        assertThat(service.registrarMascota(dNumerico).getPeso()).isEqualByComparingTo("12.5");
+
+        MascotaRegistroDTO dVacio = dto();
+        dVacio.setTamaño("");
+        assertThat(service.registrarMascota(dVacio).getPeso()).isEqualByComparingTo("0.0");
+
+        MascotaRegistroDTO dDesconocido = dto();
+        dDesconocido.setTamaño("Desconocido");
+        assertThat(service.registrarMascota(dDesconocido).getPeso()).isEqualByComparingTo("0.0");
+    }
+
+    @Test
     void registrarConFechaInvalidaDejaEdadCero() {
         when(repo.save(any(Mascota.class))).thenAnswer(i -> i.getArgument(0));
         MascotaRegistroDTO d = dto();
@@ -154,6 +183,20 @@ class MascotaServiceTest {
         assertThat(out.getNombre()).isEqualTo("Después");
         assertThat(out.getRaza()).isEqualTo("Quiltro");
         assertThat(out.getPeso()).isEqualByComparingTo("30.0");
+    }
+
+    @Test
+    void actualizarConTextoNoReconocidoNoModificaPeso() {
+        Mascota m = new Mascota();
+        m.setPropietarioId(10L);
+        m.setPeso(new BigDecimal("20.0"));
+        when(repo.findById(1L)).thenReturn(Optional.of(m));
+        when(repo.save(any(Mascota.class))).thenAnswer(i -> i.getArgument(0));
+
+        MascotaRegistroDTO d = new MascotaRegistroDTO();
+        d.setTamaño("no-reconocido");
+        Mascota out = service.actualizarMascota(1L, d);
+        assertThat(out.getPeso()).isEqualByComparingTo("20.0");
     }
 
     @Test
