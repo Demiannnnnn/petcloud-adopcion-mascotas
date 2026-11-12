@@ -150,7 +150,7 @@ export default function ChatBubble() {
       const names = [];
       if (Array.isArray(parts)) {
         parts.forEach(p => {
-          const id = String(p && (p.perfilId || p.perfil && p.perfil.id));
+          const id = String(p && (p.perfilId || (p.perfil && p.perfil.id)));
           if (!id || id === perfilId) return;
           const nm = nameMap[id];
           if (nm === null) names.push('Cargando...');
@@ -225,6 +225,7 @@ export default function ChatBubble() {
     };
   }, [open, chatId]);
 
+  const mensajesCount = chat && chat.mensajes && chat.mensajes.length;
   // Auto-scroll to bottom when messages change
   useEffect(() => {
     try {
@@ -232,7 +233,7 @@ export default function ChatBubble() {
         scrollerRef.current.scrollTop = scrollerRef.current.scrollHeight;
       }
     } catch (e) { }
-  }, [chat && chat.mensajes && chat.mensajes.length]);
+  }, [mensajesCount]);
 
   return (
     <div style={{ position: 'fixed', right: 18, bottom: 18, zIndex: 5000 }}>
@@ -252,7 +253,7 @@ export default function ChatBubble() {
           <div ref={scrollerRef} style={{ padding:10, flex:1, overflowY:'auto', background:'#fafafa' }}>
             {chat && chat.mensajes && chat.mensajes.length > 0 ? (
               chat.mensajes.map((m, idx) => {
-                const rid = String(m && m.remitenteId || '');
+                const rid = String((m && m.remitenteId) || '');
                 const resolvedRemitente = nameMap[rid];
                 const remitente = resolvedRemitente === null ? 'Cargando...' : (resolvedRemitente || (rid === currentUserId ? (currentUserName || `#${rid}`) : `#${rid}`));
                 const fechaStr = m && (m.fecha || m.createdAt) ? new Date(m.fecha || m.createdAt).toLocaleString() : '';
@@ -309,7 +310,7 @@ export default function ChatBubble() {
             <div style={{ padding:8, borderTop:'1px solid #eee', display:'flex', gap:8, alignItems:'center' }}>
               <form style={{ display:'flex', flex:1, gap:8 }} onSubmit={async (ev) => {
                 ev.preventDefault();
-                const chatId = chat && (chat.chat && chat.chat.id) || (chat && chat.id) || (chat && chat.chatId);
+                const chatId = (chat && (chat.chat && chat.chat.id)) || (chat && chat.id) || (chat && chat.chatId);
                 const remitenteId = user?.id || (user?.perfil && user.perfil.id) || null;
                 if (!chatId || !remitenteId) { toast.error('No se puede enviar mensaje (falta chat o usuario)'); return; }
                 const content = (text || '').trim();

@@ -2,7 +2,6 @@ import React, { useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import NotificationBadge from './NotificationBadge';
 import ContactsModal from './ContactsModal';
-import { getApiBase } from '../api/apiBase';
 import { Link } from 'react-router-dom';
 
 export default function Navbar() {
