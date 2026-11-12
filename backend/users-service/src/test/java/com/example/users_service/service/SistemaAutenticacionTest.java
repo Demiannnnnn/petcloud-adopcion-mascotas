@@ -56,6 +56,33 @@ class SistemaAutenticacionTest {
     }
 
     @Test
+    void loginPersonaConContrasenaEnTextoPlanoDevuelveNull() {
+        Persona p = new Persona();
+        p.setRut("11.111.111-1");
+        p.setContraseña("claveEnTextoPlano");
+        when(personaRepository.findByRut("11.111.111-1")).thenReturn(Optional.of(p));
+        assertThat(sistema.loginPersona("11.111.111-1", "claveEnTextoPlano")).isNull();
+    }
+
+    @Test
+    void loginPersonaConContrasenaNulaDevuelveNull() {
+        Persona p = new Persona();
+        p.setRut("11.111.111-1");
+        p.setContraseña(null);
+        when(personaRepository.findByRut("11.111.111-1")).thenReturn(Optional.of(p));
+        assertThat(sistema.loginPersona("11.111.111-1", "clave")).isNull();
+    }
+
+    @Test
+    void loginEmpresaConContrasenaEnTextoPlanoDevuelveNull() {
+        Empresa e = new Empresa();
+        e.setRutEmpresa("76.086.428-5");
+        e.setContraseña("claveEnTextoPlano");
+        when(empresaRepository.findByRutEmpresa("76.086.428-5")).thenReturn(Optional.of(e));
+        assertThat(sistema.loginEmpresa("76.086.428-5", "claveEnTextoPlano")).isNull();
+    }
+
+    @Test
     void loginEmpresaVerificaHashBcrypt() {
         Empresa e = new Empresa();
         e.setRutEmpresa("76.086.428-5");
