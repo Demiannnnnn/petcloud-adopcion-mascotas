@@ -16,6 +16,11 @@ dist/
 .DS_Store
 Thumbs.db
 
+# H2 Database & Locks
+backend/*/data/*.mv.db
+*.trace.db
+.LCK*~
+
 # Env
 .env
 .env.local
