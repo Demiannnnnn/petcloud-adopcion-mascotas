@@ -78,7 +78,7 @@ Los servicios levantarán sus propias bases de datos H2 automáticamente.
 
 #### Frontend
 
-Requiere Node.js 18+ o 20.
+Requiere Node.js (el CI usa Node 20).
 
 1. Ir a la carpeta del frontend:
 ```bash
