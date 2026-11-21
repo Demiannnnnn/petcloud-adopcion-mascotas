@@ -14,3 +14,27 @@ describe('rut utils', () => {
     expect(formatRut('')).toBe('');
   });
 });
+
+describe('validateRut / normalizedRut', () => {
+  const { validateRut, normalizedRut } = require('./rut');
+
+  test.each(['11.111.111-1', '12.345.678-5', '10.000.013-K', '10000013-k', '1.000.013-0', '6-K'])(
+    'acepta RUT válido %s', (rut) => {
+      expect(validateRut(rut)).toBe(true);
+    });
+
+  test.each(['12.345.678-9', '11.111.111-2', '1', '', null, undefined])(
+    'rechaza %p', (rut) => {
+      expect(validateRut(rut)).toBe(false);
+    });
+
+  test('normalizedRut deja solo dígitos y K mayúscula', () => {
+    expect(normalizedRut('10.000.013-k')).toBe('10000013K');
+    expect(normalizedRut('')).toBe('');
+  });
+
+  test('cleanRut acepta números y trata 0 como valor', () => {
+    expect(cleanRut(0)).toBe('0');
+    expect(cleanRut(null)).toBe('');
+  });
+});
