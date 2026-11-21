@@ -11,32 +11,43 @@ dist/
 # IDE
 .vscode/
 .idea/
+*.iml
+*.iws
+*.ipr
 
-# OS
+# OS & macOS
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
 Thumbs.db
 
-# Env
+# Environment variables
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*
+!.env.example
+!frontend/.env.example
 
-# Misc
-*.log
-*.lock
+# Secrets & SSL Certificates/Keys
+*.key
+*.pem
+nginx/ssl/*.key
 
-# Coverage
-coverage/
+# Database runtime & temporary files
+*.lock.db
+*.trace.db
 
-# Others
-*.swp
-*.swo
-
-# Maven / Java
+# Java & Maven
 target/
 **/target/
+*.class
+*.jar
+!.mvn/wrapper/maven-wrapper.jar
 
-# logs
+# Logs & Misc
 *.log
+*.lock
+*.swp
+*.swo
+coverage/
