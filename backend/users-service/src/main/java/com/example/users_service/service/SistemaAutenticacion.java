@@ -28,15 +28,26 @@ public class SistemaAutenticacion {
     public SistemaAutenticacion() {}
 
 
+    private boolean verificarContraseña(String contraseña, String hashGuardado) {
+        if (contraseña == null || hashGuardado == null || !hashGuardado.startsWith("$2")) {
+            return false;
+        }
+        try {
+            return BCrypt.checkpw(contraseña, hashGuardado);
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
+    }
+
     public Persona loginPersona(String rut, String contraseña) {
         return personaRepository.findByRut(rut)
-            .filter(persona -> BCrypt.checkpw(contraseña, persona.getContraseña()))
+            .filter(persona -> verificarContraseña(contraseña, persona.getContraseña()))
             .orElse(null);
     }
 
     public Empresa loginEmpresa(String rut, String contraseña) {
         return empresaRepository.findByRutEmpresa(rut)
-            .filter(empresa -> org.springframework.security.crypto.bcrypt.BCrypt.checkpw(contraseña, empresa.getContraseña()))
+            .filter(empresa -> verificarContraseña(contraseña, empresa.getContraseña()))
             .orElse(null);
     }
 

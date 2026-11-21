@@ -35,6 +35,21 @@ public class MascotaService {
 			return new RestTemplate(f);
 		}
 	}
+	java.math.BigDecimal pesoDesdeTamaño(String tamaño) {
+		if (tamaño == null || tamaño.isEmpty()) {
+			return null;
+		}
+		try {
+			return new java.math.BigDecimal(tamaño);
+		} catch (Exception ex) {
+			String s = tamaño.toLowerCase();
+			if (s.contains("peque")) return new java.math.BigDecimal("5.0");
+			if (s.contains("med") || s.contains("medio")) return new java.math.BigDecimal("15.0");
+			if (s.contains("grand")) return new java.math.BigDecimal("30.0");
+			return null;
+		}
+	}
+
 	public List<Mascota> listarPorPropietario(Long propietarioId) {
 		return mascotaRepository.findByPropietarioId(propietarioId);
 	}
@@ -249,15 +264,8 @@ public class MascotaService {
 		
 		// Peso por defecto (se puede agregar al formulario después)
 		// Mapear tamaño del DTO a peso
-		if (mascotaDTO.getTamaño() != null && !mascotaDTO.getTamaño().isEmpty()) {
-			try {
-				mascota.setPeso(new java.math.BigDecimal(mascotaDTO.getTamaño()));
-			} catch (Exception e) {
-				mascota.setPeso(new java.math.BigDecimal("0.0"));
-			}
-		} else {
-			mascota.setPeso(new java.math.BigDecimal("0.0"));
-		}
+		java.math.BigDecimal pesoRegistrado = pesoDesdeTamaño(mascotaDTO.getTamaño());
+		mascota.setPeso(pesoRegistrado != null ? pesoRegistrado : new java.math.BigDecimal("0.0"));
 		
 	// Mapear campos extra
 	mascota.setChip(mascotaDTO.getChip());
@@ -453,19 +461,9 @@ public class MascotaService {
 		}
 
 		// Si se envía tamaño, intentar mapear a peso (si viene textual)
-		if (mascotaDTO.getTamaño() != null && !mascotaDTO.getTamaño().isEmpty()) {
-			String t = mascotaDTO.getTamaño();
-			try {
-				// intentar parsear número por si el frontend envía peso
-				java.math.BigDecimal bd = new java.math.BigDecimal(t);
-				mascota.setPeso(bd);
-			} catch (Exception ex) {
-				// mapear por palabras clave
-				String s = t.toLowerCase();
-				if (s.contains("peque")) mascota.setPeso(new java.math.BigDecimal("5.0"));
-				else if (s.contains("med") || s.contains("medio")) mascota.setPeso(new java.math.BigDecimal("15.0"));
-				else if (s.contains("grand")) mascota.setPeso(new java.math.BigDecimal("30.0"));
-			}
+		java.math.BigDecimal pesoActualizado = pesoDesdeTamaño(mascotaDTO.getTamaño());
+		if (pesoActualizado != null) {
+			mascota.setPeso(pesoActualizado);
 		}
 
 		// Media: if media provided, save JSON; otherwise if foto provided ensure mediaJson contains it so gallery persists
