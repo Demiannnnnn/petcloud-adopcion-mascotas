@@ -62,7 +62,7 @@ export default function ContactsModal({ open, onClose, ownerPerfilId }) {
       let found = null;
       if (Array.isArray(chats)) {
         for (const ch of chats) {
-          const parts = ch && (ch.participantes || (ch.chat && ch.chat.participantes)) || [];
+          const parts = (ch && (ch.participantes || (ch.chat && ch.chat.participantes))) || [];
           const ids = parts.map(p => (p && (p.perfilId || (p.perfil && p.perfil.id)))).filter(Boolean).map(String);
           if (ids.includes(String(contact.contactoPerfilId))) { found = ch; break; }
         }

@@ -13,7 +13,6 @@ export default function EditProfileModal({ open, onClose, perfil, onSaved }) {
       nombreEmpresa: perfil?.nombreEmpresa || perfil?.nombre || '',
       telefonoContacto: perfil?.telefonoContacto || perfil?.numeroWhatsapp || '',
       direccion: perfil?.direccion || perfil?.ubicacion || '',
-      direccion: perfil?.direccion || perfil?.ubicacion || '',
       correo: perfil?.correo || '',
       fechaNacimiento: perfil?.fechaNacimiento || ''
     });

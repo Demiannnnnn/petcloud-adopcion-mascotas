@@ -14,8 +14,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.users_service.model.Empresa;
 import com.example.users_service.model.Persona;
 import com.example.users_service.service.SistemaAutenticacion;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api")

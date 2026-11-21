@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { crearDonacion } from '../api/donationsApi';
-import { getUserById } from '../api/usersApi';
 import { getAllRefugios } from '../api/refugiosApi';
 
 export default function DonacionFormModal({ isOpen, onClose, donanteId }) {
